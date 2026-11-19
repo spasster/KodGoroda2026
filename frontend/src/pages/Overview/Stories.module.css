@@ -1,0 +1,107 @@
+/* Обзор «Истории»: тёмный герой с главным числом и карточки людей с графиками.
+   Все цвета и шрифты через токены: под фирменный стиль финала меняется tokens.css. */
+
+/* ---------- Герой ---------- */
+.hero {
+  color: var(--hero-fg);
+  background:
+    radial-gradient(900px 320px at 88% -30%, var(--hero-glow), transparent 70%),
+    var(--hero-bg);
+  border-bottom: 1px solid var(--hero-line);
+}
+.heroIn { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; padding-block: 44px 40px; }
+.eyebrow { color: var(--hero-muted); font-size: var(--fs-s); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.headline {
+  margin-top: 12px; max-width: 18ch;
+  font-family: var(--font-wide); font-size: clamp(34px, 4.4vw, 60px); font-weight: var(--fw-bold); line-height: 1.04;
+  font-variant-numeric: tabular-nums;
+}
+.headline em { font-style: normal; color: var(--hero-accent); }
+.playBox { display: flex; flex-direction: column; align-items: flex-end; gap: 14px; flex: none; }
+.play {
+  display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 22px;
+  border: 0; border-radius: var(--r-m); background: var(--brand); color: var(--brand-fg);
+  font: inherit; font-size: var(--fs-m); font-weight: var(--fw-medium); cursor: pointer;
+  transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.play:hover { background: var(--brand-hover); }
+.play:active { transform: scale(.98); }
+.pips { display: flex; gap: 6px; }
+.pip { width: 28px; height: 4px; border-radius: 2px; background: var(--hero-line); transition: background-color var(--dur-3) var(--ease-out); }
+.pipOn { background: var(--hero-accent); }
+
+/* ---------- Секции ---------- */
+.sections { display: flex; flex-direction: column; gap: 40px; padding-top: 36px; }
+.sectionTitle {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  font-size: var(--fs-l); font-weight: var(--fw-bold);
+}
+.count { color: var(--text-3); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.risk { background: var(--risk); }
+.watch { background: var(--watch); }
+.ok { background: var(--ok); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.gridCompact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* ---------- Карточка ---------- */
+.cardWrap { min-width: 0; }
+.card {
+  display: flex; flex-direction: column; height: 100%; padding: 26px 28px 24px;
+  border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low);
+  color: var(--text-1); text-decoration: none;
+  transition: box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+.card:hover { box-shadow: var(--shadow-middle); transform: translateY(-2px); }
+.cardCompact { flex-direction: row; align-items: center; gap: 16px; padding: 18px 22px; }
+.cardCompact .cardHead { flex: 1 1 0; min-width: 0; }
+.cardCompact .chart { flex: 0 0 200px; width: 200px; margin: 0; }
+.fresh { box-shadow: var(--shadow-low), 0 0 0 2px var(--brand); }
+.cardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.person { display: flex; flex-direction: column; min-width: 0; }
+.name { font-size: var(--fs-m); font-weight: var(--fw-bold); }
+.mentor { color: var(--text-2); font-size: var(--fs-xs); }
+.name, .mentor { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signals { color: var(--text-2); font-size: var(--fs-xs); white-space: nowrap; }
+.new {
+  padding: 3px 10px; border-radius: var(--r-pill); background: var(--brand); color: var(--brand-fg);
+  font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap;
+}
+.verdict {
+  margin: 16px 0 4px; min-height: 2.5em;
+  font-size: 24px; font-weight: var(--fw-medium); line-height: 1.25; text-wrap: balance;
+}
+.quote {
+  margin: 14px 0 0; padding: 14px 16px; border-radius: var(--r-m); background: var(--sunken);
+  font-family: var(--font-text); font-size: var(--fs-s); line-height: var(--lh-body);
+}
+.quote cite { display: block; margin-top: 4px; color: var(--text-2); font-size: var(--fs-xs); font-style: normal; }
+
+/* ---------- График ---------- */
+.chart { display: block; width: 100%; height: auto; margin-top: 8px; overflow: visible; font-family: var(--font); }
+.reveal { transform-origin: 0 0; transition: transform 900ms var(--ease-io); }
+.gridLine { stroke: var(--chart-grid); stroke-width: 1; }
+.tick { fill: var(--text-3); font-size: 12px; font-variant-numeric: tabular-nums; }
+.gap { fill: var(--series-gap); transition: fill var(--dur-4) var(--ease-out); }
+.chart[data-status="risk"] .gap { fill: var(--risk-gap); }
+.chart[data-status="watch"] .gap { fill: var(--watch-gap); }
+.internLine, .mentorLine { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.internLine { stroke: var(--series-intern); }
+.mentorLine { stroke: var(--series-mentor); stroke-width: 2.5; }
+.internDot { fill: var(--series-intern); stroke: var(--surface); stroke-width: 2; }
+.mentorDot { fill: var(--series-mentor); stroke: var(--surface); stroke-width: 2; }
+.endLabel { transition: transform 900ms var(--ease-io); }
+.internValue, .mentorValue { font-size: 16px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.internValue { fill: var(--series-intern); }
+.mentorValue { fill: var(--series-mentor); }
+.who { font-size: 13px; font-weight: var(--fw-regular); }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .endLabel, .card { transition: none; }
+}
+@media (max-width: 1023px) {
+  .grid, .gridCompact { grid-template-columns: minmax(0, 1fr); }
+  .heroIn { flex-direction: column; align-items: flex-start; padding-block: 28px; }
+  .playBox { align-items: flex-start; }
+  .verdict { font-size: 22px; }
+}

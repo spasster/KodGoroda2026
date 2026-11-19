@@ -52,6 +52,16 @@
   --series-mentor: #626C77;
   --series-gap: rgb(0 138 224 / .08);
   --chart-grid: #E2E5EB;
+  --risk-gap: rgb(249 87 33 / .16);
+  --watch-gap: rgb(250 192 49 / .22);
+
+  /* Герой обзора: тёмная полоса в обеих темах */
+  --hero-bg: #1D2023;
+  --hero-fg: #FAFAFA;
+  --hero-muted: #969FA8;
+  --hero-line: #33383D;
+  --hero-accent: #45B6FC;
+  --hero-glow: rgb(0 138 224 / .38);
 
   /* Подсветка цитаты */
   --mark-bg: rgb(250 192 49 / .28);

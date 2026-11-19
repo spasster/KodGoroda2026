@@ -69,12 +69,9 @@ async function waitVisible(locator, what, timeout = WAIT) {
   }
 }
 
-// Строка пары в таблице обзора по имени стажёра.
-const pairRow = (page, intern) =>
-  page.locator('main table tbody tr').filter({ has: page.getByRole('link', { name: intern, exact: true }) })
-
-// Последняя колонка строки: «Главное».
-const mainCell = (page, intern) => pairRow(page, intern).locator('td').last()
+// Карточка стажёра на обзоре: ссылка с data-status (risk, watch, ok).
+const pairRow = (page, intern) => page.locator('main a[data-status]').filter({ hasText: intern })
+const cardStatus = (page, intern) => pairRow(page, intern).first().getAttribute('data-status')
 
 const liveDot = (page) => page.locator('header').getByText('онлайн', { exact: true })
 
@@ -142,8 +139,8 @@ try {
 
   await step('Обзор открылся, у Ильи Морозова «Всё ровно», связь онлайн', dash, async () => {
     await dash.goto(BASE + '/')
-    await waitVisible(pairRow(dash, names.ilya), `Строка «${names.ilya}» в таблице обзора`)
-    await waitText(mainCell(dash, names.ilya), 'Всё ровно', `Колонка «Главное» у «${names.ilya}»`)
+    await waitVisible(pairRow(dash, names.ilya), `Карточка «${names.ilya}» на обзоре`)
+    check((await cardStatus(dash, names.ilya)) === 'ok', `Карточка «${names.ilya}» не в группе «Всё ровно»`)
     await waitVisible(liveDot(dash), 'Точка связи «онлайн» в шапке')
   })
 
@@ -164,16 +161,16 @@ try {
     await waitText(toast, 'Новая анкета', 'Уведомление о новой анкете')
     await waitText(toast, 'Всё ровно', 'Уведомление: статус до анкеты')
     await waitText(toast, 'Пора поговорить', 'Уведомление: статус после анкеты')
-    // Пара ушла из «Всё ровно»: в «Главном» заголовок сигнала, у клетки 6-го месяца метка «новое».
+    // Карточка ушла из «Всё ровно» в «Пора поговорить» и получила метку «новая анкета».
     const until = Date.now() + WAIT
-    let main = ''
+    let status = ''
     while (Date.now() < until) {
-      main = await mainCell(dash, names.ilya).innerText().catch(() => '')
-      if (main && !main.includes('Всё ровно')) break
+      status = (await cardStatus(dash, names.ilya).catch(() => '')) ?? ''
+      if (status === 'risk') break
       await sleep(150)
     }
-    check(main && !main.includes('Всё ровно'), `Колонка «Главное» у «${names.ilya}» осталась «${squash(main)}»`)
-    await waitText(pairRow(dash, names.ilya), 'новое', `Метка «новое» в строке «${names.ilya}»`)
+    check(status === 'risk', `Карточка «${names.ilya}» осталась в статусе «${status}»`)
+    await waitText(pairRow(dash, names.ilya), 'новая анкета', `Метка «новая анкета» на карточке «${names.ilya}»`)
     const overview = await api('GET', '/api/overview')
     const p01 = overview.pairs.find((p) => p.pair_id === 'P-01')
     check(p01.status === 'risk', `P-01 после анкеты в статусе ${p01.status}, ждали risk`)
@@ -183,7 +180,7 @@ try {
 
   await step('Карточка Тимура Галиева: «Подтвердилось» сохраняется после перезагрузки', dash, async () => {
     await dash.goto(BASE + '/')
-    await pairRow(dash, names.timur).getByRole('link', { name: names.timur, exact: true }).click()
+    await pairRow(dash, names.timur).first().click()
     await waitVisible(dash.getByRole('heading', { level: 1, name: names.timur }), `Заголовок «${names.timur}» на карточке пары`)
     const confirm = (scope) => scope.getByRole('button', { name: 'Подтвердилось', exact: true })
     const open = dash.locator('article').filter({ has: confirm(dash) })

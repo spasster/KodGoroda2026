@@ -1,21 +1,23 @@
-// Обзор (docs/design/v2.md, «Обзор»): заголовок — месяц сбора, четыре итога
-// и таблица пар по месяцам. Больше на обзоре ничего нет.
+// Обзор «Истории»: герой с главным числом и карточки стажёров.
+// Кнопка «Показать динамику» проигрывает месяцы: линии растут, карточки переезжают между группами.
 
+import { Pause, Play } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { useOverview, usePeople, useSignals, useSurvey } from '../../api/queries'
-import type { Overview, PairStatus, Role } from '../../api/types'
+import { useOverview, usePeople, useSignals, useSurvey, useThresholds } from '../../api/queries'
+import type { Overview, Role } from '../../api/types'
 import { LoadError, Loading, Skeleton } from '../../components'
 import { calendarMonthName, collectMonth } from '../../lib/rules'
 import { useLive } from '../../live/useLive'
 import { EmptyOverview } from './EmptyOverview'
 import { addFresh, freshKey, pruneFresh, useFreshEntries, type FreshEntry } from './fresh'
-import { mainTitles, responsesIn, rowOrder } from './model'
+import { responsesIn, sortStories, storyOf } from './model'
 import s from './Overview.module.css'
-import { PairsTable } from './PairsTable'
-import { Totals } from './Totals'
+import { Stories } from './Stories'
+import h from './Stories.module.css'
 
 const ROLES: Role[] = ['intern', 'mentor']
+const STEP_MS = 1400
 
 function hasResponse(o: Overview, key: string): boolean {
   const [pairId, role, month] = key.split(':')
@@ -28,11 +30,13 @@ export function OverviewPage() {
   const signals = useSignals({ status: 'all' })
   const people = usePeople()
   const survey = useSurvey()
+  const thresholds = useThresholds()
   const { last, isFreshResponse } = useLive()
   const fresh = useFreshEntries()
-  const [filter, setFilter] = useState<PairStatus | null>(null)
+  // Проигрывание: месяц, на котором стоим; null — показываем как есть.
+  const [play, setPlay] = useState<number | null>(null)
 
-  // Метки «новое» из src/live переносим в localStorage, чтобы пережили перезагрузку.
+  // Метки «новая анкета» из src/live переносим в localStorage, чтобы пережили перезагрузку.
   const o = overview.data
   useEffect(() => {
     if (!o) return
@@ -44,7 +48,6 @@ export function OverviewPage() {
         }
       }
     }
-    // Последняя анкета может ещё не дойти до обзора: помечаем её временем события.
     if (last && isFreshResponse(last.pair_id, last.role, last.month)) {
       add.push({ key: freshKey(last.pair_id, last.role, last.month), at: Date.parse(last.at) })
     }
@@ -52,8 +55,18 @@ export function OverviewPage() {
     pruneFresh((key) => hasResponse(o, key), overview.dataUpdatedAt)
   }, [o, overview.dataUpdatedAt, last, isFreshResponse])
 
-  const freshKeys = useMemo(() => new Set(fresh.map((e) => e.key)), [fresh])
-  const titles = useMemo(() => mainTitles(signals.data ?? []), [signals.data])
+  const dataEnd = o ? Math.max(0, ...o.months) : 0
+  useEffect(() => {
+    if (play == null) return
+    const id = setTimeout(() => setPlay(play >= dataEnd ? null : play + 1), play >= dataEnd ? STEP_MS * 1.5 : STEP_MS)
+    return () => clearTimeout(id)
+  }, [play, dataEnd])
+
+  const freshPairs = useMemo(() => new Set(fresh.map((e) => e.key.split(':')[0])), [fresh])
+  const stories = useMemo(
+    () => sortStories((o?.pairs ?? []).map((p) => storyOf(p, signals.data ?? [], play, thresholds.active_months))),
+    [o, signals.data, play, thresholds.active_months],
+  )
 
   if (overview.isError && !o) {
     return (
@@ -65,47 +78,58 @@ export function OverviewPage() {
   if (!o || people.isPending || survey.isPending) return <OverviewSkeleton />
   if (o.totals.pairs === 0) return <EmptyOverview />
 
-  const programMonths = survey.data?.months ?? Math.max(0, ...o.months) + 1
+  const programMonths = survey.data?.months ?? dataEnd + 1
   const collect = collectMonth(people.data, programMonths)
-  const lastMonth = Math.max(programMonths, collect ?? 0, ...o.months)
-  const months = Array.from({ length: lastMonth }, (_, i) => i + 1)
-  // Месяц сбора; когда собрано всё, последний месяц программы.
-  const month = collect ?? Math.max(0, ...o.months)
+  const months = Array.from({ length: Math.max(programMonths, collect ?? 0, dataEnd) }, (_, i) => i + 1)
+  const month = collect ?? dataEnd
   const calendar = month > 0 ? calendarMonthName(month, o.recent) : null
 
-  const counts: Record<PairStatus, number> = { risk: o.totals.risk, watch: o.totals.watch, ok: o.totals.ok }
-  const order = rowOrder(o.pairs, o.totals.responses)
-  const byId = new Map(o.pairs.map((p) => [p.pair_id, p]))
-  const rows = order.flatMap((id) => {
-    const p = byId.get(id)
-    return p && (!filter || p.status === filter) ? [p] : []
-  })
-
-  const isFresh = (pairId: string, month: number) => {
-    const cell = byId.get(pairId)?.cells.find((c) => c.month === month)
-    return (
-      !!cell &&
-      ROLES.some((role) => !cell.missing[role] && (freshKeys.has(freshKey(pairId, role, month)) || isFreshResponse(pairId, role, month)))
-    )
-  }
+  const total = o.pairs.length
+  const risk = stories.filter((st) => st.status === 'risk').length
+  const eyebrow =
+    play != null
+      ? `Месяц ${play} из ${dataEnd}`
+      : `${calendar ? `${capitalize(calendar)} · ` : ''}${month}-й месяц · анкет ${responsesIn(o.pairs, month)} из ${total * 2}`
 
   return (
-    <div className="wrap">
-      {overview.isError && <LoadError query={overview} className={s.error} />}
-      <header className={s.head}>
-        <h1 className={s.title}>Обзор</h1>
-        {month > 0 && <span className={s.when}>{calendar ? `${capitalize(calendar)} · ` : ''}{month}-й месяц</span>}
-      </header>
-      <Totals
-        counts={counts}
-        filter={filter}
-        onFilter={(st) => setFilter((f) => (f === st ? null : st))}
-        month={month}
-        got={month > 0 ? responsesIn(o.pairs, month) : 0}
-        total={o.pairs.length * 2}
-      />
-      <PairsTable pairs={rows} months={months} collect={collect} titles={titles} isFresh={isFresh} />
-    </div>
+    <>
+      <section className={h.hero}>
+        <div className={`wrap ${h.heroIn}`}>
+          <div>
+            <p className={h.eyebrow}>{eyebrow}</p>
+            <h1 className={h.headline}>
+              {risk === 0 ? (
+                'Все стажировки идут ровно'
+              ) : (
+                <>
+                  <em>
+                    {risk} из {total}
+                  </em>{' '}
+                  {total === 1 ? 'стажёра' : 'стажёров'} {risk === 1 ? 'ждёт' : 'ждут'} разговора
+                </>
+              )}
+            </h1>
+          </div>
+          {dataEnd > 1 && (
+            <div className={h.playBox}>
+              <button type="button" className={h.play} onClick={() => setPlay(play == null ? 1 : null)}>
+                {play == null ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}
+                {play == null ? 'Показать динамику' : 'Остановить'}
+              </button>
+              <div className={h.pips} aria-hidden="true">
+                {Array.from({ length: dataEnd }, (_, i) => (
+                  <i key={i} className={`${h.pip} ${play == null || i < play ? h.pipOn : ''}`} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+      <div className="wrap">
+        {overview.isError && <LoadError query={overview} className={s.error} />}
+        <Stories stories={stories} months={months} scale={o.scale} upto={play} isFresh={(id) => play == null && freshPairs.has(id)} />
+      </div>
+    </>
   )
 }
 
@@ -117,13 +141,12 @@ function OverviewSkeleton() {
   return (
     <div className="wrap">
       <Loading className={s.skeleton}>
-        <Skeleton width={220} height={36} />
+        <Skeleton width={420} height={56} />
         <div className={s.skelCards}>
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} height={120} radius="var(--r-card)" />
+            <Skeleton key={i} height={220} radius="var(--r-card)" />
           ))}
         </div>
-        <Skeleton height={360} radius="var(--r-card)" />
       </Loading>
     </div>
   )
