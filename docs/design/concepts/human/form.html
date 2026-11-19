@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Анкета стажировки</title>
+<script>
+  try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #ECE6E0; --surface-1: #FBF9F6; --surface-2: #F3EEE8; --surface-3: #E8E0D7;
+  --text-1: #2A211D; --text-2: #574A42; --text-3: #74665C;
+  --border: #DDD3C9; --border-strong: #C3B5A8;
+  --brand: #D52B1E; --brand-ink: #FFFFFF; --brand-hover: #B9231A;
+  --intern: #2E62C9; --on-intern: #FFFFFF; --mentor: #4F433C; --on-mentor: #FFFFFF;
+  --ok: #2E8455; --risk: #8A2E62;
+  --shadow-1: 0 1px 0 rgba(74, 52, 36, .05), 0 14px 32px -22px rgba(74, 52, 36, .45);
+  --focus: #2A211D;
+  --font-ui: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-voice: "Alegreya", Georgia, serif;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #1A1614; --surface-1: #25201C; --surface-2: #2D2722; --surface-3: #38302A;
+    --text-1: #F3ECE5; --text-2: #CDBFB3; --text-3: #A69688;
+    --border: #3A322C; --border-strong: #54483F;
+    --brand: #D52B1E; --brand-ink: #FFFFFF; --brand-hover: #E8473B;
+    --intern: #6A93EE; --on-intern: #16120F; --mentor: #D3C6B9; --on-mentor: #16120F;
+    --ok: #4DB68A; --risk: #E07AAE;
+    --shadow-1: 0 0 0 1px rgba(255, 255, 255, .035), 0 18px 36px -24px rgba(0, 0, 0, .8);
+    --focus: #F3ECE5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1A1614; --surface-1: #25201C; --surface-2: #2D2722; --surface-3: #38302A;
+  --text-1: #F3ECE5; --text-2: #CDBFB3; --text-3: #A69688;
+  --border: #3A322C; --border-strong: #54483F;
+  --brand: #D52B1E; --brand-ink: #FFFFFF; --brand-hover: #E8473B;
+  --intern: #6A93EE; --on-intern: #16120F; --mentor: #D3C6B9; --on-mentor: #16120F;
+  --ok: #4DB68A; --risk: #E07AAE;
+  --shadow-1: 0 0 0 1px rgba(255, 255, 255, .035), 0 18px 36px -24px rgba(0, 0, 0, .8);
+  --focus: #F3ECE5;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text-1);
+  font: 400 17px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased;
+}
+h1, h2, p, fieldset, legend { margin: 0; padding: 0; border: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 8px; }
+
+.page { max-width: 520px; margin: 0 auto; padding: 0 16px 32px; }
+.bar { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.mark { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.mark-chip { width: 30px; height: 30px; border-radius: 10px; background: var(--brand); display: grid; place-items: center; }
+.mark-chip svg { width: 18px; height: 18px; }
+.icon-btn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--surface-1); box-shadow: var(--shadow-1); display: grid; place-items: center; cursor: pointer; }
+.icon-btn svg { width: 20px; height: 20px; }
+
+.intro { padding: 18px 4px 26px; }
+.intro h1 { font-size: 34px; line-height: 1.1; letter-spacing: -.02em; font-weight: 600; }
+.intro p { color: var(--text-2); margin-top: 10px; }
+
+.block { background: var(--surface-1); border-radius: 26px; box-shadow: var(--shadow-1); padding: 22px 18px; margin-top: 14px; }
+.label { font-weight: 600; font-size: 19px; line-height: 1.3; }
+.hint { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; margin-top: 12px; }
+.seg button { height: 48px; border: 0; border-radius: 999px; background: transparent; font-weight: 600; color: var(--text-2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: background-color 200ms var(--ease-out), color 200ms; }
+.seg button[aria-pressed="true"] { background: var(--surface-1); color: var(--text-1); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+.mk { display: inline-block; width: 11px; height: 11px; flex: none; }
+.mk.i { border-radius: 50%; background: var(--intern); }
+.mk.m { border-radius: 3px; background: var(--mentor); }
+
+.ids { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 14px; }
+.ids button { height: 52px; border-radius: 16px; border: 0; background: var(--surface-2); font-weight: 600; font-size: 16px; cursor: pointer; font-variant-numeric: tabular-nums; transition: background-color 200ms var(--ease-out), color 200ms, transform 120ms var(--ease-out); }
+.ids button:active { transform: scale(.95); }
+.ids button[aria-pressed="true"] { background: var(--voice); color: var(--on-voice); }
+.who-line { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: var(--surface-2); color: var(--text-2); font-size: 15px; }
+.who-line b { color: var(--text-1); font-weight: 600; }
+
+.q { padding: 22px 0; border-top: 1px solid var(--border); }
+#questions > .q:first-child { border-top: 0; padding-top: 4px; }
+
+.q .num { display: block; color: var(--text-3); font-size: 15px; font-weight: 400; margin-bottom: 4px; }
+.scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 14px; }
+.scale button {
+  height: 60px; border-radius: 18px; border: 0; cursor: pointer;
+  background: var(--surface-2); box-shadow: inset 0 0 0 1.5px var(--border);
+  font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums;
+  transition: background-color 220ms var(--ease-out), color 220ms, box-shadow 220ms, transform 120ms var(--ease-out);
+}
+.scale button:active { transform: scale(.93); }
+.scale button[aria-pressed="true"] { background: var(--voice); color: var(--on-voice); box-shadow: none; animation: pick 360ms var(--ease-spring); }
+@keyframes pick { 0% { transform: scale(.88); } 100% { transform: scale(1); } }
+.ends { display: flex; justify-content: space-between; color: var(--text-3); font-size: 14px; margin-top: 8px; }
+.q.missing .label::after { content: "Нужен ответ"; display: block; color: var(--risk); font-size: 15px; font-weight: 500; margin-top: 4px; }
+
+textarea {
+  width: 100%; min-height: 140px; margin-top: 14px; padding: 14px 16px; border-radius: 18px; resize: vertical;
+  border: 0; background: var(--surface-2); box-shadow: inset 0 0 0 1.5px var(--border);
+  font-family: var(--font-voice); font-size: 20px; line-height: 1.4;
+}
+textarea::placeholder { color: var(--text-3); }
+textarea:focus { outline: none; box-shadow: inset 0 0 0 2px var(--voice); }
+
+.send { padding: 22px 2px calc(8px + env(safe-area-inset-bottom)); }
+.send-in { display: grid; gap: 10px; }
+.send .left { text-align: center; color: var(--text-2); font-size: 15px; }
+.btn { height: 56px; border-radius: 999px; border: 0; font-weight: 600; font-size: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: background-color 160ms var(--ease-out), transform 120ms var(--ease-out); }
+.btn:active { transform: scale(.98); }
+.btn-brand { background: var(--brand); color: var(--brand-ink); }
+.btn-brand:hover { background: var(--brand-hover); }
+.btn-ghost { background: transparent; box-shadow: inset 0 0 0 1.5px var(--border-strong); color: var(--text-1); padding: 0 22px; }
+.btn[aria-busy="true"] { opacity: .7; }
+
+/* Спасибо */
+.thanks { display: none; padding: 36px 4px 40px; }
+body.done .form-view, body.done .send { display: none; }
+body.done .thanks { display: block; }
+.check { width: 84px; height: 84px; }
+.check circle { fill: none; stroke: var(--ok); stroke-width: 3; stroke-dasharray: 245; stroke-dashoffset: 245; animation: stroke 700ms var(--ease-out) forwards; }
+.check path { fill: none; stroke: var(--ok); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 50; stroke-dashoffset: 50; animation: stroke 420ms var(--ease-out) 520ms forwards; }
+@keyframes stroke { to { stroke-dashoffset: 0; } }
+.thanks h1 { font-size: 34px; line-height: 1.1; letter-spacing: -.02em; font-weight: 600; margin-top: 22px; }
+.thanks > p { color: var(--text-2); margin-top: 10px; font-size: 18px; }
+.sum { list-style: none; margin: 0; padding: 0; }
+.sum li { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 12px 0; border-top: 1px solid var(--border); align-items: center; }
+.sum li:first-child { border-top: 0; padding-top: 0; }
+.sum .v { width: 40px; height: 40px; border-radius: 12px; background: var(--voice); color: var(--on-voice); display: grid; place-items: center; font-weight: 600; font-size: 18px; }
+.said { font-family: var(--font-voice); font-size: 20px; line-height: 1.4; margin-top: 14px; padding-left: 16px; position: relative; }
+.said::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px; width: 3px; border-radius: 3px; background: var(--voice); }
+.again { margin-top: 22px; width: 100%; }
+
+body { --voice: var(--intern); --on-voice: var(--on-intern); }
+body.as-mentor { --voice: var(--mentor); --on-voice: var(--on-mentor); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+  .check circle, .check path { stroke-dashoffset: 0; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="bar">
+    <div class="mark"><span class="mark-chip" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="7" cy="10" r="4.2" fill="var(--brand-ink)"/><rect x="10.6" y="5.8" width="8.4" height="8.4" rx="2.2" fill="none" stroke="var(--brand-ink)" stroke-width="2"/></svg></span>Стажировки</div>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Сменить тему"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path id="themeIcon" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+  </header>
+
+  <main class="form-view">
+    <div class="intro">
+      <h1>Как прошёл месяц</h1>
+      <p>Шесть вопросов, около трёх минут. Ответы видит HR программы стажировок.</p>
+    </div>
+
+    <section class="block" aria-labelledby="whoLabel">
+      <div class="label" id="whoLabel">Кто заполняет</div>
+      <div class="seg" role="group" aria-label="Роль">
+        <button type="button" data-role="intern" aria-pressed="true"><i class="mk i"></i>Я стажёр</button>
+        <button type="button" data-role="mentor" aria-pressed="false"><i class="mk m"></i>Я наставник</button>
+      </div>
+      <div class="label" id="idLabel" style="margin-top:22px">ID стажёра</div>
+      <div class="hint">Есть в письме о начале стажировки</div>
+      <div class="ids" id="ids" role="group" aria-labelledby="idLabel"></div>
+      <div class="who-line" id="whoLine" aria-live="polite"></div>
+    </section>
+
+    <form class="block" id="form" novalidate>
+      <div id="questions"></div>
+    </form>
+    <div class="send" id="send">
+      <div class="send-in">
+        <div class="left" id="left" aria-live="polite"></div>
+        <button class="btn btn-brand" type="submit" form="form" id="submit">Отправить анкету</button>
+      </div>
+    </div>
+  </main>
+
+  <section class="thanks" aria-live="polite">
+    <svg class="check" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="38"/><path d="M27 43.5l10 10 21-22"/></svg>
+    <h1>Спасибо, анкета отправлена</h1>
+    <p id="thanksSub">HR увидит её сразу. Следующая анкета через месяц.</p>
+    <div class="block">
+      <div class="label" id="sumTitle">Ваши ответы за 6 месяц</div>
+      <ul class="sum" id="sum" style="margin-top:14px"></ul>
+      <p class="said" id="said"></p>
+    </div>
+    <button class="btn btn-ghost again" type="button" id="again">Заполнить ещё одну анкету</button>
+  </section>
+</div>
+
+
+<script>
+(function () {
+  'use strict';
+  /* копия survey/survey.json; в продукте форма берёт её из GET /api/survey */
+  var SURVEY = {
+    scale: { min: 1, max: 5, min_label: 'совсем нет', max_label: 'полностью' },
+    roles: {
+      intern: { person_label: 'ID стажёра', questions: [
+        { id: 'overall', type: 'scale', text: 'Как в целом проходит стажировка?' },
+        { id: 'tasks_interest', type: 'scale', text: 'Насколько вам интересны задачи?' },
+        { id: 'tasks_clarity', type: 'scale', text: 'Насколько понятно, что от вас ждут в задачах?' },
+        { id: 'mentor_support', type: 'scale', text: 'Хватает ли вам помощи наставника?' },
+        { id: 'load', type: 'scale', text: 'Насколько вам комфортна текущая нагрузка?' },
+        { id: 'comment', type: 'text', text: 'Что сейчас мешает или помогает в стажировке?' } ] },
+      mentor: { person_label: 'ID наставника', questions: [
+        { id: 'overall', type: 'scale', text: 'Как стажёр справляется в целом?' },
+        { id: 'speed', type: 'scale', text: 'Насколько оперативно стажёр выполняет задачи?' },
+        { id: 'independence', type: 'scale', text: 'Насколько стажёр самостоятелен?' },
+        { id: 'engagement', type: 'scale', text: 'Насколько стажёр вовлечён в работу команды?' },
+        { id: 'comment', type: 'text', text: 'Комментарий о работе стажёра за месяц' } ] }
+    }
+  };
+  /* как GET /api/people, next_month: первый месяц без анкеты */
+  var PEOPLE = {
+    intern: ['S-01', 'S-02', 'S-03', 'S-04', 'S-05'].map(function (id, k) { return { id: id, other: 'M-0' + (k + 1), next: 6 }; }),
+    mentor: ['M-01', 'M-02', 'M-03', 'M-04', 'M-05'].map(function (id, k) { return { id: id, other: 'S-0' + (k + 1), next: 6 }; })
+  };
+
+  var state = { role: 'intern', person: 'S-01', answers: { overall: 2, tasks_interest: 2, tasks_clarity: 3 },
+    comment: 'Последние три недели почти нет задач. Сижу без дела и не понимаю, что дальше.' };
+
+  var $ = function (id) { return document.getElementById(id); };
+  function plural(n, a, b, c) { var m10 = n % 10, m100 = n % 100; if (m10 === 1 && m100 !== 11) return a; if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return b; return c; }
+
+  function renderWho() {
+    document.body.classList.toggle('as-mentor', state.role === 'mentor');
+    document.querySelectorAll('[data-role]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.role === state.role); });
+    $('idLabel').textContent = SURVEY.roles[state.role].person_label;
+    $('ids').innerHTML = PEOPLE[state.role].map(function (p) {
+      return '<button type="button" data-id="' + p.id + '" aria-pressed="' + (p.id === state.person) + '">' + p.id + '</button>';
+    }).join('');
+    var p = PEOPLE[state.role].filter(function (x) { return x.id === state.person; })[0];
+    $('whoLine').innerHTML = p
+      ? (state.role === 'intern' ? '<i class="mk m"></i><span>Наставник <b>' + p.other + '</b>. Анкета за <b>' + p.next + ' месяц</b>.</span>'
+                                 : '<i class="mk i"></i><span>Стажёр <b>' + p.other + '</b>. Анкета за <b>' + p.next + ' месяц</b>.</span>')
+      : '<span>Выберите свой ID, чтобы мы знали, чья это анкета.</span>';
+  }
+
+  function renderQuestions() {
+    var qs = SURVEY.roles[state.role].questions, total = qs.length, sc = SURVEY.scale, html = '';
+    qs.forEach(function (q, k) {
+      if (q.type === 'scale') {
+        var btns = '';
+        for (var v = sc.min; v <= sc.max; v++) btns += '<button type="button" data-q="' + q.id + '" data-v="' + v + '" aria-pressed="' + (state.answers[q.id] === v) + '" aria-label="' + v + ' из ' + sc.max + '">' + v + '</button>';
+        html += '<div class="q" role="group" aria-labelledby="l-' + q.id + '" id="q-' + q.id + '"><div class="label" id="l-' + q.id + '"><span class="num">' + (k + 1) + ' из ' + total + '</span>' + q.text + '</div>' +
+          '<div class="scale" role="group">' + btns + '</div><div class="ends" aria-hidden="true"><span>' + sc.min_label + '</span><span>' + sc.max_label + '</span></div></div>';
+      } else {
+        html += '<div class="q"><label class="label" for="comment" style="display:block"><span class="num">' + (k + 1) + ' из ' + total + '</span>' + q.text + '</label>' +
+          '<div class="hint">Пара предложений своими словами. Про задачи, команду, наставника.</div>' +
+          '<textarea id="comment" placeholder="Например: не хватает задач, или наоборот, всё получается"></textarea></div>';
+      }
+    });
+    $('questions').innerHTML = html;
+    $('comment').value = state.comment;
+    updateLeft();
+  }
+
+  function missing() {
+    return SURVEY.roles[state.role].questions.filter(function (q) { return q.type === 'scale' && state.answers[q.id] == null; });
+  }
+  function updateLeft() {
+    var n = missing().length;
+    $('left').textContent = n ? 'Осталось ответить на ' + n + ' ' + plural(n, 'вопрос', 'вопроса', 'вопросов') : 'Всё готово, можно отправлять';
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.role && t.dataset.role !== state.role) {
+      state.role = t.dataset.role; state.person = PEOPLE[state.role][0].id; state.answers = {}; state.comment = '';
+      renderWho(); renderQuestions();
+    } else if (t.dataset.id) {
+      state.person = t.dataset.id; renderWho();
+    } else if (t.dataset.q) {
+      state.answers[t.dataset.q] = +t.dataset.v;
+      t.parentNode.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b === t); });
+      t.closest('.q').classList.remove('missing');
+      updateLeft();
+    }
+  });
+  document.addEventListener('input', function (e) { if (e.target.id === 'comment') state.comment = e.target.value; });
+
+  function showThanks() {
+    var qs = SURVEY.roles[state.role].questions;
+    $('sum').innerHTML = qs.filter(function (q) { return q.type === 'scale'; }).map(function (q) {
+      return '<li><span>' + q.text + '</span><span class="v">' + state.answers[q.id] + '</span></li>';
+    }).join('');
+    $('said').textContent = state.comment ? '«' + state.comment + '»' : '';
+    $('said').style.display = state.comment ? '' : 'none';
+    document.body.classList.add('done');
+    window.scrollTo(0, 0);
+  }
+
+  $('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var miss = missing();
+    if (miss.length) {
+      miss.forEach(function (q) { $('q-' + q.id).classList.add('missing'); });
+      $('q-' + miss[0].id).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+      return;
+    }
+    var btn = $('submit'); btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Отправляем';
+    /* в продукте: POST /api/ingest {role, person_id, month, answers, source: 'form'} */
+    setTimeout(function () { btn.removeAttribute('aria-busy'); btn.textContent = 'Отправить анкету'; showThanks(); }, 600);
+  });
+  $('again').addEventListener('click', function () {
+    document.body.classList.remove('done'); state.answers = {}; state.comment = ''; renderQuestions();
+    history.replaceState(null, '', location.pathname);
+  });
+
+  /* тема */
+  var root = document.documentElement, mq = matchMedia('(prefers-color-scheme: dark)');
+  function current() { return root.dataset.theme || (mq.matches ? 'dark' : 'light'); }
+  function syncIcon() {
+    $('themeIcon').setAttribute('d', current() === 'dark'
+      ? 'M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'
+      : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z');
+    $('themeBtn').setAttribute('aria-label', current() === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему');
+  }
+  $('themeBtn').addEventListener('click', function () {
+    var n = current() === 'dark' ? 'light' : 'dark'; root.dataset.theme = n;
+    try { localStorage.setItem('theme', n); } catch (e) {}
+    syncIcon();
+  });
+  syncIcon();
+
+  renderWho(); renderQuestions();
+  if (location.hash === '#thanks') {
+    state.answers = { overall: 2, tasks_interest: 2, tasks_clarity: 3, mentor_support: 4, load: 3 };
+    showThanks();
+  }
+})();
+</script>
+</body>
+</html>

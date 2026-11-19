@@ -1,0 +1,1083 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Диспетчерская стажировок</title>
+<script>
+  try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,SHRP@300..800,0..100&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap" rel="stylesheet">
+<style>
+/* ===== Токены ===== */
+:root {
+  color-scheme: light;
+  --font-ui: 'Geologica', 'Golos Text', system-ui, sans-serif;
+  --font-num: 'Martian Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --bg: #E9EDF0;
+  --surface: #FFFFFF;
+  --surface-2: #F4F6F8;
+  --text-1: #0A1A28;
+  --text-2: #354756;
+  --text-3: #5B6B78;
+  --line: #CCD4DB;
+  --line-2: #AEB9C2;
+  --frame: #0A1A28;
+
+  --accent: #0A1A28;
+  --on-accent: #FFFFFF;
+  --tape-bg: #0A1A28;
+  --tape-fg: #F2F6F9;
+  --tape-dim: #9DB0BF;
+
+  --brand: #E30611;
+  --on-brand: #FFFFFF;
+
+  --risk: #C8291C;   --on-risk: #FFFFFF;  --risk-ink: #B3221A;  --risk-tint: #FBE3E0;
+  --watch: #F0B429;  --on-watch: #1A1405; --watch-ink: #8A5A00; --watch-tint: #FDF0D2;
+  --ok: #DDE9E2;     --on-ok: #0F2A1E;    --ok-ink: #237A4B;    --ok-tint: #E8F2EC;
+  --low-ink: #5B6B78; --low-tint: #E6EBEF;
+
+  --intern: #1767D8;
+  --mentor: #C0398A;
+  --gap-wash: rgba(10, 26, 40, .08);
+  --hatch: #C4CDD5;
+  --shadow-pop: 0 18px 44px rgba(6, 16, 26, .26);
+
+  --fs-14: 14px; --fs-16: 16px; --fs-18: 18px; --fs-21: 21px; --fs-24: 24px; --fs-36: 36px; --fs-48: 48px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+
+  --t-fast: 120ms; --t-mid: 200ms; --t-slow: 280ms;
+  --ease-out: cubic-bezier(.2, 0, 0, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+}
+html[data-brand="blue"] { --brand: #0057B8; }
+html[data-brand="none"] { --brand: var(--text-1); --on-brand: var(--surface); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0A141D; --surface: #102030; --surface-2: #16283A;
+    --text-1: #EEF3F7; --text-2: #B2C0CC; --text-3: #8396A6;
+    --line: #26394B; --line-2: #3A5064; --frame: #5C7589;
+    --accent: #EEF3F7; --on-accent: #0A141D;
+    --tape-bg: #1B3044; --tape-fg: #EEF3F7; --tape-dim: #93A7B8;
+    --risk: #D3301F;  --on-risk: #FFFFFF; --risk-ink: #FF6B5A;  --risk-tint: #3A1A18;
+    --watch: #F2B731; --on-watch: #1A1405; --watch-ink: #F2B731; --watch-tint: #33290F;
+    --ok: #17372A;    --on-ok: #D9F2E4;   --ok-ink: #4CC287;    --ok-tint: #132C22;
+    --low-ink: #93A7B8; --low-tint: #1B2D3E;
+    --intern: #4A8CF0; --mentor: #D95FA8;
+    --gap-wash: rgba(238, 243, 247, .09);
+    --hatch: #2B4053;
+    --shadow-pop: 0 18px 44px rgba(0, 0, 0, .55);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0A141D; --surface: #102030; --surface-2: #16283A;
+  --text-1: #EEF3F7; --text-2: #B2C0CC; --text-3: #8396A6;
+  --line: #26394B; --line-2: #3A5064; --frame: #5C7589;
+  --accent: #EEF3F7; --on-accent: #0A141D;
+  --tape-bg: #1B3044; --tape-fg: #EEF3F7; --tape-dim: #93A7B8;
+  --risk: #D3301F;  --on-risk: #FFFFFF; --risk-ink: #FF6B5A;  --risk-tint: #3A1A18;
+  --watch: #F2B731; --on-watch: #1A1405; --watch-ink: #F2B731; --watch-tint: #33290F;
+  --ok: #17372A;    --on-ok: #D9F2E4;   --ok-ink: #4CC287;    --ok-tint: #132C22;
+  --low-ink: #93A7B8; --low-tint: #1B2D3E;
+  --intern: #4A8CF0; --mentor: #D95FA8;
+  --gap-wash: rgba(238, 243, 247, .09);
+  --hatch: #2B4053;
+  --shadow-pop: 0 18px 44px rgba(0, 0, 0, .55);
+}
+
+/* ===== База ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text-1);
+  font-family: var(--font-ui); font-size: var(--fs-16); line-height: 1.45;
+  font-variation-settings: "SHRP" 0;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-stretch: 87.5%; letter-spacing: -.01em; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.g { width: 14px; height: 14px; flex: none; fill: currentColor; }
+.g-risk { color: var(--risk-ink); } .g-watch { color: var(--watch-ink); } .g-ok { color: var(--ok-ink); } .g-low { color: var(--low-ink); }
+
+/* ===== Полоса макета (не часть продукта) ===== */
+.specbar {
+  display: flex; flex-wrap: wrap; gap: var(--s3) var(--s5); align-items: center;
+  padding: 10px 32px; background: var(--surface-2); border-bottom: 1px solid var(--line);
+  font-size: var(--fs-14); color: var(--text-2);
+}
+.specbar b { color: var(--text-1); font-weight: 600; }
+.specbar .grow { flex: 1; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); }
+.seg button {
+  border: 0; background: transparent; padding: 5px 10px; cursor: pointer; font-size: var(--fs-14);
+  transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+.seg button + button { border-left: 1px solid var(--line-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px;
+  border: 2px solid var(--accent); background: var(--accent); color: var(--on-accent);
+  font-weight: 600; cursor: pointer; text-decoration: none; font-size: var(--fs-16);
+  transition: transform var(--t-fast) var(--ease-out), background var(--t-fast) var(--ease-out);
+}
+.btn:active { transform: translateY(1px); }
+.btn.ghost { background: transparent; color: var(--text-1); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn[disabled] { opacity: .45; cursor: default; }
+
+.screen-label {
+  max-width: 1440px; margin: 0 auto; padding: 56px 32px 12px;
+  font-size: var(--fs-14); color: var(--text-3); display: flex; gap: 12px; align-items: baseline;
+}
+.screen-label b { color: var(--text-1); font-weight: 600; font-size: var(--fs-16); }
+.screen-label .num { color: var(--text-3); }
+
+/* ===== Шапка продукта ===== */
+.app { max-width: 1440px; margin: 0 auto; padding: 0 32px 32px; }
+.top {
+  display: flex; align-items: center; gap: var(--s5); flex-wrap: wrap;
+  padding: 16px 0 14px; border-top: 4px solid var(--brand);
+}
+.logo { width: 34px; height: 34px; background: var(--brand); color: var(--on-brand); display: grid; place-items: center; font-weight: 700; font-size: 13px; letter-spacing: .02em; }
+.product { font-size: var(--fs-21); font-weight: 650; letter-spacing: -.01em; font-variation-settings: "SHRP" 100; }
+.product span { color: var(--text-3); font-weight: 400; }
+.nav { display: flex; gap: var(--s5); margin-left: var(--s4); }
+.nav a { color: var(--text-2); text-decoration: none; padding: 6px 0; border-bottom: 3px solid transparent; font-weight: 500; }
+.nav a[aria-current="page"] { color: var(--text-1); border-bottom-color: var(--accent); }
+.nav a .num { font-size: var(--fs-14); color: var(--text-3); margin-left: 4px; }
+.top .grow { flex: 1; }
+.live { display: flex; align-items: center; gap: 10px; font-size: var(--fs-14); color: var(--text-2); }
+.lamp { position: relative; width: 10px; height: 10px; background: var(--ok-ink); }
+.lamp::after { content: ""; position: absolute; inset: -4px; border: 2px solid var(--ok-ink); opacity: 0; }
+.lamp.ping::after { animation: ping 700ms var(--ease-out); }
+@keyframes ping { 0% { opacity: .9; transform: scale(.6); } 100% { opacity: 0; transform: scale(1.9); } }
+.clock { font-size: var(--fs-16); color: var(--text-1); }
+
+/* ===== Лента ===== */
+.tape {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s4);
+  background: var(--tape-bg); color: var(--tape-fg); min-height: 48px; padding: 0 var(--s4);
+  overflow: hidden;
+}
+.tape-label { font-size: var(--fs-14); color: var(--tape-dim); }
+.tape-win { position: relative; height: 48px; overflow: hidden; }
+.tape-line { position: absolute; inset: 0; display: flex; align-items: center; gap: var(--s4); white-space: nowrap; font-size: var(--fs-18); }
+.tape-line .num { color: var(--tape-dim); font-size: var(--fs-16); }
+.tape-line.in { animation: tapeIn var(--t-mid) var(--ease-out) both; }
+.tape-line.out { animation: tapeOut var(--t-mid) var(--ease-in) both; }
+@keyframes tapeIn { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes tapeOut { from { transform: none; opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+.cursor { display: inline-block; width: .55em; height: 1.05em; background: var(--tape-fg); vertical-align: -2px; animation: blink 1s steps(2, jump-none) 4; }
+@keyframes blink { 50% { opacity: 0; } }
+.tape-meta { font-size: var(--fs-14); color: var(--tape-dim); }
+.tape-mark { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; background: var(--risk); color: var(--on-risk); font-size: var(--fs-14); font-weight: 600; }
+
+/* ===== Итоги ===== */
+.readouts { display: grid; grid-template-columns: repeat(5, 1fr); border-left: 2px solid var(--frame); border-right: 2px solid var(--frame); background: var(--surface); }
+.ro { padding: 16px 20px 18px; border-right: 1px solid var(--line); display: grid; grid-template-rows: auto auto auto; gap: 2px; }
+.ro:last-child { border-right: 0; }
+.ro-head { display: flex; align-items: center; gap: 8px; font-size: var(--fs-16); color: var(--text-2); font-weight: 500; }
+.ro-num { font-family: var(--font-num); font-size: var(--fs-48); line-height: 1.1; font-weight: 600; letter-spacing: -.03em; height: 1.1em; overflow: hidden; position: relative; }
+.ro-num .flap { display: block; }
+.ro-num .flap.old { position: absolute; left: 0; top: 0; animation: flapOut var(--t-mid) var(--ease-in) both; }
+.ro-num .flap.new { animation: flapIn var(--t-mid) var(--ease-out) both; }
+@keyframes flapOut { to { transform: translateY(-100%); } }
+@keyframes flapIn { from { transform: translateY(100%); } to { transform: none; } }
+.ro-ids { font-size: var(--fs-14); color: var(--text-3); min-height: 20px; }
+.ro-ids .num { color: var(--text-2); }
+.ro.risk .ro-num { color: var(--risk-ink); }
+.ro.changed { box-shadow: inset 0 -3px 0 var(--accent); }
+
+/* ===== Основная панель ===== */
+.deck { display: grid; grid-template-columns: minmax(0, 1fr) 400px; border: 2px solid var(--frame); background: var(--surface); }
+.board-col { border-right: 2px solid var(--frame); min-width: 0; }
+.panel-head { display: flex; align-items: baseline; gap: var(--s4); flex-wrap: wrap; padding: 18px 20px 12px; }
+.panel-head h2 { font-size: var(--fs-21); font-weight: 650; letter-spacing: -.01em; font-variation-settings: "SHRP" 100; }
+.panel-head p { color: var(--text-3); font-size: var(--fs-14); }
+.panel-head .grow { flex: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: var(--fs-14); color: var(--text-2); padding: 0 20px 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; display: inline-block; }
+.sw.hatch { background: repeating-linear-gradient(135deg, var(--hatch) 0 1px, transparent 1px 5px); outline: 1px solid var(--line-2); outline-offset: -1px; }
+
+.board-wrap { overflow-x: auto; padding: 0 20px 20px; }
+.board { display: grid; grid-template-columns: 176px repeat(6, minmax(112px, 1fr)); gap: 2px; background: var(--surface); min-width: 860px; }
+.bh { font-size: var(--fs-14); color: var(--text-3); padding: 6px 10px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+.bh .num { font-size: var(--fs-18); color: var(--text-1); font-weight: 600; }
+.bh.now { background: var(--accent); color: var(--on-accent); border-bottom-color: var(--accent); }
+.bh.now .num { color: var(--on-accent); }
+.rowh { display: grid; grid-template-columns: 1fr auto; align-content: center; gap: 4px 8px; padding: 10px 12px 10px 4px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
+.rowh .pid { font-family: var(--font-num); font-size: var(--fs-24); font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.rowh .ppl { font-size: var(--fs-14); color: var(--text-3); grid-column: 1 / 3; }
+.rowh .ppl .num { color: var(--text-2); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-16); font-weight: 600; grid-column: 1 / 3; }
+.rowh .cnt { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; font-size: var(--fs-14); color: var(--text-3); }
+.rowh:hover .pid { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+.cell {
+  position: relative; display: grid; grid-template-rows: 1fr 12px; gap: 8px;
+  min-height: 104px; padding: 10px 12px 10px; border: 0; text-align: left; cursor: pointer;
+  background: var(--surface-2); color: var(--text-1);
+}
+.cell[data-s="ok"] { background: var(--ok); color: var(--on-ok); }
+.cell[data-s="watch"] { background: var(--watch); color: var(--on-watch); }
+.cell[data-s="risk"] { background: var(--risk); color: var(--on-risk); }
+.cell[data-s="wait"] { background: repeating-linear-gradient(135deg, var(--hatch) 0 1px, transparent 1px 7px), var(--surface); color: var(--text-3); cursor: default; outline: 1px solid var(--line); outline-offset: -1px; }
+.cell .ctop { position: absolute; top: 12px; right: 12px; display: flex; }
+.cell .ctop svg.g { width: 16px; height: 16px; }
+.cell .vals { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font-family: var(--font-num); font-stretch: 87.5%; font-variant-numeric: tabular-nums; }
+.cell .v { display: inline-flex; align-items: center; gap: 7px; font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.02em; }
+.cell .v.m { font-weight: 400; }
+.cell .v svg { width: 8px; height: 8px; fill: currentColor; align-self: center; }
+.cell .v.miss { font-size: var(--fs-16); font-weight: 500; font-family: var(--font-ui); letter-spacing: 0; }
+.cell .dumb { width: 100%; height: 12px; overflow: visible; }
+.cell .wait-t { grid-row: 1; align-self: center; font-size: var(--fs-16); }
+.cell:hover:not([data-s="wait"]) { box-shadow: inset 0 0 0 2px var(--text-1); }
+.cell[data-s="risk"]:hover { box-shadow: inset 0 0 0 2px var(--on-risk); }
+.cell.cross { box-shadow: inset 0 0 0 2px var(--text-1); }
+
+/* скан при загрузке */
+.board.scan .cell { animation: scanIn var(--t-slow) var(--ease-out) both; animation-delay: calc(var(--c) * 45ms + var(--r) * 15ms); }
+@keyframes scanIn { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+/* приход анкеты */
+.cell.arrive { animation: sweep var(--t-slow) var(--ease-out) both; }
+.cell.arrive::after { content: ""; position: absolute; inset: -3px; border: 3px solid var(--accent); animation: ring 1.2s var(--ease-out) 2 both; pointer-events: none; }
+@keyframes sweep { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes ring { 0% { opacity: 1; } 100% { opacity: 0; } }
+.cell.fresh::before { content: "новое"; position: absolute; bottom: 6px; right: 6px; padding: 0 6px; background: var(--accent); color: var(--on-accent); font-size: 12px; line-height: 18px; font-weight: 600; }
+.rowh.flip .chip { animation: flipIn var(--t-mid) var(--ease-out) both; }
+@keyframes flipIn { from { transform: rotateX(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ===== Поступления ===== */
+.log { border-top: 2px solid var(--frame); overflow-x: auto; }
+.log table { width: 100%; border-collapse: collapse; font-size: var(--fs-16); }
+.log th { text-align: left; font-weight: 500; font-size: var(--fs-14); color: var(--text-3); padding: 0 20px 8px; }
+.log td { padding: 9px 20px; border-top: 1px solid var(--line); white-space: nowrap; }
+.log td.num { font-size: var(--fs-16); }
+.log td.dim { color: var(--text-3); }
+.log tr.in td { animation: rowFlash 1.6s var(--ease-out) both; }
+@keyframes rowFlash { 0% { background: var(--accent); color: var(--on-accent); } 25% { background: var(--accent); color: var(--on-accent); } 100% { background: transparent; } }
+
+/* ===== Очередь сигналов ===== */
+.queue { min-width: 0; display: flex; flex-direction: column; }
+.q-list { list-style: none; margin: 0; padding: 0; }
+.q-item { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--t-mid) var(--ease-out); }
+.q-item.enter { grid-template-rows: 0fr; }
+.q-item > a { overflow: hidden; display: grid; grid-template-columns: 22px 1fr; gap: 2px 10px; padding: 12px 20px 13px; border-top: 1px solid var(--line); color: inherit; text-decoration: none; position: relative; }
+.q-item > a:hover { background: var(--surface-2); }
+.q-item.new > a { box-shadow: inset 4px 0 0 var(--accent); }
+.q-item svg.g { width: 16px; height: 16px; margin-top: 3px; }
+.q-meta { display: flex; gap: 10px; align-items: baseline; font-size: var(--fs-14); color: var(--text-3); flex-wrap: wrap; }
+.q-meta .num { font-size: var(--fs-16); font-weight: 600; color: var(--text-1); }
+.q-meta .sev { color: var(--text-2); font-weight: 500; }
+.q-meta .src { margin-left: auto; }
+.q-title { grid-column: 2; font-size: var(--fs-18); font-weight: 600; line-height: 1.3; letter-spacing: -.005em; }
+.q-exp { grid-column: 2; font-size: var(--fs-14); color: var(--text-2); }
+.q-more { padding: 12px 20px 16px; border-top: 1px solid var(--line); margin-top: auto; }
+.q-more a { color: var(--text-1); font-weight: 600; text-underline-offset: 3px; }
+
+/* ===== Карточка пары ===== */
+.crumbs { font-size: var(--fs-14); color: var(--text-3); padding: 18px 0 0; }
+.crumbs a { color: var(--text-2); }
+.pair-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s4) var(--s6); padding: 8px 0 20px; }
+.pair-id { font-family: var(--font-num); font-size: 60px; line-height: 1; font-weight: 600; letter-spacing: -.04em; }
+.status-plate { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; font-size: var(--fs-21); font-weight: 650; }
+.status-plate svg.g { width: 18px; height: 18px; }
+.status-plate.risk { background: var(--risk); color: var(--on-risk); }
+.pair-facts { display: flex; gap: var(--s6); flex-wrap: wrap; font-size: var(--fs-16); color: var(--text-2); padding-bottom: 4px; }
+.pair-facts b { display: block; font-family: var(--font-num); font-size: var(--fs-24); color: var(--text-1); font-weight: 600; letter-spacing: -.02em; }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); border: 2px solid var(--frame); background: var(--surface); }
+.grid2 > section { min-width: 0; }
+.grid2 > section + section { border-left: 2px solid var(--frame); }
+.grid2b { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border: 2px solid var(--frame); border-top: 0; background: var(--surface); }
+.grid2b > section { min-width: 0; }
+.grid2b > section + section { border-left: 2px solid var(--frame); }
+
+.chart-legend { display: flex; gap: 20px; flex-wrap: wrap; padding: 0 20px 6px; font-size: var(--fs-16); color: var(--text-2); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.chart-wrap { position: relative; padding: 0 12px 8px 4px; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .grid line { stroke: var(--line); stroke-width: 1; }
+.chart .axis text, .chart .ytick { fill: var(--text-3); font-family: var(--font-num); font-size: 14px; }
+.chart .xlab { fill: var(--text-2); font-family: var(--font-ui); font-size: 14px; }
+.chart .band { fill: var(--gap-wash); }
+.chart .l-i { stroke: var(--intern); stroke-width: 3; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.chart .l-m { stroke: var(--mentor); stroke-width: 3; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.chart .d-i { fill: var(--intern); stroke: var(--surface); stroke-width: 2; }
+.chart .d-m { fill: var(--mentor); stroke: var(--surface); stroke-width: 2; }
+.chart .gapv { fill: var(--text-1); font-family: var(--font-num); font-size: 15px; font-weight: 600; }
+.chart .gapbg { fill: var(--surface); }
+.chart .endl { fill: var(--text-1); font-family: var(--font-ui); font-size: 16px; font-weight: 600; }
+.chart .endv { fill: var(--text-1); font-family: var(--font-num); font-size: 16px; font-weight: 600; }
+.chart .wait { fill: url(#hatch); }
+.chart .waitt { fill: var(--text-3); font-size: 14px; font-family: var(--font-ui); }
+.chart .hit { fill: transparent; cursor: crosshair; }
+.chart .xhair { stroke: var(--text-1); stroke-width: 1; opacity: 0; }
+.chart .xhair.on { opacity: 1; }
+.chart .sigm.risk { fill: var(--risk-ink); } .chart .sigm.watch { fill: var(--watch-ink); }
+.chart-note { padding: 4px 20px 16px; font-size: var(--fs-14); color: var(--text-3); }
+.chart .draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw 520ms var(--ease-out) 120ms forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+.qtable { width: 100%; border-collapse: collapse; font-size: var(--fs-16); }
+.qtable th, .qtable td { padding: 6px 8px; border-top: 1px solid var(--line); }
+.qtable th { text-align: left; font-weight: 400; color: var(--text-2); font-size: var(--fs-14); line-height: 1.3; }
+.qtable thead th { border-top: 0; color: var(--text-3); font-family: var(--font-num); font-size: var(--fs-14); text-align: center; }
+.qtable thead th:first-child { text-align: left; font-family: var(--font-ui); }
+.qtable td { text-align: center; font-family: var(--font-num); font-stretch: 87.5%; font-variant-numeric: tabular-nums; font-size: var(--fs-18); font-weight: 500; }
+.qtable td.lo span { display: inline-block; min-width: 30px; outline: 2px solid var(--text-1); outline-offset: -2px; font-weight: 700; }
+.qtable td.na { color: var(--text-3); font-family: var(--font-ui); font-size: var(--fs-14); }
+.qtable tr.grp th { padding-top: 14px; color: var(--text-1); font-weight: 600; font-size: var(--fs-16); border-top: 0; display: flex; align-items: center; gap: 8px; }
+.qtable tr.idx th, .qtable tr.idx td { font-weight: 700; border-top: 2px solid var(--text-1); }
+.qtable-wrap { padding: 0 16px 16px; overflow-x: auto; }
+
+.sig { padding: 20px; border-top: 1px solid var(--line); }
+.sig:first-of-type { border-top: 0; }
+.sig-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: var(--fs-14); color: var(--text-2); }
+.sev-plate { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; font-weight: 650; font-size: var(--fs-14); }
+.sev-plate.high { background: var(--risk); color: var(--on-risk); }
+.sev-plate.medium { background: var(--watch); color: var(--on-watch); }
+.sev-plate svg.g { width: 12px; height: 12px; }
+.tag { border: 1px solid var(--line-2); padding: 1px 8px; font-size: var(--fs-14); color: var(--text-2); }
+.sig h3 { font-size: var(--fs-24); line-height: 1.2; font-weight: 650; letter-spacing: -.01em; margin: 12px 0 6px; font-variation-settings: "SHRP" 100; }
+.sig .exp { font-size: var(--fs-18); color: var(--text-1); max-width: 62ch; }
+.seq { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 0; font-family: var(--font-num); font-stretch: 87.5%; font-size: var(--fs-18); }
+.seq span { padding: 2px 6px; background: var(--surface-2); }
+.seq span.hl { background: var(--text-1); color: var(--surface); font-weight: 600; }
+.seq i { font-style: normal; color: var(--text-3); }
+.seq small { font-family: var(--font-ui); font-size: var(--fs-14); color: var(--text-3); margin-right: 6px; }
+blockquote.quote { margin: 16px 0 0; padding: 12px 16px; border-left: 4px solid var(--text-1); background: var(--surface-2); font-size: var(--fs-18); line-height: 1.5; max-width: 66ch; }
+.quote-cap { display: block; font-size: var(--fs-14); color: var(--text-3); margin-bottom: 4px; }
+mark { color: inherit; padding: 1px 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+mark.high { background: var(--risk-tint); box-shadow: inset 0 -2px 0 var(--risk-ink); }
+mark.medium { background: var(--watch-tint); box-shadow: inset 0 -2px 0 var(--watch-ink); }
+mark.old { background: transparent; box-shadow: inset 0 -2px 0 var(--line-2); }
+.action { margin-top: 16px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: var(--fs-18); max-width: 66ch; }
+.action b { font-size: var(--fs-14); color: var(--text-3); font-weight: 500; padding-top: 3px; }
+.review { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+.review .hint { font-size: var(--fs-14); color: var(--text-3); }
+.stamp { display: none; align-items: center; gap: 10px; padding: 8px 14px; border: 2px solid var(--text-1); font-weight: 650; }
+.sig.done .review .btn { display: none; }
+.sig.done .stamp { display: inline-flex; animation: stamp var(--t-mid) var(--ease-out) both; }
+.sig.done .stamp button { font-weight: 500; border: 0; background: none; text-decoration: underline; cursor: pointer; color: var(--text-2); padding: 0; }
+@keyframes stamp { from { transform: scale(1.08); opacity: 0; } to { transform: none; opacity: 1; } }
+.sig.done h3, .sig.done .exp { color: var(--text-3); }
+details.hist { padding: 14px 20px 18px; border-top: 1px solid var(--line); font-size: var(--fs-16); }
+details.hist summary { cursor: pointer; font-weight: 600; }
+details.hist li { color: var(--text-2); margin-top: 6px; }
+
+.comments { width: 100%; border-collapse: collapse; }
+.comments th { text-align: left; font-weight: 500; font-size: var(--fs-14); color: var(--text-3); padding: 0 16px 8px; }
+.comments td { vertical-align: top; padding: 12px 16px; border-top: 1px solid var(--line); font-size: var(--fs-16); line-height: 1.5; }
+.comments td.m { font-family: var(--font-num); font-size: var(--fs-18); font-weight: 600; width: 56px; white-space: nowrap; }
+.comments td.mentor { color: var(--text-2); width: 32%; }
+.topics { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.topics span { font-size: 13px; color: var(--text-3); border: 1px solid var(--line); padding: 0 6px; }
+
+/* ===== Уведомление ===== */
+.notice-grid { display: grid; grid-template-columns: minmax(0, 1fr) 460px; border: 2px solid var(--frame); background: var(--surface); }
+.notice-grid > div + div { border-left: 2px solid var(--frame); }
+.steps { list-style: none; margin: 0; padding: 0 20px 20px; counter-reset: st; }
+.steps li { display: grid; grid-template-columns: 96px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); font-size: var(--fs-16); }
+.steps li .num { font-size: var(--fs-16); font-weight: 600; }
+.mini { display: grid; grid-template-columns: 96px repeat(6, 1fr); gap: 2px; padding: 0 20px 20px; }
+.mini .cell { min-height: 92px; cursor: default; }
+.mini .cell .v { font-size: var(--fs-18); }
+.mini .lab { display: flex; flex-direction: column; justify-content: center; font-size: var(--fs-14); color: var(--text-3); }
+.mini .lab b { font-family: var(--font-num); font-size: var(--fs-18); color: var(--text-1); }
+.toast-stage { padding: 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; background: repeating-linear-gradient(135deg, var(--line) 0 1px, transparent 1px 9px); }
+
+.toast {
+  width: 420px; max-width: 100%; background: var(--tape-bg); color: var(--tape-fg);
+  box-shadow: var(--shadow-pop); position: relative; overflow: hidden;
+}
+.toast-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px 0; }
+.toast-head .tape-mark { font-size: var(--fs-14); }
+.toast-head .num { margin-left: auto; color: var(--tape-dim); font-size: var(--fs-14); }
+.toast h3 { font-size: var(--fs-21); line-height: 1.25; font-weight: 650; padding: 10px 16px 4px; font-variation-settings: "SHRP" 100; }
+.toast p { padding: 0 16px; font-size: var(--fs-16); color: var(--tape-fg); }
+.toast p.dim { color: var(--tape-dim); font-size: var(--fs-14); padding-top: 6px; }
+.toast-acts { display: flex; gap: 8px; padding: 14px 16px 16px; }
+.toast .btn { border-color: var(--tape-fg); background: var(--tape-fg); color: var(--tape-bg); min-height: 38px; }
+.toast .btn.ghost { background: transparent; color: var(--tape-fg); border-color: var(--tape-dim); }
+.toast .timer { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--tape-fg); width: 100%; transform-origin: left; }
+.toast.is-live .timer { animation: timer 12s linear forwards; }
+.toast.is-live:hover .timer { animation-play-state: paused; }
+@keyframes timer { to { transform: scaleX(0); } }
+.toast-host { position: fixed; right: 24px; bottom: 24px; z-index: 30; display: grid; gap: 12px; max-width: calc(100vw - 32px); }
+.toast.enter { animation: toastIn var(--t-mid) var(--ease-out) both; }
+.toast.leave { animation: toastOut var(--t-fast) var(--ease-in) both; }
+@keyframes toastIn { from { transform: translateX(calc(100% + 24px)); } to { transform: none; } }
+@keyframes toastOut { to { transform: translateX(calc(100% + 24px)); opacity: 0; } }
+
+.colormap { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid var(--frame); border-top: 0; background: var(--surface); }
+.colormap > div { padding: 16px 20px 20px; border-left: 1px solid var(--line); font-size: var(--fs-14); color: var(--text-2); }
+.colormap > div:first-child { border-left: 0; }
+.colormap h3 { font-size: var(--fs-16); color: var(--text-1); font-weight: 650; margin-bottom: 8px; }
+.chips { display: flex; gap: 2px; margin-bottom: 10px; }
+.chips i { display: block; height: 28px; flex: 1; }
+
+#tip {
+  position: fixed; z-index: 40; pointer-events: none; background: var(--tape-bg); color: var(--tape-fg);
+  padding: 8px 12px; font-size: var(--fs-14); max-width: 300px; opacity: 0; transform: translateY(4px);
+  transition: opacity var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
+}
+#tip.on { opacity: 1; transform: none; }
+#tip b { font-family: var(--font-num); }
+
+/* ===== Адаптив ===== */
+@media (max-width: 1200px) {
+  .deck { grid-template-columns: minmax(0, 1fr); }
+  .board-col { border-right: 0; border-bottom: 2px solid var(--frame); }
+  .readouts { grid-template-columns: repeat(3, 1fr); }
+  .ro { border-bottom: 1px solid var(--line); }
+  .grid2, .grid2b, .notice-grid { grid-template-columns: minmax(0, 1fr); }
+  .grid2 > section + section, .grid2b > section + section, .notice-grid > div + div { border-left: 0; border-top: 2px solid var(--frame); }
+  .colormap { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .app, .specbar, .screen-label { padding-left: 16px; padding-right: 16px; }
+  .top { gap: 12px 16px; }
+  .product { font-size: var(--fs-18); }
+  .nav { margin-left: 0; order: 3; width: 100%; }
+  .tape-line { white-space: normal; font-size: var(--fs-16); line-height: 1.25; }
+  .tape-win { height: 64px; }
+  .readouts { grid-template-columns: repeat(2, 1fr); }
+  .tape { grid-template-columns: 1fr; }
+  .tape-label, .tape-meta { display: none; }
+  .pair-id { font-size: 44px; }
+  .colormap { grid-template-columns: 1fr; }
+  .comments td.mentor { width: auto; }
+  .steps li { grid-template-columns: 72px 1fr; }
+  .mini { grid-template-columns: 64px repeat(6, minmax(92px, 1fr)); overflow-x: auto; }
+  .log td, .log th { padding-left: 16px; padding-right: 16px; }
+  .toast-host { right: 16px; bottom: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+  .cursor { animation: none; }
+  .lamp.ping::after { animation: none; }
+  .cell.arrive::after { animation: none; opacity: 1; }
+  .toast.is-live .timer { animation: none; }
+  .chart .draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+}
+@media (forced-colors: active) {
+  .cell { border: 1px solid CanvasText; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="g-risk" viewBox="0 0 16 16"><path d="M8 .8 15.2 8 8 15.2.8 8z"/></symbol>
+  <symbol id="g-watch" viewBox="0 0 16 16"><path d="M8 1.5 15.5 14.5H.5z"/></symbol>
+  <symbol id="g-ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/></symbol>
+  <symbol id="g-low" viewBox="0 0 16 16"><path d="M8 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zm0 2.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></symbol>
+  <symbol id="k-i" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5"/></symbol>
+  <symbol id="k-m" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9"/></symbol>
+</svg>
+
+<div class="specbar" role="region" aria-label="Управление макетом">
+  <b>Макет «Диспетчерская»</b>
+  <span>Данные тестовые. Эта полоса не часть продукта.</span>
+  <span class="grow"></span>
+  <span>Цвет бренда</span>
+  <span class="seg" id="brandSeg">
+    <button type="button" data-brand="red" aria-pressed="true">Красный</button>
+    <button type="button" data-brand="blue" aria-pressed="false">Синий</button>
+    <button type="button" data-brand="none" aria-pressed="false">Без бренда</button>
+  </span>
+  <button type="button" class="btn" id="demoBtn">Живое демо: анкета S-01</button>
+</div>
+
+<!-- ============ Экран 1. Обзор ============ -->
+<div class="screen-label"><span class="num">1/3</span><b>Обзор</b><span>адрес /</span></div>
+<div class="app" id="overview">
+  <header class="top">
+    <div class="logo" aria-label="Логотип">лого</div>
+    <div class="product">Стажировки <span>диспетчерская HR</span></div>
+    <nav class="nav" aria-label="Разделы">
+      <a href="#overview" aria-current="page">Обзор</a>
+      <a href="#pair">Сигналы<span class="num" id="navCount">11</span></a>
+      <a href="form.html">Форма анкеты</a>
+    </nav>
+    <span class="grow"></span>
+    <div class="live" title="Сервер присылает отметку раз в 15 секунд">
+      <span class="lamp" id="lamp" aria-hidden="true"></span>
+      <span>Приём анкет идёт</span>
+      <span class="clock num" id="clock">11:47:02</span>
+    </div>
+    <span class="seg" id="themeSeg" role="group" aria-label="Тема">
+      <button type="button" data-theme="light">Светлая</button>
+      <button type="button" data-theme="dark">Тёмная</button>
+    </span>
+  </header>
+
+  <div class="tape" aria-live="polite">
+    <span class="tape-label">Последнее</span>
+    <div class="tape-win" id="tapeWin">
+      <div class="tape-line"><span class="num">11:46</span><span>M-05 прислал анкету наставника за 5-й месяц. Источник: форма.</span></div>
+    </div>
+    <span class="tape-meta" id="tapeMeta">Сегодня пришло 3 анкеты</span>
+  </div>
+
+  <div class="readouts" id="readouts">
+    <div class="ro risk" data-k="risk">
+      <div class="ro-head"><svg class="g g-risk"><use href="#g-risk"/></svg>В риске</div>
+      <div class="ro-num"><span class="flap">3</span></div>
+      <div class="ro-ids">пары <span class="num" data-ids>P-02 P-03 P-05</span></div>
+    </div>
+    <div class="ro" data-k="watch">
+      <div class="ro-head"><svg class="g g-watch"><use href="#g-watch"/></svg>Под наблюдением</div>
+      <div class="ro-num"><span class="flap">1</span></div>
+      <div class="ro-ids">пара <span class="num" data-ids>P-04</span></div>
+    </div>
+    <div class="ro" data-k="ok">
+      <div class="ro-head"><svg class="g g-ok"><use href="#g-ok"/></svg>В норме</div>
+      <div class="ro-num"><span class="flap">1</span></div>
+      <div class="ro-ids">пара <span class="num" data-ids>P-01</span></div>
+    </div>
+    <div class="ro" data-k="signals">
+      <div class="ro-head">Открытых сигналов</div>
+      <div class="ro-num"><span class="flap">11</span></div>
+      <div class="ro-ids">из них важных <span class="num" data-ids>4</span></div>
+    </div>
+    <div class="ro" data-k="resp">
+      <div class="ro-head">Анкет за 6-й месяц</div>
+      <div class="ro-num"><span class="flap">0</span></div>
+      <div class="ro-ids">из <span class="num">10</span>, месяц идёт</div>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="board-col">
+      <div class="panel-head">
+        <h2>Пары по месяцам</h2>
+        <p>Строки стоят на местах. Изменения видно там, где они случились.</p>
+      </div>
+      <div class="legend" aria-label="Обозначения">
+        <span><svg class="g g-ok"><use href="#g-ok"/></svg>норма</span>
+        <span><svg class="g g-watch"><use href="#g-watch"/></svg>наблюдение</span>
+        <span><svg class="g g-risk"><use href="#g-risk"/></svg>риск</span>
+        <span><i class="sw hatch"></i>ждём анкеты</span>
+        <span><svg width="10" height="10" style="fill:currentColor"><use href="#k-i"/></svg>оценка стажёра</span>
+        <span><svg width="10" height="10" style="fill:currentColor"><use href="#k-m"/></svg>оценка наставника, шкала 1–5</span>
+        <span>«нет»: анкету не прислали</span>
+      </div>
+      <div class="board-wrap">
+        <div class="board scan" id="board" role="grid" aria-label="Статус пар по месяцам"></div>
+      </div>
+      <div class="log">
+        <div class="panel-head"><h2>Последние поступления</h2><p>Каждая анкета, откуда пришла</p></div>
+        <table>
+          <thead><tr><th>Когда</th><th>Кто</th><th>Роль</th><th>Месяц</th><th>Источник</th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="queue" aria-labelledby="qh">
+      <div class="panel-head">
+        <h2 id="qh">С кем поговорить</h2>
+        <span class="grow"></span>
+        <p>сначала важные, потом свежие</p>
+      </div>
+      <ol class="q-list" id="qList"></ol>
+      <div class="q-more"><a href="#pair">Все сигналы и отметки HR</a></div>
+    </aside>
+  </div>
+</div>
+
+<!-- ============ Экран 2. Карточка пары ============ -->
+<div class="screen-label"><span class="num">2/3</span><b>Карточка пары P-03</b><span>адрес /pairs/P-03</span></div>
+<div class="app" id="pair">
+  <div class="crumbs"><a href="#overview">Обзор</a> / P-03</div>
+  <div class="pair-head">
+    <div class="pair-id">P-03</div>
+    <div class="status-plate risk"><svg class="g"><use href="#g-risk"/></svg>Риск</div>
+    <div class="pair-facts">
+      <div><b>S-03</b>стажёр</div>
+      <div><b>M-03</b>наставник</div>
+      <div><b>2</b>открытых сигнала</div>
+      <div><b>1,8</b>разрыв в 5-м месяце</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <section aria-labelledby="ch">
+      <div class="panel-head"><h2 id="ch">Оценки по месяцам</h2><p>Индекс: среднее оценок анкеты, шкала 1–5</p></div>
+      <div class="chart-legend">
+        <span><svg width="12" height="12" style="fill:var(--intern)"><use href="#k-i"/></svg>Стажёр S-03</span>
+        <span><svg width="12" height="12" style="fill:var(--mentor)"><use href="#k-m"/></svg>Наставник M-03</span>
+        <span><i class="sw" style="background:var(--gap-wash);outline:1px solid var(--line-2);outline-offset:-1px"></i>Разрыв, баллы</span>
+      </div>
+      <div class="chart-wrap" id="chartWrap"></div>
+      <p class="chart-note">Под осью отмечены месяцы с сигналами. Наведите на месяц, чтобы увидеть цифры.</p>
+    </section>
+    <section aria-labelledby="qt">
+      <div class="panel-head"><h2 id="qt">Ответы по вопросам</h2></div>
+      <div class="qtable-wrap">
+        <table class="qtable" id="qTable"></table>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid2b">
+    <section aria-labelledby="sg">
+      <div class="panel-head"><h2 id="sg">Сигналы</h2><p>Решение за HR. Отметка сохранится в истории.</p></div>
+      <div id="sigs"></div>
+      <details class="hist">
+        <summary>Ранее: 1 сигнал, уже неактивен</summary>
+        <ul>
+          <li>Месяц 3. Стажёру хуже, чем видит наставник. Разрыв 1,4 балла, средняя важность.</li>
+        </ul>
+      </details>
+    </section>
+    <section aria-labelledby="cm">
+      <div class="panel-head"><h2 id="cm">Комментарии по месяцам</h2><p>Подсвечено то, на что опираются сигналы</p></div>
+      <table class="comments">
+        <thead><tr><th>Мес.</th><th>Стажёр S-03</th><th>Наставник M-03</th></tr></thead>
+        <tbody id="cmBody"></tbody>
+      </table>
+    </section>
+  </div>
+</div>
+
+<!-- ============ Экран 3. Уведомление ============ -->
+<div class="screen-label"><span class="num">3/3</span><b>Новая анкета в реальном времени</b><span>живое демо, S-01 за 6-й месяц</span></div>
+<div class="app" id="notice">
+  <div class="notice-grid">
+    <div>
+      <div class="panel-head"><h2>Что видит HR за полсекунды</h2><p>Анкета пришла из формы, страница не перезагружается</p></div>
+      <ol class="steps">
+        <li><span class="num">0 мс</span><span>Лента сверху меняет строку, лампа приёма мигает.</span></li>
+        <li><span class="num">0–280 мс</span><span>Ячейка P-01 за 6-й месяц заливается слева направо и получает метку «новое». Строка пары остаётся на месте.</span></li>
+        <li><span class="num">280 мс</span><span>Статус пары переворачивается с «нормы» на «риск», числа в итогах перелистываются.</span></li>
+        <li><span class="num">120 мс</span><span>Справа внизу выезжает уведомление. Висит 12 секунд, под курсором не пропадает.</span></li>
+        <li><span class="num">без анимации</span><span>Если в системе включено «уменьшить движение», всё меняется сразу, а метка «новое» и рамка остаются, пока HR не откроет пару.</span></li>
+      </ol>
+      <div class="panel-head" style="padding-top:4px"><h2>Строка P-01 до и после</h2></div>
+      <div class="mini" id="mini"></div>
+    </div>
+    <div class="toast-stage" aria-label="Пример уведомления">
+      <div class="toast" id="toastSpec">
+        <div class="toast-head"><span class="tape-mark"><svg class="g" style="width:12px;height:12px"><use href="#g-risk"/></svg>Риск</span><span class="num">11:47</span></div>
+        <h3>P-01 перешла в риск</h3>
+        <p>S-01 прислал анкету за 6-й месяц. Оценка 2,6, месяцем раньше было 4,6.</p>
+        <p class="dim">2 новых сигнала. Источник: форма.</p>
+        <div class="toast-acts"><a class="btn" href="#overview">Открыть пару</a><button class="btn ghost" type="button">Скрыть</button></div>
+        <span class="timer" style="transform:scaleX(.62)"></span>
+      </div>
+    </div>
+  </div>
+  <div class="colormap" aria-label="Где какой цвет">
+    <div>
+      <h3>Бренд</h3>
+      <div class="chips"><i style="background:var(--brand)"></i></div>
+      Полоса над шапкой, логотип и кнопка отправки в форме. В таблице, сигналах и графиках бренда нет. Переключите цвет бренда наверху: статусы не меняются.
+    </div>
+    <div>
+      <h3>Статусы</h3>
+      <div class="chips"><i style="background:var(--ok)"></i><i style="background:var(--watch)"></i><i style="background:var(--risk)"></i></div>
+      Только в зоне данных. Всегда вместе с фигурой: круг, треугольник, ромб. И со словом в строке пары.
+    </div>
+    <div>
+      <h3>Стажёр и наставник</h3>
+      <div class="chips"><i style="background:var(--intern)"></i><i style="background:var(--mentor)"></i></div>
+      Синий и пурпурный только для линий графика. Стажёр всегда круг, наставник всегда квадрат.
+    </div>
+    <div>
+      <h3>Интерфейс</h3>
+      <div class="chips"><i style="background:var(--text-1)"></i><i style="background:var(--text-3)"></i><i style="background:var(--line)"></i></div>
+      Кнопки, ссылки, фокус и всё новое отмечены чернилами. Отдельного цвета у интерфейса нет, чтобы он не спорил ни с брендом, ни со статусами.
+    </div>
+  </div>
+</div>
+
+<div class="toast-host" id="toastHost" aria-live="assertive"></div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const fmt = v => v == null ? '' : v.toFixed(1).replace('.', ',');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const ST = { ok: 'норма', watch: 'наблюдение', risk: 'риск' };
+  const SEV = { high: 'высокая', medium: 'средняя', low: 'низкая' };
+  const SEVG = { high: 'risk', medium: 'watch', low: 'low' };
+  const plural = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c); };
+  const g = (k, cls = '') => `<svg class="g ${cls}" aria-hidden="true"><use href="#g-${k}"/></svg>`;
+
+  /* ---------- тема ---------- */
+  const root = document.documentElement;
+  const sysDark = matchMedia('(prefers-color-scheme: dark)');
+  function currentTheme() { return root.dataset.theme || (sysDark.matches ? 'dark' : 'light'); }
+  function paintThemeSeg() { document.querySelectorAll('#themeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === currentTheme()))); }
+  $('#themeSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.dataset.theme = b.dataset.theme;
+    try { localStorage.setItem('theme', b.dataset.theme); } catch (err) {}
+    paintThemeSeg();
+  });
+  sysDark.addEventListener('change', paintThemeSeg);
+  paintThemeSeg();
+
+  /* ---------- бренд ---------- */
+  $('#brandSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    root.dataset.brand = b.dataset.brand;
+    document.querySelectorAll('#brandSeg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  });
+
+  /* ---------- данные ---------- */
+  const PAIRS = [
+    { id: 'P-01', s: 'S-01', m: 'M-01', i: [4.4, 4.6, 4.4, 4.6, 4.6, null], mm: [4.5, 4.5, 4.8, 4.5, 4.8, null], st: ['ok', 'ok', 'ok', 'ok', 'ok', 'wait'], status: 'ok', open: 0 },
+    { id: 'P-02', s: 'S-02', m: 'M-02', i: [4.6, 4.4, 3.8, 3.0, null, null], mm: [4.5, 4.5, 4.3, 4.0, 4.0, null], st: ['ok', 'ok', 'watch', 'risk', 'watch', 'wait'], status: 'risk', open: 4 },
+    { id: 'P-03', s: 'S-03', m: 'M-03', i: [3.6, 3.6, 3.4, 3.2, 3.2, null], mm: [4.5, 4.5, 4.8, 4.8, 5.0, null], st: ['ok', 'ok', 'watch', 'risk', 'risk', 'wait'], status: 'risk', open: 2 },
+    { id: 'P-04', s: 'S-04', m: 'M-04', i: [4.2, 4.0, 4.2, 4.0, 4.2, null], mm: [4.5, 4.5, 4.5, 4.8, 4.8, null], st: ['ok', 'ok', 'watch', 'ok', 'watch', 'wait'], status: 'watch', open: 1 },
+    { id: 'P-05', s: 'S-05', m: 'M-05', i: [4.6, 4.8, 4.6, 4.8, 4.8, null], mm: [4.2, 3.6, 3.0, 2.6, 2.4, null], st: ['ok', 'watch', 'risk', 'risk', 'risk', 'wait'], status: 'risk', open: 4 },
+  ];
+  const QUEUE = [
+    { sev: 'high', pair: 'P-05', m: 5, src: 'формула', title: 'Наставник недоволен, а стажёр этого не видит', exp: 'Наставник 2,4, стажёр 4,8. Разрыв 2,4 балла и растёт с 1-го месяца.' },
+    { sev: 'high', pair: 'P-03', m: 5, src: 'формула', title: 'Стажёру хуже, чем видит наставник', exp: 'Стажёр 3,2, наставник 5,0. Разрыв 1,8 балла.' },
+    { sev: 'high', pair: 'P-05', m: 4, src: 'формула', title: 'Наставник недоволен, а стажёр этого не видит', exp: 'Наставник 2,6, стажёр 4,8. Разрыв 2,2 балла.' },
+    { sev: 'high', pair: 'P-03', m: 4, src: 'формула', title: 'Стажёру хуже, чем видит наставник', exp: 'Разрыв растёт второй месяц: 0,9, 1,4, 1,6.' },
+    { sev: 'medium', pair: 'P-02', m: 5, src: 'формула', title: 'Стажёр не прислал анкету', exp: 'Наставник за 5-й месяц ответил, стажёр нет. Раньше он не пропускал.' },
+    { sev: 'medium', pair: 'P-04', m: 5, src: 'ИИ по тексту', title: 'Оценки хорошие, а в комментарии жалоба', exp: 'Средняя оценка 4,2. В тексте: «задач почти нет».' },
+    { sev: 'medium', pair: 'P-05', m: 5, src: 'формула', title: 'Наставник ставит оценки всё ниже', exp: '3,0, 2,6, 2,4 за последние три месяца.' },
+    { sev: 'medium', pair: 'P-02', m: 4, src: 'формула', title: 'Стажёр ставит оценки всё ниже', exp: '4,4, 3,8, 3,0 за три месяца.' },
+  ];
+  const LOG = [
+    ['26.11 11:46', 'M-05', 'наставник', 5, 'форма'],
+    ['26.11 11:40', 'M-02', 'наставник', 5, 'форма'],
+    ['26.11 10:12', 'S-04', 'стажёр', 5, 'Яндекс Формы'],
+    ['25.11 18:03', 'S-05', 'стажёр', 5, 'форма'],
+    ['25.11 17:55', 'M-03', 'наставник', 5, 'Excel'],
+  ];
+
+  /* ---------- табло ---------- */
+  function dumb(iv, mv) {
+    const x = v => 4 + (v - 1) / 4 * 92;
+    let s = `<svg class="dumb" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><line x1="4" y1="6" x2="96" y2="6" stroke="currentColor" stroke-opacity=".35" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+    if (iv != null && mv != null) s += `<line x1="${x(iv)}" y1="6" x2="${x(mv)}" y2="6" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke"/>`;
+    s += `</svg>`;
+    return s;
+  }
+  function dumbMarks(iv, mv) {
+    // маркеры отдельно, чтобы не растягивались вместе с viewBox
+    let s = '';
+    if (iv != null) s += `<span style="position:absolute;left:calc(${(iv - 1) / 4 * 92 + 4}% - 5px);top:1px;width:10px;height:10px;border-radius:50%;background:currentColor;box-shadow:0 0 0 2px var(--cellbg)"></span>`;
+    if (mv != null) s += `<span style="position:absolute;left:calc(${(mv - 1) / 4 * 92 + 4}% - 5px);top:1px;width:10px;height:10px;background:currentColor;box-shadow:0 0 0 2px var(--cellbg)"></span>`;
+    return s;
+  }
+  function cellHTML(p, k) {
+    const s = p.st[k], iv = p.i[k], mv = p.mm[k];
+    if (s === 'wait') return `<span class="wait-t">ждём</span><span></span>`;
+    const iTxt = iv == null ? `<span class="v miss">${k === 5 ? 'ждём' : 'нет'}</span>` : `<span class="v"><svg aria-hidden="true"><use href="#k-i"/></svg>${fmt(iv)}</span>`;
+    const mTxt = mv == null ? `<span class="v miss">${k === 5 ? 'ждём' : 'нет'}</span>` : `<span class="v m"><svg aria-hidden="true"><use href="#k-m"/></svg>${fmt(mv)}</span>`;
+    return `<span class="ctop">${g(s)}</span><span class="vals">${iTxt}${mTxt}</span><span style="position:relative;display:block">${dumb(iv, mv)}${dumbMarks(iv, mv)}</span>`;
+  }
+  function cellLabel(p, k) {
+    const s = p.st[k];
+    if (s === 'wait') return `${p.id}, месяц ${k + 1}: анкет пока нет`;
+    const gap = p.i[k] != null && p.mm[k] != null ? `, разрыв ${fmt(Math.abs(p.mm[k] - p.i[k]))}` : '';
+    return `${p.id}, месяц ${k + 1}: ${ST[s]}. Стажёр ${p.i[k] == null ? 'не ответил' : fmt(p.i[k])}, наставник ${p.mm[k] == null ? 'не ответил' : fmt(p.mm[k])}${gap}`;
+  }
+  const cellBg = { ok: 'var(--ok)', watch: 'var(--watch)', risk: 'var(--risk)', wait: 'var(--surface)' };
+  function rowHead(p) {
+    return `<a class="rowh" href="${p.id === 'P-03' ? '#pair' : '#overview'}" data-row="${p.id}">
+      <span class="pid">${p.id}</span>
+      <span class="cnt">${p.open ? p.open + ' ' + plural(p.open, 'сигнал', 'сигнала', 'сигналов') : ''}</span>
+      <span class="chip">${g(p.status, 'g-' + p.status)}${ST[p.status]}</span>
+      <span class="ppl"><span class="num">${p.s}</span> и <span class="num">${p.m}</span></span>
+    </a>`;
+  }
+  function renderBoard() {
+    const b = $('#board');
+    let h = `<div class="bh">Пара</div>`;
+    for (let k = 1; k <= 6; k++) h += `<div class="bh${k === 6 ? ' now' : ''}" data-col="${k}"><span>месяц</span><span class="num">${k}</span>${k === 6 ? '<span>идёт</span>' : ''}</div>`;
+    PAIRS.forEach((p, r) => {
+      h += rowHead(p);
+      p.st.forEach((s, k) => {
+        h += `<button class="cell" type="button" data-s="${s}" data-pair="${p.id}" data-k="${k}" style="--c:${k};--r:${r};--cellbg:${cellBg[s]}" aria-label="${cellLabel(p, k)}" ${s === 'wait' ? 'tabindex="-1"' : ''}>${cellHTML(p, k)}</button>`;
+      });
+    });
+    b.innerHTML = h;
+  }
+  renderBoard();
+  if (reduce.matches) $('#board').classList.remove('scan');
+  setTimeout(() => $('#board').classList.remove('scan'), 1200);
+
+  /* подсказка и перекрестие */
+  const tip = $('#tip');
+  function showTip(html, x, y) { tip.innerHTML = html; tip.classList.add('on'); const r = tip.getBoundingClientRect(); tip.style.left = Math.min(x + 14, innerWidth - r.width - 8) + 'px'; tip.style.top = Math.max(8, y - r.height - 12) + 'px'; }
+  function hideTip() { tip.classList.remove('on'); }
+  const board = $('#board');
+  function cross(cell, on) {
+    if (!cell) return;
+    const k = +cell.dataset.k + 1, pid = cell.dataset.pair;
+    board.querySelector(`.bh[data-col="${k}"]`)?.classList.toggle('cross-h', on);
+    const rh = board.querySelector(`.rowh[data-row="${pid}"]`);
+    if (rh) rh.style.background = on ? 'var(--surface-2)' : '';
+    const hh = board.querySelector(`.bh[data-col="${k}"]`); if (hh && k !== 6) hh.style.background = on ? 'var(--surface-2)' : '';
+  }
+  board.addEventListener('pointerover', e => { const c = e.target.closest('.cell'); if (!c || c.dataset.s === 'wait') return; cross(c, true); const r = c.getBoundingClientRect(); showTip(c.getAttribute('aria-label').replace(/(\d,\d)/g, '<b>$1</b>'), r.left + r.width / 2, r.top); });
+  board.addEventListener('pointerout', e => { const c = e.target.closest('.cell'); if (!c) return; cross(c, false); hideTip(); });
+  board.addEventListener('focusin', e => { const c = e.target.closest('.cell'); if (!c) return; cross(c, true); const r = c.getBoundingClientRect(); showTip(c.getAttribute('aria-label').replace(/(\d,\d)/g, '<b>$1</b>'), r.left + r.width / 2, r.top); });
+  board.addEventListener('focusout', e => { const c = e.target.closest('.cell'); if (!c) return; cross(c, false); hideTip(); });
+  board.addEventListener('click', e => { const c = e.target.closest('.cell'); if (c && c.dataset.pair === 'P-03') location.hash = 'pair'; });
+
+  /* ---------- очередь ---------- */
+  function qItem(q, isNew) {
+    return `<li class="q-item${isNew ? ' new enter' : ''}"><a href="${q.pair === 'P-03' ? '#pair' : '#overview'}">
+      ${g(SEVG[q.sev], 'g-' + SEVG[q.sev])}
+      <span class="q-meta"><span class="num">${q.pair}</span><span>месяц ${q.m}</span><span class="sev">${SEV[q.sev]}</span><span class="src">${q.src}</span></span>
+      <span class="q-title">${q.title}</span>
+      <span class="q-exp">${q.exp}</span>
+    </a></li>`;
+  }
+  $('#qList').innerHTML = QUEUE.map(q => qItem(q)).join('');
+
+  /* ---------- журнал ---------- */
+  const logRow = (r, isNew) => `<tr${isNew ? ' class="in"' : ''}><td class="num">${r[0]}</td><td class="num">${r[1]}</td><td>${r[2]}</td><td class="num">${r[3]}</td><td class="dim">${r[4]}</td></tr>`;
+  $('#logBody').innerHTML = LOG.map(r => logRow(r)).join('');
+
+  /* ---------- часы и пульс ---------- */
+  const t0 = Date.now(), base = 11 * 3600 + 47 * 60 + 2;
+  const pad = n => String(n).padStart(2, '0');
+  function tick() { const s = base + Math.floor((Date.now() - t0) / 1000); $('#clock').textContent = `${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; }
+  setInterval(tick, 1000);
+  function ping() { const l = $('#lamp'); l.classList.remove('ping'); void l.offsetWidth; l.classList.add('ping'); }
+  setInterval(ping, 15000);
+  setTimeout(ping, 400);
+
+  /* ---------- итоги: перелистывание ---------- */
+  function flap(key, val, ids) {
+    const ro = document.querySelector(`.ro[data-k="${key}"]`), box = ro.querySelector('.ro-num');
+    const cur = box.querySelector('.flap:not(.old)');
+    if (ids != null) { const el = ro.querySelector('[data-ids]'); if (el) el.textContent = ids; }
+    if (cur.textContent === String(val)) return;
+    ro.classList.add('changed');
+    setTimeout(() => ro.classList.remove('changed'), 2400);
+    if (reduce.matches) { cur.textContent = val; return; }
+    cur.classList.add('old');
+    const n = document.createElement('span'); n.className = 'flap new'; n.textContent = val; box.appendChild(n);
+    setTimeout(() => { cur.remove(); n.classList.remove('new'); }, 260);
+  }
+
+  /* ---------- лента ---------- */
+  function pushTape(html) {
+    const win = $('#tapeWin'), old = win.querySelector('.tape-line:last-child');
+    const n = document.createElement('div'); n.className = 'tape-line in'; n.innerHTML = html;
+    if (old) { old.classList.add('out'); setTimeout(() => old.remove(), 220); }
+    win.appendChild(n);
+  }
+
+  /* ---------- карточка: график ---------- */
+  const P3 = PAIRS[2];
+  function renderChart() {
+    const W = 820, H = 450, L = 40, R = 24, T = 24, B = 62;
+    const pw = W - L - R, ph = H - T - B;
+    const x = m => L + (m - 1) / 5 * pw;
+    const y = v => T + (5 - v) / 4 * ph;
+    const iv = P3.i.slice(0, 5), mv = P3.mm.slice(0, 5);
+    const pts = (arr) => arr.map((v, k) => `${x(k + 1)},${y(v)}`).join(' ');
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Индексы стажёра и наставника P-03 по месяцам. Стажёр 3,6, 3,6, 3,4, 3,2, 3,2. Наставник 4,5, 4,5, 4,8, 4,8, 5,0.">
+      <defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="var(--hatch)" stroke-width="1.2"/></pattern></defs>
+      <g class="grid">${[1, 2, 3, 4, 5].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/>`).join('')}</g>
+      ${[1, 2, 3, 4, 5].map(v => `<text class="ytick" x="${L - 12}" y="${y(v) + 5}" text-anchor="end">${v}</text>`).join('')}
+      <polygon class="band" points="${pts(mv)} ${iv.map((v, k) => `${x(k + 1)},${y(v)}`).reverse().join(' ')}"/>
+      <polyline class="l-m draw" points="${pts(mv)}"/>
+      <polyline class="l-i draw" points="${pts(iv)}"/>`;
+    iv.forEach((v, k) => {
+      const gap = mv[k] - v, cy = (y(v) + y(mv[k])) / 2;
+      s += `<rect class="gapbg" x="${x(k + 1) - 22}" y="${cy - 11}" width="44" height="22"/><text class="gapv" x="${x(k + 1)}" y="${cy + 5}" text-anchor="middle">${fmt(gap)}</text>`;
+    });
+    iv.forEach((v, k) => { s += `<circle class="d-i" cx="${x(k + 1)}" cy="${y(v)}" r="6"/>`; });
+    mv.forEach((v, k) => { s += `<rect class="d-m" x="${x(k + 1) - 6}" y="${y(v) - 6}" width="12" height="12"/>`; });
+    // подписи на концах
+    s += `<text class="endl" x="${x(5) + 18}" y="${y(5.0) - 14}">наставник <tspan class="endv">5,0</tspan></text>`;
+    s += `<text class="endl" x="${x(5) + 18}" y="${y(3.2) + 30}">стажёр <tspan class="endv">3,2</tspan></text>`;
+    // ось X
+    for (let m = 1; m <= 6; m++) s += `<text class="xlab" x="${m === 6 ? x(m) - 4 : x(m)}" y="${H - 34}" text-anchor="${m === 6 ? 'end' : 'middle'}">месяц ${m}${m === 6 ? ', ждём' : ''}</text>`;
+    const sig = { 3: 'watch', 4: 'risk', 5: 'risk' };
+    Object.entries(sig).forEach(([m, k]) => {
+      const cx = x(+m), cy = H - 10;
+      s += k === 'risk' ? `<path class="sigm risk" d="M${cx} ${cy - 8} L${cx + 8} ${cy} L${cx} ${cy + 8} L${cx - 8} ${cy}Z"/>` : `<path class="sigm watch" d="M${cx} ${cy - 8} L${cx + 8} ${cy + 6} L${cx - 8} ${cy + 6}Z"/>`;
+    });
+    s += `<line class="xhair" id="xhair" x1="0" x2="0" y1="${T}" y2="${T + ph}"/>`;
+    for (let m = 1; m <= 5; m++) s += `<rect class="hit" data-m="${m}" x="${x(m) - pw / 10}" y="${T}" width="${pw / 5}" height="${ph + 20}"/>`;
+    s += `</svg>`;
+    $('#chartWrap').innerHTML = s;
+    document.querySelectorAll('.chart .draw').forEach(p => p.style.setProperty('--len', p.getTotalLength()));
+    const svg = $('#chartWrap svg'), xh = $('#xhair');
+    svg.addEventListener('pointermove', e => {
+      const h = e.target.closest('.hit'); if (!h) return;
+      const m = +h.dataset.m; xh.setAttribute('x1', x(m)); xh.setAttribute('x2', x(m)); xh.classList.add('on');
+      showTip(`Месяц ${m}. Стажёр <b>${fmt(iv[m - 1])}</b>, наставник <b>${fmt(mv[m - 1])}</b>, разрыв <b>${fmt(mv[m - 1] - iv[m - 1])}</b>`, e.clientX, e.clientY);
+    });
+    svg.addEventListener('pointerleave', () => { xh.classList.remove('on'); hideTip(); });
+  }
+  renderChart();
+
+  /* ---------- карточка: вопросы ---------- */
+  const QI = [
+    ['Как в целом проходит стажировка?', [4, 4, 4, 3, 3]],
+    ['Насколько интересны задачи?', [4, 4, 4, 4, 4]],
+    ['Насколько понятно, что ждут в задачах?', [3, 3, 3, 3, 3]],
+    ['Хватает ли помощи наставника?', [3, 3, 2, 2, 2]],
+    ['Насколько комфортна нагрузка?', [4, 4, 4, 4, 4]],
+  ];
+  const QM = [
+    ['Как стажёр справляется в целом?', [5, 5, 5, 5, 5]],
+    ['Насколько оперативно выполняет задачи?', [4, 4, 5, 5, 5]],
+    ['Насколько самостоятелен?', [4, 4, 4, 4, 5]],
+    ['Насколько вовлечён в работу команды?', [5, 5, 5, 5, 5]],
+  ];
+  function qRows(rows) { return rows.map(([t, v]) => `<tr><th scope="row">${t}</th>${v.map(n => `<td${n <= 2 ? ' class="lo"' : ''}><span>${n}</span></td>`).join('')}<td class="na">—</td></tr>`).join(''); }
+  $('#qTable').innerHTML = `<thead><tr><th>Вопрос</th>${[1, 2, 3, 4, 5, 6].map(m => `<th>${m}</th>`).join('')}</tr></thead><tbody>
+    <tr class="grp"><th colspan="7"><svg width="10" height="10" style="fill:var(--intern)"><use href="#k-i"/></svg>Стажёр S-03</th></tr>
+    ${qRows(QI)}
+    <tr class="idx"><th scope="row">Индекс стажёра</th>${P3.i.slice(0, 5).map(v => `<td>${fmt(v)}</td>`).join('')}<td class="na">—</td></tr>
+    <tr class="grp"><th colspan="7"><svg width="10" height="10" style="fill:var(--mentor)"><use href="#k-m"/></svg>Наставник M-03</th></tr>
+    ${qRows(QM)}
+    <tr class="idx"><th scope="row">Индекс наставника</th>${P3.mm.slice(0, 5).map(v => `<td>${fmt(v)}</td>`).join('')}<td class="na">—</td></tr>
+  </tbody>`;
+
+  /* ---------- карточка: сигналы ---------- */
+  const SIGS = [
+    { key: 'gap_intern_low:P-03:both:5', m: 5, title: 'Стажёру хуже, чем видит наставник',
+      exp: 'Стажёр 3,2, наставник 5,0, разрыв 1,8 балла. В 1-м месяце разрыв был 0,9. На вопрос о помощи наставника стажёр третий месяц ставит 2 из 5.',
+      seq: [0.9, 0.9, 1.4, 1.6, 1.8], hl: 4,
+      quote: { cap: 'Комментарий стажёра, месяц 5. Цитата сверена с текстом дословно.', pre: 'Ситуация та же: ', mark: 'наставник почти не отвечает, созвонов не было с прошлого месяца', post: '. Помогают ребята из соседней команды.' },
+      action: 'Поговорить со стажёром один на один: как быстро он получает ответы и от кого. Потом спросить наставника, сколько времени у него есть на стажёра.' },
+    { key: 'gap_intern_low:P-03:both:4', m: 4, title: 'Разрыв растёт второй месяц подряд',
+      exp: 'Наставник ставит 4,8, стажёр 3,2. Разрыв 1,6 балла, месяцем раньше был 1,4.',
+      seq: [0.9, 0.9, 1.4, 1.6], hl: 3,
+      quote: { cap: 'Комментарий стажёра, месяц 4. Цитата сверена с текстом дословно.', pre: '', mark: 'На вопросы наставник отвечает раз в несколько дней', post: '. Пробую разбираться сам, но часто иду не туда.' },
+      action: 'Если разговор по 5-му месяцу уже был, отметьте оба сигнала одним решением.' },
+  ];
+  $('#sigs').innerHTML = SIGS.map(sg => `
+    <article class="sig" data-key="${sg.key}">
+      <div class="sig-top">
+        <span class="sev-plate high">${g('risk')}Высокая важность</span>
+        <span class="num">месяц ${sg.m}</span>
+        <span class="tag">формула по оценкам</span>
+        <span class="tag">цитата: ИИ по тексту</span>
+      </div>
+      <h3>${sg.title}</h3>
+      <p class="exp">${sg.exp}</p>
+      <div class="seq"><small>разрыв по месяцам</small>${sg.seq.map((v, k) => `${k ? '<i>›</i>' : ''}<span${k === sg.hl ? ' class="hl"' : ''}>${fmt(v)}</span>`).join('')}</div>
+      <blockquote class="quote"><span class="quote-cap">${sg.quote.cap}</span>«${sg.quote.pre}<mark class="high">${sg.quote.mark}</mark>${sg.quote.post}»</blockquote>
+      <div class="action"><b>Что сделать</b><span>${sg.action}</span></div>
+      <div class="review">
+        <button class="btn" type="button" data-act="confirmed">Подтвердилось</button>
+        <button class="btn ghost" type="button" data-act="rejected">Ложная тревога</button>
+        <span class="hint">Можно поменять позже</span>
+        <span class="stamp" role="status"></span>
+      </div>
+    </article>`).join('');
+  $('#sigs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const sig = b.closest('.sig');
+    if (b.dataset.act) {
+      const word = b.dataset.act === 'confirmed' ? 'Подтверждено HR' : 'Отмечено как ложная тревога';
+      sig.querySelector('.stamp').innerHTML = `${word} в <span class="num">${$('#clock').textContent.slice(0, 5)}</span><button type="button" data-undo>Отменить</button>`;
+      sig.classList.add('done');
+    } else if (b.hasAttribute('data-undo')) {
+      sig.classList.remove('done');
+    }
+  });
+
+  /* ---------- карточка: комментарии ---------- */
+  const CM = [
+    [5, 'Ситуация та же: <mark class="high">наставник почти не отвечает, созвонов не было с прошлого месяца</mark>. Помогают ребята из соседней команды.', ['наставник', 'команда'], 'Справляется, претензий нет.'],
+    [4, '<mark class="high">На вопросы наставник отвечает раз в несколько дней</mark>. Пробую разбираться сам, но часто иду не туда.', ['наставник', 'понятность задач'], 'Всё хорошо, справляется.'],
+    [3, '<mark class="old">Наставник почти не отвечает</mark>. Неделю сидел на одной задаче, потому что не у кого спросить.', ['наставник'], 'Всё хорошо, справляется.'],
+    [2, 'Разобрался с сервисом, сделал первую задачу. Вопросы пока задаю в общем чате.', ['рост'], 'Справляется, вопросов нет.'],
+    [1, 'Задачи интересные, команда приняла хорошо. Наставник занят на релизе, договорились созваниваться по пятницам.', ['хорошее', 'команда'], 'Всё хорошо, быстро вникает.'],
+  ];
+  $('#cmBody').innerHTML = CM.map(([m, t, tp, mt]) => `<tr><td class="m">${m}</td><td>${t}<div class="topics">${tp.map(x => `<span>${x}</span>`).join('')}</div></td><td class="mentor">${mt}</td></tr>`).join('');
+
+  /* ---------- мини-строка до и после ---------- */
+  const P1 = PAIRS[0];
+  function miniRow(label, st6, i6) {
+    let h = `<div class="lab"><b>P-01</b>${label}</div>`;
+    for (let k = 0; k < 6; k++) {
+      const s = k === 5 ? st6 : P1.st[k];
+      const p = { ...P1, st: P1.st.map((x, j) => j === 5 ? st6 : x), i: P1.i.map((x, j) => j === 5 ? i6 : x) };
+      h += `<div class="cell" data-s="${s}" style="--cellbg:${cellBg[s]}">${cellHTML(p, k)}</div>`;
+    }
+    return h;
+  }
+  $('#mini').innerHTML = miniRow('до', 'wait', null) + miniRow('после', 'risk', 2.6);
+  $('#mini').querySelectorAll('.cell')[11].classList.add('fresh');
+
+  /* ---------- живое демо ---------- */
+  let demoDone = false;
+  function toast() {
+    const host = $('#toastHost');
+    const t = $('#toastSpec').cloneNode(true);
+    t.removeAttribute('id'); t.classList.add('is-live', 'enter');
+    t.querySelector('.timer').removeAttribute('style');
+    const close = () => { t.classList.add('leave'); setTimeout(() => t.remove(), 160); };
+    t.querySelector('.btn.ghost').addEventListener('click', close);
+    let timer = setTimeout(close, 12000);
+    t.addEventListener('mouseenter', () => clearTimeout(timer));
+    t.addEventListener('mouseleave', () => { timer = setTimeout(close, 4000); });
+    host.appendChild(t);
+  }
+  function runDemo() {
+    if (demoDone) return; demoDone = true;
+    $('#demoBtn').disabled = true;
+    ping();
+    pushTape(`<span class="num">11:47</span><span>S-01 прислал анкету стажёра за 6-й месяц. Источник: форма.</span><span class="tape-mark">${g('risk')}P-01 в риске</span><span class="cursor" aria-hidden="true"></span>`);
+    // ячейка
+    P1.st[5] = 'risk'; P1.i[5] = 2.6; P1.status = 'risk'; P1.open = 2;
+    const c = board.querySelector('.cell[data-pair="P-01"][data-k="5"]');
+    c.dataset.s = 'risk'; c.style.setProperty('--cellbg', cellBg.risk); c.removeAttribute('tabindex');
+    c.innerHTML = cellHTML(P1, 5); c.setAttribute('aria-label', cellLabel(P1, 5) + '. Новое');
+    c.classList.add('arrive', 'fresh');
+    setTimeout(() => {
+      const rh = board.querySelector('.rowh[data-row="P-01"]');
+      rh.outerHTML = rowHead(P1);
+      board.querySelector('.rowh[data-row="P-01"]').classList.add('flip');
+      flap('risk', 4, 'P-01 P-02 P-03 P-05');
+      flap('ok', 0, '');
+      document.querySelector('.ro[data-k="ok"] .ro-ids').textContent = 'пар нет';
+      flap('signals', 13, '5');
+      flap('resp', 1);
+      $('#navCount').textContent = '13';
+      $('#tapeMeta').textContent = 'Сегодня пришло 4 анкеты';
+    }, reduce.matches ? 0 : 280);
+    // очередь: новый важный сверху, средний перед прочими средними
+    const list = $('#qList');
+    const hi = { sev: 'high', pair: 'P-01', m: 6, src: 'формула', title: 'Стажёр резко снизил оценку', exp: '4,6 в 5-м месяце, 2,6 сейчас. В комментарии: «задач почти нет».' };
+    const md = { sev: 'medium', pair: 'P-01', m: 6, src: 'формула', title: 'Наставник ещё не прислал анкету', exp: 'Стажёр за 6-й месяц ответил, наставник пока нет.' };
+    list.insertAdjacentHTML('afterbegin', qItem(hi, true));
+    list.children[4].insertAdjacentHTML('afterend', qItem(md, true));
+    list.lastElementChild.remove(); list.lastElementChild.remove();
+    requestAnimationFrame(() => requestAnimationFrame(() => list.querySelectorAll('.q-item.enter').forEach(el => el.classList.remove('enter'))));
+    // журнал
+    $('#logBody').insertAdjacentHTML('afterbegin', logRow(['26.11 11:47', 'S-01', 'стажёр', 6, 'форма'], true));
+    $('#logBody').lastElementChild.remove();
+    setTimeout(toast, reduce.matches ? 0 : 120);
+  }
+  $('#demoBtn').addEventListener('click', runDemo);
+  if (location.hash === '#demo') setTimeout(runDemo, 900);
+})();
+</script>
+</body>
+</html>

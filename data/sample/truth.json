@@ -1,0 +1,1908 @@
+{
+  "dataset": "data/sample",
+  "generated_by": "uv run data/expected.py data/sample",
+  "how_to_use": "signals срабатывают при любом прочтении правил и должны быть у бэкенда. optional зависят от прочтения, fires_when говорит, при каком. Сигналов вне signals и optional быть не должно. text_analysis: true значит, что сигнал держится на разборе текста и разметке из data/scenarios.py, а не только на оценках.",
+  "thresholds": {
+    "active_months": 2,
+    "decline": {
+      "two_month_drop": 0.12,
+      "single_drop": 0.25
+    },
+    "gap": {
+      "min_gap": 0.25,
+      "high_gap": 0.4
+    },
+    "text_vs_score": {
+      "min_index": 0.65,
+      "max_sentiment": -0.2
+    },
+    "silence": {
+      "length_drop": 0.6,
+      "min_prev_length": 40
+    },
+    "quote_min_length": 12
+  },
+  "readings": {
+    "decline": {
+      "primary": "both_months",
+      "values": {
+        "both_months": "Индекс падал оба месяца и за два месяца в сумме упал на two_month_drop или больше.",
+        "two_month_sum": "За два месяца индекс упал на two_month_drop или больше, как бы он ни менялся в середине.",
+        "each_month": "Индекс падал на two_month_drop или больше в каждом из двух месяцев."
+      }
+    },
+    "gap_growth": {
+      "primary": "raw",
+      "values": {
+        "raw": "«Разрыв растёт второй месяц»: разрыв больше, чем месяц назад, а тот больше, чем два месяца назад.",
+        "after_signal": "Разрыв больше, чем месяц назад, и месяц назад он уже был не меньше min_gap."
+      }
+    },
+    "silence_month_passed": {
+      "primary": "all_pairs",
+      "values": {
+        "all_pairs": "Месяц прошёл, если по нему есть анкеты у всех остальных пар.",
+        "any_pair": "Месяц прошёл, если по нему есть анкета хотя бы у одной другой пары."
+      }
+    },
+    "silence_length_mean": {
+      "primary": "with_empty",
+      "values": {
+        "with_empty": "Средняя длина прошлых комментариев считается по всем прошлым анкетам, пустой комментарий даёт 0.",
+        "non_empty": "Средняя длина считается только по непустым прошлым комментариям."
+      }
+    },
+    "silence_same_scores": {
+      "primary": "within_form",
+      "values": {
+        "within_form": "Все оценки внутри анкеты одинаковые, и так три анкеты подряд.",
+        "same_answers": "Три анкеты подряд с одинаковыми ответами на все вопросы."
+      }
+    },
+    "text": {
+      "primary": "sure",
+      "values": {
+        "sure": "Сигналы по тексту считаются только по комментариям с уверенной разметкой.",
+        "all": "Сигналы по тексту считаются и по спорной разметке (sure: false)."
+      }
+    },
+    "active_window": {
+      "primary": "pair_last_month",
+      "values": {
+        "pair_last_month": "Активные месяцы отсчитываются от последнего месяца, по которому у пары есть анкета.",
+        "dataset_last_month": "Активные месяцы отсчитываются от последнего месяца во всём наборе."
+      }
+    }
+  },
+  "basis": {
+    "scores": "только оценки",
+    "presence": "есть ли анкета",
+    "comment_length": "длина комментария",
+    "text": "нужен разбор текста"
+  },
+  "months": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pairs": [
+    {
+      "pair_id": "P-01",
+      "intern_id": "S-01",
+      "mentor_id": "M-01",
+      "scenario": "ровная пара",
+      "story": "Контроль. Обе стороны ставят 4–5 и пишут спокойно и по делу. Сигналов быть не должно.",
+      "expect_no_signals": true,
+      "status": "ok",
+      "status_by_reading": [
+        "ok"
+      ],
+      "series": [
+        {
+          "month": 1,
+          "intern_index": 4.4,
+          "mentor_index": 4.5,
+          "gap": 0.1
+        },
+        {
+          "month": 2,
+          "intern_index": 4.6,
+          "mentor_index": 4.75,
+          "gap": 0.15
+        },
+        {
+          "month": 3,
+          "intern_index": 4.6,
+          "mentor_index": 4.75,
+          "gap": 0.15
+        },
+        {
+          "month": 4,
+          "intern_index": 4.8,
+          "mentor_index": 4.5,
+          "gap": -0.3
+        },
+        {
+          "month": 5,
+          "intern_index": 4.6,
+          "mentor_index": 4.75,
+          "gap": 0.15
+        }
+      ],
+      "cells": [
+        {
+          "month": 1,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 2,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 3,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 4,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 5,
+          "status": "ok",
+          "signal_keys": []
+        }
+      ],
+      "signals": [],
+      "optional": [],
+      "note": "Сигналов быть не должно ни при каком прочтении правил."
+    },
+    {
+      "pair_id": "P-02",
+      "intern_id": "S-02",
+      "mentor_id": "M-02",
+      "scenario": "выгорание",
+      "story": "Индекс стажёра 4,6 → 4,4 → 3,8 → 3,0, за 5-й месяц анкеты нет. Комментарии укорачиваются: развёрнутые, потом «нормально», потом пусто. Наставник замечает только лёгкий спад.",
+      "expect_no_signals": false,
+      "status": "risk",
+      "status_by_reading": [
+        "risk"
+      ],
+      "series": [
+        {
+          "month": 1,
+          "intern_index": 4.6,
+          "mentor_index": 4.75,
+          "gap": 0.15
+        },
+        {
+          "month": 2,
+          "intern_index": 4.4,
+          "mentor_index": 4.75,
+          "gap": 0.35
+        },
+        {
+          "month": 3,
+          "intern_index": 3.8,
+          "mentor_index": 4.5,
+          "gap": 0.7
+        },
+        {
+          "month": 4,
+          "intern_index": 3.0,
+          "mentor_index": 4.75,
+          "gap": 1.75
+        },
+        {
+          "month": 5,
+          "intern_index": null,
+          "mentor_index": 4.5,
+          "gap": null
+        }
+      ],
+      "cells": [
+        {
+          "month": 1,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 2,
+          "status": "watch",
+          "signal_keys": [
+            "text_vs_score:P-02:intern:2"
+          ]
+        },
+        {
+          "month": 3,
+          "status": "risk",
+          "signal_keys": [
+            "decline:P-02:intern:3",
+            "silence:P-02:intern:3"
+          ]
+        },
+        {
+          "month": 4,
+          "status": "risk",
+          "signal_keys": [
+            "decline:P-02:intern:4",
+            "gap_intern_low:P-02:both:4",
+            "silence:P-02:intern:4"
+          ]
+        },
+        {
+          "month": 5,
+          "status": "watch",
+          "signal_keys": [
+            "silence:P-02:intern:5"
+          ]
+        }
+      ],
+      "signals": [
+        {
+          "key": "text_vs_score:P-02:intern:2",
+          "pair_id": "P-02",
+          "type": "text_vs_score",
+          "role": "intern",
+          "month": 2,
+          "severity": "medium",
+          "basis": "text",
+          "text_analysis": true,
+          "quote": "две недели были переработки",
+          "why": "Индекс стажёра 4,4, а в комментарии: «две недели были переработки»."
+        },
+        {
+          "key": "silence:P-02:intern:3",
+          "pair_id": "P-02",
+          "type": "silence",
+          "role": "intern",
+          "month": 3,
+          "severity": "low",
+          "basis": "comment_length",
+          "text_analysis": false,
+          "why": "Комментарий 9 симв., раньше в среднем 244."
+        },
+        {
+          "key": "decline:P-02:intern:4",
+          "pair_id": "P-02",
+          "type": "decline",
+          "role": "intern",
+          "month": 4,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Индекс стажёра за три месяца: 4,4 → 3,8 → 3."
+        },
+        {
+          "key": "gap_intern_low:P-02:both:4",
+          "pair_id": "P-02",
+          "type": "gap_intern_low",
+          "role": "both",
+          "month": 4,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла. Разрыв растёт второй месяц."
+        },
+        {
+          "key": "silence:P-02:intern:4",
+          "pair_id": "P-02",
+          "type": "silence",
+          "role": "intern",
+          "month": 4,
+          "severity": "low",
+          "basis": "comment_length",
+          "text_analysis": false,
+          "why": "Комментарий пустой, хотя в прошлые месяцы был. Комментарий 0 симв., раньше в среднем 166."
+        },
+        {
+          "key": "silence:P-02:intern:5",
+          "pair_id": "P-02",
+          "type": "silence",
+          "role": "intern",
+          "month": 5,
+          "severity": "medium",
+          "basis": "presence",
+          "text_analysis": false,
+          "why": "Анкеты стажёра за 5-й месяц нет, а наставник свою заполнил."
+        }
+      ],
+      "optional": [
+        {
+          "key": "decline:P-02:intern:3",
+          "pair_id": "P-02",
+          "type": "decline",
+          "role": "intern",
+          "month": 3,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "fires_when": {
+            "decline": [
+              "both_months",
+              "two_month_sum"
+            ]
+          },
+          "why": "Индекс стажёра за три месяца: 4,6 → 4,4 → 3,8."
+        },
+        {
+          "key": "text_vs_score:P-02:mentor:4",
+          "pair_id": "P-02",
+          "type": "text_vs_score",
+          "role": "mentor",
+          "month": 4,
+          "severity": "medium",
+          "basis": "text",
+          "text_analysis": true,
+          "quote": "Стал медленнее",
+          "fires_when": {
+            "text": [
+              "all"
+            ]
+          },
+          "why": "Индекс наставника 4,75, а в комментарии: «Стал медленнее»."
+        },
+        {
+          "key": "text_vs_score:P-02:mentor:5",
+          "pair_id": "P-02",
+          "type": "text_vs_score",
+          "role": "mentor",
+          "month": 5,
+          "severity": "medium",
+          "basis": "text",
+          "text_analysis": true,
+          "quote": "Раньше брал задачи сам",
+          "fires_when": {
+            "text": [
+              "all"
+            ]
+          },
+          "why": "Индекс наставника 4,5, а в комментарии: «Раньше брал задачи сам»."
+        }
+      ]
+    },
+    {
+      "pair_id": "P-03",
+      "intern_id": "S-03",
+      "mentor_id": "M-03",
+      "scenario": "напряжение с наставником",
+      "story": "Стажёр ставит средние оценки, «помощь наставника» падает до 2. Пишет, что наставник отвечает раз в несколько дней. Наставник пишет «всё хорошо» и ставит 4,5–4,75. Разрыв растёт.",
+      "expect_no_signals": false,
+      "status": "risk",
+      "status_by_reading": [
+        "risk"
+      ],
+      "series": [
+        {
+          "month": 1,
+          "intern_index": 3.8,
+          "mentor_index": 4.5,
+          "gap": 0.7
+        },
+        {
+          "month": 2,
+          "intern_index": 3.4,
+          "mentor_index": 4.75,
+          "gap": 1.35
+        },
+        {
+          "month": 3,
+          "intern_index": 3.4,
+          "mentor_index": 4.75,
+          "gap": 1.35
+        },
+        {
+          "month": 4,
+          "intern_index": 3.0,
+          "mentor_index": 4.75,
+          "gap": 1.75
+        },
+        {
+          "month": 5,
+          "intern_index": 3.0,
+          "mentor_index": 4.75,
+          "gap": 1.75
+        }
+      ],
+      "cells": [
+        {
+          "month": 1,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 2,
+          "status": "watch",
+          "signal_keys": [
+            "gap_intern_low:P-03:both:2"
+          ]
+        },
+        {
+          "month": 3,
+          "status": "watch",
+          "signal_keys": [
+            "gap_intern_low:P-03:both:3"
+          ]
+        },
+        {
+          "month": 4,
+          "status": "risk",
+          "signal_keys": [
+            "gap_intern_low:P-03:both:4"
+          ]
+        },
+        {
+          "month": 5,
+          "status": "risk",
+          "signal_keys": [
+            "gap_intern_low:P-03:both:5"
+          ]
+        }
+      ],
+      "signals": [
+        {
+          "key": "gap_intern_low:P-03:both:2",
+          "pair_id": "P-03",
+          "type": "gap_intern_low",
+          "role": "both",
+          "month": 2,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Наставник 4,75, стажёр 3,4, разрыв 1,35 балла."
+        },
+        {
+          "key": "gap_intern_low:P-03:both:3",
+          "pair_id": "P-03",
+          "type": "gap_intern_low",
+          "role": "both",
+          "month": 3,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Наставник 4,75, стажёр 3,4, разрыв 1,35 балла."
+        },
+        {
+          "key": "gap_intern_low:P-03:both:4",
+          "pair_id": "P-03",
+          "type": "gap_intern_low",
+          "role": "both",
+          "month": 4,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
+        },
+        {
+          "key": "gap_intern_low:P-03:both:5",
+          "pair_id": "P-03",
+          "type": "gap_intern_low",
+          "role": "both",
+          "month": 5,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
+        }
+      ],
+      "optional": []
+    },
+    {
+      "pair_id": "P-04",
+      "intern_id": "S-04",
+      "mentor_id": "M-04",
+      "scenario": "нет задач",
+      "story": "Стажёр ставит вежливые 4 почти везде, а пишет, что задач почти нет и он целыми днями читает документацию. Наставник доволен. Проблему видно только по тексту.",
+      "expect_no_signals": false,
+      "status": "risk",
+      "status_by_reading": [
+        "risk"
+      ],
+      "series": [
+        {
+          "month": 1,
+          "intern_index": 4.2,
+          "mentor_index": 4.5,
+          "gap": 0.3
+        },
+        {
+          "month": 2,
+          "intern_index": 4.2,
+          "mentor_index": 4.75,
+          "gap": 0.55
+        },
+        {
+          "month": 3,
+          "intern_index": 4.0,
+          "mentor_index": 4.5,
+          "gap": 0.5
+        },
+        {
+          "month": 4,
+          "intern_index": 4.0,
+          "mentor_index": 4.75,
+          "gap": 0.75
+        },
+        {
+          "month": 5,
+          "intern_index": 3.8,
+          "mentor_index": 4.5,
+          "gap": 0.7
+        }
+      ],
+      "cells": [
+        {
+          "month": 1,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 2,
+          "status": "watch",
+          "signal_keys": [
+            "text_vs_score:P-04:intern:2"
+          ]
+        },
+        {
+          "month": 3,
+          "status": "watch",
+          "signal_keys": [
+            "text_vs_score:P-04:intern:3"
+          ]
+        },
+        {
+          "month": 4,
+          "status": "watch",
+          "signal_keys": [
+            "text_vs_score:P-04:intern:4"
+          ]
+        },
+        {
+          "month": 5,
+          "status": "watch",
+          "signal_keys": [
+            "text_vs_score:P-04:intern:5"
+          ]
+        }
+      ],
+      "signals": [
+        {
+          "key": "text_vs_score:P-04:intern:2",
+          "pair_id": "P-04",
+          "type": "text_vs_score",
+          "role": "intern",
+          "month": 2,
+          "severity": "medium",
+          "basis": "text",
+          "text_analysis": true,
+          "quote": "Задач пока почти нет",
+          "why": "Индекс стажёра 4,2, а в комментарии: «Задач пока почти нет»."
+        },
+        {
+          "key": "text_vs_score:P-04:intern:3",
+          "pair_id": "P-04",
+          "type": "text_vs_score",
+          "role": "intern",
+          "month": 3,
+          "severity": "medium",
+          "basis": "text",
+          "text_analysis": true,
+          "quote": "Попросил задачу, сказали подождать",
+          "why": "Индекс стажёра 4, а в комментарии: «Попросил задачу, сказали подождать»."
+        },
+        {
+          "key": "text_vs_score:P-04:intern:4",
+          "pair_id": "P-04",
+          "type": "text_vs_score",
+          "role": "intern",
+          "month": 4,
+          "severity": "medium",
+          "basis": "text",
+          "text_analysis": true,
+          "quote": "Своих задач у меня по-прежнему нет",
+          "why": "Индекс стажёра 4, а в комментарии: «Своих задач у меня по-прежнему нет»."
+        },
+        {
+          "key": "text_vs_score:P-04:intern:5",
+          "pair_id": "P-04",
+          "type": "text_vs_score",
+          "role": "intern",
+          "month": 5,
+          "severity": "medium",
+          "basis": "text",
+          "text_analysis": true,
+          "quote": "своей задачи так и не появилось",
+          "why": "Индекс стажёра 3,8, а в комментарии: «своей задачи так и не появилось»."
+        }
+      ],
+      "optional": []
+    },
+    {
+      "pair_id": "P-05",
+      "intern_id": "S-05",
+      "mentor_id": "M-05",
+      "scenario": "наставник недоволен",
+      "story": "Стажёр доволен: 4,6–4,8 и «команда классная». Наставник снижает оценки с 4,0 до 2,0: не укладывается в сроки, приходится переделывать. Стажёр не знает, что рискует не попасть в штат.",
+      "expect_no_signals": false,
+      "status": "risk",
+      "status_by_reading": [
+        "risk"
+      ],
+      "series": [
+        {
+          "month": 1,
+          "intern_index": 4.6,
+          "mentor_index": 4.0,
+          "gap": -0.6
+        },
+        {
+          "month": 2,
+          "intern_index": 4.8,
+          "mentor_index": 3.5,
+          "gap": -1.3
+        },
+        {
+          "month": 3,
+          "intern_index": 4.8,
+          "mentor_index": 3.0,
+          "gap": -1.8
+        },
+        {
+          "month": 4,
+          "intern_index": 4.6,
+          "mentor_index": 2.5,
+          "gap": -2.1
+        },
+        {
+          "month": 5,
+          "intern_index": 4.6,
+          "mentor_index": 2.0,
+          "gap": -2.6
+        }
+      ],
+      "cells": [
+        {
+          "month": 1,
+          "status": "ok",
+          "signal_keys": []
+        },
+        {
+          "month": 2,
+          "status": "watch",
+          "signal_keys": [
+            "gap_mentor_low:P-05:both:2"
+          ]
+        },
+        {
+          "month": 3,
+          "status": "risk",
+          "signal_keys": [
+            "decline:P-05:mentor:3",
+            "gap_mentor_low:P-05:both:3"
+          ]
+        },
+        {
+          "month": 4,
+          "status": "risk",
+          "signal_keys": [
+            "decline:P-05:mentor:4",
+            "gap_mentor_low:P-05:both:4"
+          ]
+        },
+        {
+          "month": 5,
+          "status": "risk",
+          "signal_keys": [
+            "decline:P-05:mentor:5",
+            "gap_mentor_low:P-05:both:5"
+          ]
+        }
+      ],
+      "signals": [
+        {
+          "key": "gap_mentor_low:P-05:both:2",
+          "pair_id": "P-05",
+          "type": "gap_mentor_low",
+          "role": "both",
+          "month": 2,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Стажёр 4,8, наставник 3,5, разрыв 1,3 балла."
+        },
+        {
+          "key": "decline:P-05:mentor:3",
+          "pair_id": "P-05",
+          "type": "decline",
+          "role": "mentor",
+          "month": 3,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Индекс наставника за три месяца: 4 → 3,5 → 3."
+        },
+        {
+          "key": "gap_mentor_low:P-05:both:3",
+          "pair_id": "P-05",
+          "type": "gap_mentor_low",
+          "role": "both",
+          "month": 3,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Стажёр 4,8, наставник 3, разрыв 1,8 балла."
+        },
+        {
+          "key": "decline:P-05:mentor:4",
+          "pair_id": "P-05",
+          "type": "decline",
+          "role": "mentor",
+          "month": 4,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Индекс наставника за три месяца: 3,5 → 3 → 2,5."
+        },
+        {
+          "key": "gap_mentor_low:P-05:both:4",
+          "pair_id": "P-05",
+          "type": "gap_mentor_low",
+          "role": "both",
+          "month": 4,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Стажёр 4,6, наставник 2,5, разрыв 2,1 балла."
+        },
+        {
+          "key": "decline:P-05:mentor:5",
+          "pair_id": "P-05",
+          "type": "decline",
+          "role": "mentor",
+          "month": 5,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Индекс наставника за три месяца: 3 → 2,5 → 2."
+        },
+        {
+          "key": "gap_mentor_low:P-05:both:5",
+          "pair_id": "P-05",
+          "type": "gap_mentor_low",
+          "role": "both",
+          "month": 5,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Стажёр 4,6, наставник 2, разрыв 2,6 балла."
+        }
+      ],
+      "optional": []
+    }
+  ],
+  "signals": [
+    {
+      "key": "text_vs_score:P-02:intern:2",
+      "pair_id": "P-02",
+      "type": "text_vs_score",
+      "role": "intern",
+      "month": 2,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "две недели были переработки",
+      "why": "Индекс стажёра 4,4, а в комментарии: «две недели были переработки»."
+    },
+    {
+      "key": "silence:P-02:intern:3",
+      "pair_id": "P-02",
+      "type": "silence",
+      "role": "intern",
+      "month": 3,
+      "severity": "low",
+      "basis": "comment_length",
+      "text_analysis": false,
+      "why": "Комментарий 9 симв., раньше в среднем 244."
+    },
+    {
+      "key": "decline:P-02:intern:4",
+      "pair_id": "P-02",
+      "type": "decline",
+      "role": "intern",
+      "month": 4,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Индекс стажёра за три месяца: 4,4 → 3,8 → 3."
+    },
+    {
+      "key": "gap_intern_low:P-02:both:4",
+      "pair_id": "P-02",
+      "type": "gap_intern_low",
+      "role": "both",
+      "month": 4,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла. Разрыв растёт второй месяц."
+    },
+    {
+      "key": "silence:P-02:intern:4",
+      "pair_id": "P-02",
+      "type": "silence",
+      "role": "intern",
+      "month": 4,
+      "severity": "low",
+      "basis": "comment_length",
+      "text_analysis": false,
+      "why": "Комментарий пустой, хотя в прошлые месяцы был. Комментарий 0 симв., раньше в среднем 166."
+    },
+    {
+      "key": "silence:P-02:intern:5",
+      "pair_id": "P-02",
+      "type": "silence",
+      "role": "intern",
+      "month": 5,
+      "severity": "medium",
+      "basis": "presence",
+      "text_analysis": false,
+      "why": "Анкеты стажёра за 5-й месяц нет, а наставник свою заполнил."
+    },
+    {
+      "key": "gap_intern_low:P-03:both:2",
+      "pair_id": "P-03",
+      "type": "gap_intern_low",
+      "role": "both",
+      "month": 2,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Наставник 4,75, стажёр 3,4, разрыв 1,35 балла."
+    },
+    {
+      "key": "gap_intern_low:P-03:both:3",
+      "pair_id": "P-03",
+      "type": "gap_intern_low",
+      "role": "both",
+      "month": 3,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Наставник 4,75, стажёр 3,4, разрыв 1,35 балла."
+    },
+    {
+      "key": "gap_intern_low:P-03:both:4",
+      "pair_id": "P-03",
+      "type": "gap_intern_low",
+      "role": "both",
+      "month": 4,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
+    },
+    {
+      "key": "gap_intern_low:P-03:both:5",
+      "pair_id": "P-03",
+      "type": "gap_intern_low",
+      "role": "both",
+      "month": 5,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
+    },
+    {
+      "key": "text_vs_score:P-04:intern:2",
+      "pair_id": "P-04",
+      "type": "text_vs_score",
+      "role": "intern",
+      "month": 2,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "Задач пока почти нет",
+      "why": "Индекс стажёра 4,2, а в комментарии: «Задач пока почти нет»."
+    },
+    {
+      "key": "text_vs_score:P-04:intern:3",
+      "pair_id": "P-04",
+      "type": "text_vs_score",
+      "role": "intern",
+      "month": 3,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "Попросил задачу, сказали подождать",
+      "why": "Индекс стажёра 4, а в комментарии: «Попросил задачу, сказали подождать»."
+    },
+    {
+      "key": "text_vs_score:P-04:intern:4",
+      "pair_id": "P-04",
+      "type": "text_vs_score",
+      "role": "intern",
+      "month": 4,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "Своих задач у меня по-прежнему нет",
+      "why": "Индекс стажёра 4, а в комментарии: «Своих задач у меня по-прежнему нет»."
+    },
+    {
+      "key": "text_vs_score:P-04:intern:5",
+      "pair_id": "P-04",
+      "type": "text_vs_score",
+      "role": "intern",
+      "month": 5,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "своей задачи так и не появилось",
+      "why": "Индекс стажёра 3,8, а в комментарии: «своей задачи так и не появилось»."
+    },
+    {
+      "key": "gap_mentor_low:P-05:both:2",
+      "pair_id": "P-05",
+      "type": "gap_mentor_low",
+      "role": "both",
+      "month": 2,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Стажёр 4,8, наставник 3,5, разрыв 1,3 балла."
+    },
+    {
+      "key": "decline:P-05:mentor:3",
+      "pair_id": "P-05",
+      "type": "decline",
+      "role": "mentor",
+      "month": 3,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Индекс наставника за три месяца: 4 → 3,5 → 3."
+    },
+    {
+      "key": "gap_mentor_low:P-05:both:3",
+      "pair_id": "P-05",
+      "type": "gap_mentor_low",
+      "role": "both",
+      "month": 3,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Стажёр 4,8, наставник 3, разрыв 1,8 балла."
+    },
+    {
+      "key": "decline:P-05:mentor:4",
+      "pair_id": "P-05",
+      "type": "decline",
+      "role": "mentor",
+      "month": 4,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Индекс наставника за три месяца: 3,5 → 3 → 2,5."
+    },
+    {
+      "key": "gap_mentor_low:P-05:both:4",
+      "pair_id": "P-05",
+      "type": "gap_mentor_low",
+      "role": "both",
+      "month": 4,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Стажёр 4,6, наставник 2,5, разрыв 2,1 балла."
+    },
+    {
+      "key": "decline:P-05:mentor:5",
+      "pair_id": "P-05",
+      "type": "decline",
+      "role": "mentor",
+      "month": 5,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Индекс наставника за три месяца: 3 → 2,5 → 2."
+    },
+    {
+      "key": "gap_mentor_low:P-05:both:5",
+      "pair_id": "P-05",
+      "type": "gap_mentor_low",
+      "role": "both",
+      "month": 5,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Стажёр 4,6, наставник 2, разрыв 2,6 балла."
+    }
+  ],
+  "optional": [
+    {
+      "key": "decline:P-02:intern:3",
+      "pair_id": "P-02",
+      "type": "decline",
+      "role": "intern",
+      "month": 3,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "fires_when": {
+        "decline": [
+          "both_months",
+          "two_month_sum"
+        ]
+      },
+      "why": "Индекс стажёра за три месяца: 4,6 → 4,4 → 3,8."
+    },
+    {
+      "key": "text_vs_score:P-02:mentor:4",
+      "pair_id": "P-02",
+      "type": "text_vs_score",
+      "role": "mentor",
+      "month": 4,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "Стал медленнее",
+      "fires_when": {
+        "text": [
+          "all"
+        ]
+      },
+      "why": "Индекс наставника 4,75, а в комментарии: «Стал медленнее»."
+    },
+    {
+      "key": "text_vs_score:P-02:mentor:5",
+      "pair_id": "P-02",
+      "type": "text_vs_score",
+      "role": "mentor",
+      "month": 5,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "Раньше брал задачи сам",
+      "fires_when": {
+        "text": [
+          "all"
+        ]
+      },
+      "why": "Индекс наставника 4,5, а в комментарии: «Раньше брал задачи сам»."
+    }
+  ],
+  "near_threshold": [
+    "P-05 mentor м3: меньший из двух месячных спадов: 0.1250 при пороге 0.12",
+    "P-05 mentor м4: меньший из двух месячных спадов: 0.1250 при пороге 0.12",
+    "P-05 mentor м5: меньший из двух месячных спадов: 0.1250 при пороге 0.12"
+  ],
+  "comments": [
+    {
+      "pair_id": "P-01",
+      "role": "intern",
+      "month": 1,
+      "text": "Первый месяц ушёл на доступы и знакомство с хранилищем. Разобрался, как устроены таблицы по абонентам и начислениям, написал первые запросы для отчёта по подключениям за квартал. На дейликах уже понимаю, о чём речь.",
+      "sentiment": 0.5,
+      "topics": [
+        "growth",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "intern",
+      "month": 2,
+      "text": "Сделал первый отчёт целиком: отток по районам за полгода. Его показали на планёрке отдела и попросили добавить разбивку по тарифам, добавил за два дня. Приятно, что отчёт кто-то реально открывает.",
+      "sentiment": 0.6,
+      "topics": [
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "intern",
+      "month": 3,
+      "text": "Перенёс три старых отчёта из Excel в Superset, теперь они обновляются по расписанию. Начал разбираться с Airflow: читаю чужие даги и пробую собрать свой для выгрузки по заявкам.",
+      "sentiment": 0.5,
+      "topics": [
+        "growth"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "intern",
+      "month": 4,
+      "text": "Дали задачу посложнее: витрина по заявкам на подключение GPON, чтобы видеть, на каком шаге они застревают. Поля для витрины предложил сам, со мной согласились. Сейчас она пересчитывается каждую ночь и сходится с биллингом.",
+      "sentiment": 0.6,
+      "topics": [
+        "growth",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "intern",
+      "month": 5,
+      "text": "Показывал витрину руководителю направления. Договорились, что в следующем месяце подключу к ней дашборд для колл-центра. После стажировки хочу остаться в этой команде, тут понятно, куда расти.",
+      "sentiment": 0.7,
+      "topics": [
+        "growth",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "mentor",
+      "month": 1,
+      "text": "Быстро получил доступы, сам разобрался со схемой хранилища. Вопросы задаёт по делу.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "mentor",
+      "month": 2,
+      "text": "Отчёт по оттоку сдал вовремя, правки внёс за два дня.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "mentor",
+      "month": 3,
+      "text": "Перенёс отчёты в Superset без моей помощи. Код читаемый.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "mentor",
+      "month": 4,
+      "text": "Витрину по GPON спроектировал сам, я только проверил. Хороший уровень для стажёра.",
+      "sentiment": 0.6,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-01",
+      "role": "mentor",
+      "month": 5,
+      "text": "Готов брать в штат. Задачи закрывает сам, с командой общается легко.",
+      "sentiment": 0.7,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-02",
+      "role": "intern",
+      "month": 1,
+      "text": "Попал в команду биллинга, в первую же неделю дали задачу: поправить расчёт скидки для пенсионных тарифов. Разобрался в сервисе, сделал, ревью прошло со второго раза. Нравится, что код настоящий и уходит в прод. Ребята на созвонах объясняют спокойно, глупых вопросов тут нет.",
+      "sentiment": 0.7,
+      "topics": [
+        "team",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-02",
+      "role": "intern",
+      "month": 2,
+      "text": "Задачи интересные, но месяц выдался тяжёлый. Перед релизом новых тарифов две недели были переработки, сидели до десяти вечера, в выходные тоже подключался. Релиз вышел, это приятно. Надеюсь, дальше будет спокойнее.",
+      "sentiment": -0.1,
+      "topics": [
+        "overload"
+      ],
+      "quote": "две недели были переработки",
+      "sure": true
+    },
+    {
+      "pair_id": "P-02",
+      "role": "intern",
+      "month": 3,
+      "text": "нормально",
+      "sentiment": 0.0,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-02",
+      "role": "mentor",
+      "month": 1,
+      "text": "Толковый, быстро разобрался в сервисе скидок. Ревью проходит со второго раза, для начала это хорошо.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-02",
+      "role": "mentor",
+      "month": 2,
+      "text": "Закрыл свою часть релиза тарифов, тесты написал сам.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-02",
+      "role": "mentor",
+      "month": 3,
+      "text": "Подключил к интеграции с CRM, пока осваивается.",
+      "sentiment": 0.1,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-02",
+      "role": "mentor",
+      "month": 4,
+      "text": "Стал медленнее: выгрузку для CRM делал неделю, раньше такое занимало два дня.",
+      "sentiment": -0.3,
+      "topics": [],
+      "quote": "Стал медленнее",
+      "sure": false
+    },
+    {
+      "pair_id": "P-02",
+      "role": "mentor",
+      "month": 5,
+      "text": "Раньше брал задачи сам, теперь ждёт, пока назначу.",
+      "sentiment": -0.3,
+      "topics": [],
+      "quote": "Раньше брал задачи сам",
+      "sure": false
+    },
+    {
+      "pair_id": "P-03",
+      "role": "intern",
+      "month": 1,
+      "text": "Тестирую личный кабинет абонента: оплату, смену тарифа, заявки на ремонт. Написал первые тест-кейсы и завёл пять багов, три из них уже починили. Со стендами пока разбираюсь, их тут четыре и у каждого свои данные.",
+      "sentiment": 0.3,
+      "topics": [
+        "growth"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "intern",
+      "month": 2,
+      "text": "Вопросы по задачам пишу наставнику в личку, отвечает раз в несколько дней. Пока жду ответа, задача стоит, беру что-нибудь из общего бэклога. По оплате так и не понял, какие сценарии важнее, спросил в среду, ответа до сих пор нет.",
+      "sentiment": -0.5,
+      "topics": [
+        "mentor",
+        "clarity"
+      ],
+      "quote": "отвечает раз в несколько дней",
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "intern",
+      "month": 3,
+      "text": "Наставник почти не отвечает. Созвон за месяц был один, и тот перенесли. Спрашиваю у разработчиков, они помогают, но это не их работа. Кейсы по смене тарифа написал сам и не уверен, что покрыл нужное.",
+      "sentiment": -0.6,
+      "topics": [
+        "mentor"
+      ],
+      "quote": "Наставник почти не отвечает",
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "intern",
+      "month": 4,
+      "text": "Всё так же. Сообщения висят непрочитанными по два-три дня, ревью моих тест-кейсов никто не делал с июля. Стараюсь лишний раз не дёргать, но без обратной связи непонятно, расту я или нет.",
+      "sentiment": -0.6,
+      "topics": [
+        "mentor",
+        "growth"
+      ],
+      "quote": "Сообщения висят непрочитанными по два-три дня",
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "intern",
+      "month": 5,
+      "text": "Попросил созваниваться раз в неделю на 15 минут. Сказали, что можно, но созвона так и не было. Учусь сам по статьям про автотесты.",
+      "sentiment": -0.4,
+      "topics": [
+        "mentor",
+        "growth"
+      ],
+      "quote": "созвона так и не было",
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "mentor",
+      "month": 1,
+      "text": "Всё хорошо, осваивается.",
+      "sentiment": 0.4,
+      "topics": [
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "mentor",
+      "month": 2,
+      "text": "Справляется.",
+      "sentiment": 0.3,
+      "topics": [
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "mentor",
+      "month": 3,
+      "text": "Всё хорошо, справляется.",
+      "sentiment": 0.4,
+      "topics": [
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "mentor",
+      "month": 4,
+      "text": "Без замечаний.",
+      "sentiment": 0.3,
+      "topics": [
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-03",
+      "role": "mentor",
+      "month": 5,
+      "text": "Всё хорошо.",
+      "sentiment": 0.3,
+      "topics": [
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "intern",
+      "month": 1,
+      "text": "Первые недели знакомился с системой учёта сетевого оборудования, ходил на встречи команды, получил все доступы. Ребята приветливые, обедаем вместе, на ретро позвали с первой же недели.",
+      "sentiment": 0.6,
+      "topics": [
+        "team",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "intern",
+      "month": 2,
+      "text": "Задач пока почти нет. Большую часть дня читаю документацию по OSS и схемы сетевых узлов. Это полезно, но хочется уже что-то сделать руками. Дали поправить одну схему в Visio, сделал за час.",
+      "sentiment": -0.2,
+      "topics": [
+        "tasks_shortage"
+      ],
+      "quote": "Задач пока почти нет",
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "intern",
+      "month": 3,
+      "text": "Попросил задачу, сказали подождать, пока стартует проект по замене коммутаторов. Пока жду, прошёл два внутренних курса и прочитал регламенты по инцидентам. В целом всё хорошо, просто хочется практики.",
+      "sentiment": -0.1,
+      "topics": [
+        "tasks_shortage"
+      ],
+      "quote": "Попросил задачу, сказали подождать",
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "intern",
+      "month": 4,
+      "text": "Проект по коммутаторам сдвинули на следующий квартал. Своих задач у меня по-прежнему нет, помогаю коллегам сверять выгрузки, когда попросят. Бывают дни, когда за весь день ничего не сделал.",
+      "sentiment": -0.4,
+      "topics": [
+        "tasks_shortage"
+      ],
+      "quote": "Своих задач у меня по-прежнему нет",
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "intern",
+      "month": 5,
+      "text": "Пятый месяц, а своей задачи так и не появилось. Документацию по OSS знаю уже лучше некоторых сотрудников, но опыта в проектах ноль. Не понимаю, с чем идти на собеседование в штат.",
+      "sentiment": -0.5,
+      "topics": [
+        "tasks_shortage",
+        "growth"
+      ],
+      "quote": "своей задачи так и не появилось",
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "mentor",
+      "month": 1,
+      "text": "Вежливый, аккуратный. Изучает систему.",
+      "sentiment": 0.4,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "mentor",
+      "month": 2,
+      "text": "Схему узла поправил быстро и аккуратно.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "mentor",
+      "month": 3,
+      "text": "Прошёл два курса по инцидентам, тесты сдал на отлично.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "mentor",
+      "month": 4,
+      "text": "Помогает коллегам со сверкой выгрузок. Доволен.",
+      "sentiment": 0.5,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-04",
+      "role": "mentor",
+      "month": 5,
+      "text": "Спокойный, исполнительный. Возьмём в проект по коммутаторам, когда стартует.",
+      "sentiment": 0.4,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "intern",
+      "month": 1,
+      "text": "Делаю фронт для формы заявки на подключение интернета. Стек знакомый, React и TypeScript, так что влился быстро. Команда классная: на первой неделе позвали на настолки, на ретро все говорят прямо.",
+      "sentiment": 0.8,
+      "topics": [
+        "team",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "intern",
+      "month": 2,
+      "text": "Сдал форму заявки, сейчас по ней доделывают бэкенд. Взял следующую задачу, кабинет для юрлиц. Нравится, что можно приходить с идеями: предложил подсказки по адресу, команда поддержала.",
+      "sentiment": 0.7,
+      "topics": [
+        "team",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "intern",
+      "month": 3,
+      "text": "Месяц пролетел. Сделал три экрана кабинета юрлиц и переписал таблицу договоров, теперь она грузится в разы быстрее. Ходили всей командой на внутренний хакатон, заняли второе место.",
+      "sentiment": 0.8,
+      "topics": [
+        "team",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "intern",
+      "month": 4,
+      "text": "Всё отлично. Освоил дизайн-систему компании, вёрстка пошла быстрее. Сам вызвался показать на демо новый фильтр договоров.",
+      "sentiment": 0.7,
+      "topics": [
+        "growth",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "intern",
+      "month": 5,
+      "text": "Очень хочу остаться в штате. Команда классная, задачи интересные, за пять месяцев научился больше, чем за два курса универа.",
+      "sentiment": 0.8,
+      "topics": [
+        "team",
+        "growth",
+        "positive"
+      ],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "mentor",
+      "month": 1,
+      "text": "Вошёл быстро, React знает. Первую форму собрал за неделю.",
+      "sentiment": 0.3,
+      "topics": [],
+      "quote": null,
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "mentor",
+      "month": 2,
+      "text": "Форму заявки сдал на неделю позже срока. Валидацию адреса пришлось переделывать мне.",
+      "sentiment": -0.5,
+      "topics": [],
+      "quote": "сдал на неделю позже срока",
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "mentor",
+      "month": 3,
+      "text": "Из трёх экранов кабинета юрлиц два вернул на доработку. Оценки сроков не сходятся с реальностью.",
+      "sentiment": -0.5,
+      "topics": [],
+      "quote": "два вернул на доработку",
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "mentor",
+      "month": 4,
+      "text": "Опять сорвал срок по фильтру договоров. На демо показал то, что ещё не прошло ревью.",
+      "sentiment": -0.6,
+      "topics": [],
+      "quote": "Опять сорвал срок",
+      "sure": true
+    },
+    {
+      "pair_id": "P-05",
+      "role": "mentor",
+      "month": 5,
+      "text": "Третий месяц подряд переделываю за ним. Пока не вижу его в штате.",
+      "sentiment": -0.7,
+      "topics": [],
+      "quote": "Пока не вижу его в штате",
+      "sure": true
+    }
+  ],
+  "demo": {
+    "month": 6,
+    "order": [
+      "intern_S-01_m6.json",
+      "mentor_M-01_m6.json",
+      "mentor_M-02_m6.json",
+      "intern_S-03_m6.json",
+      "intern_S-04_m6.json",
+      "mentor_M-05_m6.json"
+    ],
+    "steps": [
+      {
+        "file": "intern_S-01_m6.json",
+        "pair_id": "P-01",
+        "new_signals": [
+          {
+            "key": "decline:P-01:intern:6",
+            "pair_id": "P-01",
+            "type": "decline",
+            "role": "intern",
+            "month": 6,
+            "severity": "high",
+            "basis": "scores",
+            "text_analysis": false,
+            "why": "Индекс стажёра за месяц: 4,6 → 2,6.",
+            "required": true
+          },
+          {
+            "key": "silence:P-01:mentor:6",
+            "pair_id": "P-01",
+            "type": "silence",
+            "role": "mentor",
+            "month": 6,
+            "severity": "medium",
+            "basis": "presence",
+            "text_analysis": false,
+            "why": "Анкеты наставника за 6-й месяц нет, а стажёр свою заполнил.",
+            "required": true
+          }
+        ],
+        "gone_signals": [],
+        "may_appear_by_reading": [
+          "silence:P-02:intern:6",
+          "silence:P-02:mentor:6",
+          "silence:P-03:intern:6",
+          "silence:P-03:mentor:6",
+          "silence:P-04:intern:6",
+          "silence:P-04:mentor:6",
+          "silence:P-05:intern:6",
+          "silence:P-05:mentor:6"
+        ],
+        "pair_status": {
+          "P-01": "risk",
+          "P-02": "risk",
+          "P-03": "risk",
+          "P-04": "risk",
+          "P-05": "risk"
+        },
+        "pair_status_by_reading": {
+          "P-02": [
+            "risk",
+            "watch"
+          ],
+          "P-04": [
+            "risk",
+            "watch"
+          ]
+        }
+      },
+      {
+        "file": "mentor_M-01_m6.json",
+        "pair_id": "P-01",
+        "new_signals": [
+          {
+            "key": "gap_intern_low:P-01:both:6",
+            "pair_id": "P-01",
+            "type": "gap_intern_low",
+            "role": "both",
+            "month": 6,
+            "severity": "high",
+            "basis": "scores",
+            "text_analysis": false,
+            "why": "Наставник 4,75, стажёр 2,6, разрыв 2,15 балла. Разрыв растёт второй месяц.",
+            "required": true
+          }
+        ],
+        "gone_signals": [
+          "silence:P-01:mentor:6"
+        ],
+        "may_appear_by_reading": [],
+        "pair_status": {
+          "P-01": "risk",
+          "P-02": "risk",
+          "P-03": "risk",
+          "P-04": "risk",
+          "P-05": "risk"
+        },
+        "pair_status_by_reading": {
+          "P-02": [
+            "risk",
+            "watch"
+          ],
+          "P-04": [
+            "risk",
+            "watch"
+          ]
+        }
+      },
+      {
+        "file": "mentor_M-02_m6.json",
+        "pair_id": "P-02",
+        "new_signals": [
+          {
+            "key": "silence:P-02:intern:6",
+            "pair_id": "P-02",
+            "type": "silence",
+            "role": "intern",
+            "month": 6,
+            "severity": "medium",
+            "basis": "presence",
+            "text_analysis": false,
+            "why": "Анкеты стажёра за 6-й месяц нет, а наставник свою заполнил.",
+            "required": true
+          }
+        ],
+        "gone_signals": [],
+        "may_appear_by_reading": [
+          "text_vs_score:P-02:mentor:6"
+        ],
+        "pair_status": {
+          "P-01": "risk",
+          "P-02": "risk",
+          "P-03": "risk",
+          "P-04": "risk",
+          "P-05": "risk"
+        },
+        "pair_status_by_reading": {
+          "P-04": [
+            "risk",
+            "watch"
+          ]
+        }
+      },
+      {
+        "file": "intern_S-03_m6.json",
+        "pair_id": "P-03",
+        "new_signals": [
+          {
+            "key": "silence:P-03:mentor:6",
+            "pair_id": "P-03",
+            "type": "silence",
+            "role": "mentor",
+            "month": 6,
+            "severity": "medium",
+            "basis": "presence",
+            "text_analysis": false,
+            "why": "Анкеты наставника за 6-й месяц нет, а стажёр свою заполнил.",
+            "required": true
+          }
+        ],
+        "gone_signals": [],
+        "may_appear_by_reading": [],
+        "pair_status": {
+          "P-01": "risk",
+          "P-02": "risk",
+          "P-03": "risk",
+          "P-04": "risk",
+          "P-05": "risk"
+        },
+        "pair_status_by_reading": {
+          "P-04": [
+            "risk",
+            "watch"
+          ]
+        }
+      },
+      {
+        "file": "intern_S-04_m6.json",
+        "pair_id": "P-04",
+        "new_signals": [
+          {
+            "key": "silence:P-04:mentor:6",
+            "pair_id": "P-04",
+            "type": "silence",
+            "role": "mentor",
+            "month": 6,
+            "severity": "medium",
+            "basis": "presence",
+            "text_analysis": false,
+            "why": "Анкеты наставника за 6-й месяц нет, а стажёр свою заполнил.",
+            "required": true
+          },
+          {
+            "key": "text_vs_score:P-04:intern:6",
+            "pair_id": "P-04",
+            "type": "text_vs_score",
+            "role": "intern",
+            "month": 6,
+            "severity": "medium",
+            "basis": "text",
+            "text_analysis": true,
+            "quote": "Своих задач нет, проект по коммутаторам так и не стартовал",
+            "why": "Индекс стажёра 4, а в комментарии: «Своих задач нет, проект по коммутаторам так и не стартовал».",
+            "required": true
+          },
+          {
+            "key": "silence:P-05:intern:6",
+            "pair_id": "P-05",
+            "type": "silence",
+            "role": "intern",
+            "month": 6,
+            "severity": "medium",
+            "basis": "presence",
+            "text_analysis": false,
+            "why": "Анкеты стажёра за 6-й месяц нет, хотя другие пары этот месяц уже заполнили.",
+            "required": true
+          },
+          {
+            "key": "silence:P-05:mentor:6",
+            "pair_id": "P-05",
+            "type": "silence",
+            "role": "mentor",
+            "month": 6,
+            "severity": "medium",
+            "basis": "presence",
+            "text_analysis": false,
+            "why": "Анкеты наставника за 6-й месяц нет, хотя другие пары этот месяц уже заполнили.",
+            "required": true
+          }
+        ],
+        "gone_signals": [],
+        "may_appear_by_reading": [],
+        "pair_status": {
+          "P-01": "risk",
+          "P-02": "risk",
+          "P-03": "risk",
+          "P-04": "risk",
+          "P-05": "risk"
+        },
+        "pair_status_by_reading": {}
+      },
+      {
+        "file": "mentor_M-05_m6.json",
+        "pair_id": "P-05",
+        "new_signals": [
+          {
+            "key": "decline:P-05:mentor:6",
+            "pair_id": "P-05",
+            "type": "decline",
+            "role": "mentor",
+            "month": 6,
+            "severity": "medium",
+            "basis": "scores",
+            "text_analysis": false,
+            "why": "Индекс наставника за три месяца: 2,5 → 2 → 1,5.",
+            "required": true
+          }
+        ],
+        "gone_signals": [
+          "silence:P-05:mentor:6"
+        ],
+        "may_appear_by_reading": [],
+        "pair_status": {
+          "P-01": "risk",
+          "P-02": "risk",
+          "P-03": "risk",
+          "P-04": "risk",
+          "P-05": "risk"
+        },
+        "pair_status_by_reading": {}
+      }
+    ]
+  }
+}

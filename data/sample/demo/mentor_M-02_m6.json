@@ -1,0 +1,13 @@
+{
+  "role": "mentor",
+  "person_id": "M-02",
+  "month": 6,
+  "answers": {
+    "overall": 4,
+    "speed": 5,
+    "independence": 4,
+    "engagement": 5,
+    "comment": "На дейликах отвечает односложно. Задачи закрывает, но только те, что назначаю сам."
+  },
+  "source": "form"
+}

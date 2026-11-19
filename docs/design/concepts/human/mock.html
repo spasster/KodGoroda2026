@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Стажировки: обзор</title>
+<script>
+  try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;1,400&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- Токены: светлая тема ---------- */
+:root {
+  color-scheme: light;
+  --bg: #ECE6E0;
+  --surface-1: #FBF9F6;
+  --surface-2: #F3EEE8;
+  --surface-3: #E8E0D7;
+  --text-1: #2A211D;
+  --text-2: #574A42;
+  --text-3: #74665C;
+  --border: #DDD3C9;
+  --border-strong: #C3B5A8;
+  --grid: #E7DFD6;
+  --axis: #C6B9AC;
+
+  --brand: #D52B1E;          /* заглушка: фирменный цвет придёт на финале */
+  --brand-ink: #FFFFFF;
+  --brand-hover: #B9231A;
+
+  --intern: #2E62C9;
+  --on-intern: #FFFFFF;
+  --mentor: #4F433C;
+  --on-mentor: #FFFFFF;
+
+  --risk: #8A2E62;  --risk-fill: #8A2E62;  --on-risk: #FFFFFF;  --risk-hl: rgba(138, 46, 98, .15);
+  --watch: #8C6100; --watch-fill: #F0D48C; --on-watch: #2A211D; --watch-hl: rgba(212, 160, 23, .30);
+  --ok: #2E8455;    --ok-fill: #E0EBE1;    --on-ok: #2A211D;
+  --gap-fill: rgba(138, 46, 98, .10);
+  --halo: #FBF9F6;
+
+  --shadow-1: 0 1px 0 rgba(74, 52, 36, .05), 0 14px 32px -22px rgba(74, 52, 36, .45);
+  --shadow-2: 0 2px 6px rgba(74, 52, 36, .08), 0 28px 56px -28px rgba(74, 52, 36, .55);
+  --focus: #2A211D;
+
+  --font-ui: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-voice: "Alegreya", Georgia, serif;
+
+  --fs-12: 14px; --fs-14: 15px; --fs-16: 16px; --fs-18: 18px; --fs-20: 20px;
+  --fs-24: 24px; --fs-28: 28px; --fs-36: 36px; --fs-54: 54px;
+
+  --r-xs: 8px; --r-s: 12px; --r-m: 16px; --r-l: 22px; --r-xl: 30px; --r-pill: 999px;
+
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-io: cubic-bezier(.65, 0, .35, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+  --d-1: 140ms; --d-2: 260ms; --d-3: 480ms; --d-4: 1100ms;
+}
+
+/* ---------- Токены: тёмная тема ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #1A1614; --surface-1: #25201C; --surface-2: #2D2722; --surface-3: #38302A;
+    --text-1: #F3ECE5; --text-2: #CDBFB3; --text-3: #A69688;
+    --border: #3A322C; --border-strong: #54483F; --grid: #352D27; --axis: #4D4239;
+    --brand: #D52B1E; --brand-ink: #FFFFFF; --brand-hover: #E8473B;
+    --intern: #6A93EE; --on-intern: #16120F; --mentor: #D3C6B9; --on-mentor: #16120F;
+    --risk: #E07AAE;  --risk-fill: #A83F78; --on-risk: #FFFFFF; --risk-hl: rgba(224, 122, 174, .24);
+    --watch: #D9AA3E; --watch-fill: #5A4517; --on-watch: #F8E7BC; --watch-hl: rgba(217, 170, 62, .24);
+    --ok: #4DB68A;    --ok-fill: #26342C;   --on-ok: #F3ECE5;
+    --gap-fill: rgba(224, 122, 174, .13);
+    --halo: #25201C;
+    --shadow-1: 0 0 0 1px rgba(255, 255, 255, .035), 0 18px 36px -24px rgba(0, 0, 0, .8);
+    --shadow-2: 0 0 0 1px rgba(255, 255, 255, .05), 0 30px 60px -28px rgba(0, 0, 0, .9);
+    --focus: #F3ECE5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1A1614; --surface-1: #25201C; --surface-2: #2D2722; --surface-3: #38302A;
+  --text-1: #F3ECE5; --text-2: #CDBFB3; --text-3: #A69688;
+  --border: #3A322C; --border-strong: #54483F; --grid: #352D27; --axis: #4D4239;
+  --brand: #D52B1E; --brand-ink: #FFFFFF; --brand-hover: #E8473B;
+  --intern: #6A93EE; --on-intern: #16120F; --mentor: #D3C6B9; --on-mentor: #16120F;
+  --risk: #E07AAE;  --risk-fill: #A83F78; --on-risk: #FFFFFF; --risk-hl: rgba(224, 122, 174, .24);
+  --watch: #D9AA3E; --watch-fill: #5A4517; --on-watch: #F8E7BC; --watch-hl: rgba(217, 170, 62, .24);
+  --ok: #4DB68A;    --ok-fill: #26342C;   --on-ok: #F3ECE5;
+  --gap-fill: rgba(224, 122, 174, .13);
+  --halo: #25201C;
+  --shadow-1: 0 0 0 1px rgba(255, 255, 255, .035), 0 18px 36px -24px rgba(0, 0, 0, .8);
+  --shadow-2: 0 0 0 1px rgba(255, 255, 255, .05), 0 30px 60px -28px rgba(0, 0, 0, .9);
+  --focus: #F3ECE5;
+}
+
+/* ---------- База ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text-1);
+  font: 400 var(--fs-18)/1.5 var(--font-ui);
+  font-feature-settings: "ss01" 0;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--d-2) var(--ease-io), color var(--d-2) var(--ease-io);
+}
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.num { font-variant-numeric: tabular-nums; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap { max-width: 1360px; margin: 0 auto; padding: 0 40px; }
+
+/* ---------- Шапка ---------- */
+.top {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in oklab, var(--bg) 86%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.top .wrap { display: flex; align-items: center; gap: 32px; height: 72px; }
+.mark { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.mark-chip { width: 34px; height: 34px; border-radius: 11px; background: var(--brand); display: grid; place-items: center; }
+.mark-chip svg { width: 20px; height: 20px; }
+.mark b { font-weight: 650; font-size: var(--fs-20); letter-spacing: -.01em; }
+.nav { display: flex; gap: 6px; }
+.nav a {
+  text-decoration: none; padding: 8px 14px; border-radius: var(--r-pill);
+  color: var(--text-2); font-weight: 500; font-size: var(--fs-16);
+  transition: background-color var(--d-1) var(--ease-out), color var(--d-1);
+}
+.nav a:hover { background: var(--surface-3); color: var(--text-1); }
+.nav a { position: relative; }
+.nav a[aria-current="page"] { color: var(--text-1); background: var(--surface-1); }
+.nav a[aria-current="page"]::after { content: ""; position: absolute; left: 50%; bottom: -15px; width: 28px; height: 3px; margin-left: -14px; border-radius: 3px; background: var(--brand); }
+.nav .count { font-variant-numeric: tabular-nums; color: var(--text-3); margin-left: 4px; }
+.top-right { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+.live { display: flex; align-items: center; gap: 10px; color: var(--text-2); font-size: var(--fs-16); }
+.live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); position: relative; }
+.live-dot.ping::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--ok);
+  animation: ping 1200ms var(--ease-out) 2;
+}
+@keyframes ping { from { transform: scale(.4); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
+  height: 44px; padding: 0 18px; border-radius: var(--r-pill); font-weight: 600; font-size: var(--fs-16);
+  transition: background-color var(--d-1) var(--ease-out), transform var(--d-1) var(--ease-out), box-shadow var(--d-1);
+  text-decoration: none; white-space: nowrap;
+}
+.btn:active { transform: scale(.97); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn-ghost { background: transparent; color: var(--text-1); box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.btn-ghost:hover { background: var(--surface-3); }
+.btn-brand { background: var(--brand); color: var(--brand-ink); }
+.btn-brand:hover { background: var(--brand-hover); }
+.btn-soft { background: var(--surface-3); color: var(--text-1); }
+.btn-ink { background: var(--text-1); color: var(--surface-1); }
+.btn-ink:hover { background: var(--text-2); }
+.btn-soft:hover { background: var(--border); }
+
+/* ---------- Подписи макета (не часть продукта) ---------- */
+.screen-label {
+  display: flex; align-items: center; gap: 16px; margin: 88px 0 28px;
+  color: var(--text-3); font-size: var(--fs-14);
+}
+.screen-label::after { content: ""; flex: 1; height: 1px; background: var(--border-strong); }
+.screen-label:first-child { margin-top: 36px; }
+
+/* ---------- Значки статусов и важности ---------- */
+.glyph { width: 20px; height: 20px; flex: none; display: inline-block; vertical-align: middle; }
+.glyph svg, .st svg { width: 100%; height: 100%; display: block; }
+.totals { --cut: var(--bg); }
+.glyph.risk { color: var(--risk); } .glyph.watch { color: var(--watch); } .glyph.ok { color: var(--ok); }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 10px;
+  border-radius: var(--r-pill); font-weight: 600; font-size: var(--fs-16); white-space: nowrap;
+  transition: background-color var(--d-3) var(--ease-out), color var(--d-3) var(--ease-out);
+}
+.pill .glyph { color: currentColor; --cut: var(--risk-fill); }
+.pill.risk { background: var(--risk-fill); color: var(--on-risk); }
+.pill.watch { background: var(--watch-fill); color: var(--on-watch); }
+.pill.ok { background: var(--ok-fill); color: var(--on-ok); }
+.pill.ok .glyph { color: var(--ok); }
+.pill.watch .glyph { color: var(--watch); }
+.pill.big { height: 44px; font-size: var(--fs-18); padding: 0 18px 0 12px; }
+.pill.big .glyph { width: 22px; height: 22px; }
+
+.sev { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: var(--fs-16); color: var(--text-1); white-space: nowrap; }
+.sev svg { width: 20px; height: 18px; }
+.sev.high svg { color: var(--risk); } .sev.medium svg { color: var(--watch); } .sev.low svg { color: var(--text-3); }
+
+.mk { display: inline-block; width: 11px; height: 11px; flex: none; vertical-align: 1px; }
+.mk.i { border-radius: 50%; background: var(--intern); }
+.mk.m { border-radius: 3px; background: var(--mentor); }
+
+/* ---------- Обзор: шапка экрана ---------- */
+.hero { display: grid; grid-template-columns: 1fr auto; gap: 56px; align-items: end; padding: 8px 0 40px; }
+.hero h1 {
+  font-size: clamp(36px, 4.2vw, var(--fs-54)); line-height: 1.08; letter-spacing: -.025em; font-weight: 600;
+  max-width: 19ch; text-wrap: balance;
+}
+.hero .lede { margin-top: 18px; color: var(--text-2); font-size: var(--fs-20); max-width: 56ch; }
+.roll { display: inline-block; position: relative; overflow: hidden; vertical-align: bottom; height: 1.08em; }
+.roll > span { display: block; transition: transform var(--d-3) var(--ease-out); }
+.totals { display: grid; grid-template-columns: auto auto 1fr; column-gap: 14px; row-gap: 6px; align-items: center; margin: 0; padding: 0; list-style: none; }
+.totals li { display: contents; }
+.totals .glyph { width: 24px; height: 24px; }
+.totals .n { font-size: var(--fs-36); font-weight: 600; line-height: 1.1; text-align: right; letter-spacing: -.01em; min-width: 1.4ch; font-variant-numeric: proportional-nums; }
+.totals .l { color: var(--text-2); font-size: var(--fs-18); }
+.totals .sep { grid-column: 1 / -1; height: 1px; background: var(--border-strong); margin: 6px 0; }
+
+/* ---------- Панели ---------- */
+.panel { background: var(--surface-1); border-radius: var(--r-xl); box-shadow: var(--shadow-1); padding: 28px; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 20px; flex-wrap: wrap; }
+.panel-head h2 { font-size: var(--fs-28); font-weight: 600; letter-spacing: -.015em; }
+.panel-head p { color: var(--text-2); font-size: var(--fs-16); }
+.panel-head .key { display: flex; align-items: center; gap: 18px; color: var(--text-2); font-size: var(--fs-16); flex-wrap: wrap; }
+.panel-head .key span { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ---------- Таблица «пара × месяц» ---------- */
+.board { --cols: 214px repeat(6, minmax(112px, 1fr)) 198px; }
+.board-scroll { overflow-x: auto; margin: 0 -8px; padding: 0 8px; }
+.b-row, .b-head { display: grid; grid-template-columns: var(--cols); gap: 8px; align-items: stretch; min-width: 1120px; }
+.b-head { color: var(--text-3); font-size: var(--fs-14); padding: 0 0 10px; }
+.b-head > div { padding: 0 12px; }
+.b-head .m6 { color: var(--text-3); }
+.b-row {
+  padding: 10px 0; border-top: 1px solid var(--border); position: relative;
+  border-radius: var(--r-m); transition: background-color var(--d-2) var(--ease-out);
+}
+.b-row:hover { background: var(--surface-2); }
+.b-row.flash { animation: rowflash 3200ms var(--ease-out); }
+@keyframes rowflash { 0%, 30% { background: color-mix(in oklab, var(--risk-fill) 14%, transparent); } 100% { background: transparent; } }
+.who { padding: 6px 12px 6px 4px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.who-ids { display: flex; align-items: center; gap: 8px; font-size: var(--fs-20); font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
+.who-ids .and { color: var(--text-3); font-weight: 400; }
+.who-cap { color: var(--text-2); font-size: var(--fs-16); line-height: 1.35; }
+.who-cap .pid { color: var(--text-3); margin-right: 6px; }
+
+.cell {
+  position: relative; border-radius: var(--r-m); padding: 10px 12px 8px; min-height: 84px;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+  background: var(--cell-bg); color: var(--cell-ink);
+  --cell-bg: var(--ok-fill); --cell-ink: var(--on-ok); --ci: var(--intern); --cm: var(--mentor); --cut: var(--ok-fill);
+  transition: background-color var(--d-3) var(--ease-out), color var(--d-3) var(--ease-out);
+}
+.cell.watch { --cell-bg: var(--watch-fill); --cell-ink: var(--on-watch); --cut: var(--watch-fill); }
+.cell.risk { --cell-bg: var(--risk-fill); --cell-ink: var(--on-risk); --ci: var(--on-risk); --cm: var(--on-risk); --cut: var(--risk-fill); }
+.cell.empty { --cell-bg: transparent; box-shadow: inset 0 0 0 1.5px var(--border-strong); justify-content: center; align-items: center; color: var(--text-3); font-size: var(--fs-16); }
+.cell.empty { background-image: repeating-linear-gradient(135deg, transparent 0 9px, var(--grid) 9px 10px); }
+.cell .vals { display: flex; gap: 12px; align-items: baseline; font-size: var(--fs-20); font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.cell .vals span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.cell .vals .mk.i { background: var(--ci); }
+.cell .vals .mk.m { background: var(--cm); }
+.cell .vals .miss { font-weight: 500; font-size: var(--fs-16); opacity: .85; }
+.cell .vals .mk.hollow { background: transparent; box-shadow: inset 0 0 0 2px var(--ci); }
+.cell .foot { display: flex; align-items: center; gap: 8px; }
+.cell .st { width: 18px; height: 18px; flex: none; color: currentColor; }
+.cell.ok .st { color: var(--ok); }
+.cell.watch .st { color: var(--watch); }
+.cell .db { flex: 1; min-width: 0; height: 18px; display: block; overflow: visible; }
+.cell.arrive::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 0 var(--risk-fill); animation: ripple 1400ms var(--ease-out) 1;
+}
+@keyframes ripple { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--risk-fill) 70%, transparent); } 100% { box-shadow: 0 0 0 18px transparent; } }
+.cell.arrive .vals, .cell.arrive .foot { animation: settle 700ms var(--ease-spring) both; }
+@keyframes settle { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+
+.verdict { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; padding: 0 4px 0 10px; }
+.verdict .open { color: var(--text-2); font-size: var(--fs-16); }
+.verdict .open a { text-decoration: none; border-bottom: 1.5px solid var(--border-strong); }
+.verdict .open a:hover { border-color: var(--text-1); }
+
+/* ---------- Очередь «С кем поговорить» и поступления ---------- */
+.split { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4.2fr); gap: 24px; margin-top: 24px; align-items: start; }
+.queue { list-style: none; margin: 0; padding: 0; }
+.q { display: grid; grid-template-columns: 136px 1fr; gap: 20px; padding: 22px 0; border-top: 1px solid var(--border); }
+.q:first-child { border-top: 0; padding-top: 4px; }
+.q-who { display: flex; align-items: center; gap: 10px; color: var(--text-2); font-size: var(--fs-16); flex-wrap: wrap; }
+.q-who b { color: var(--text-1); font-weight: 600; }
+.q h3 { font-size: var(--fs-24); font-weight: 600; letter-spacing: -.01em; line-height: 1.25; margin-top: 4px; }
+.q .expl { color: var(--text-2); margin-top: 6px; max-width: 64ch; }
+.q-foot { display: flex; gap: 20px; align-items: center; margin-top: 14px; font-size: var(--fs-16); color: var(--text-2); }
+.q-foot a { color: var(--text-1); font-weight: 600; text-decoration: none; border-bottom: 1.5px solid var(--border-strong); }
+.q-foot a:hover { border-color: var(--text-1); }
+
+.voice { margin: 14px 0 0; padding: 0 0 0 18px; position: relative; max-width: 62ch; }
+.voice::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 3px; background: var(--intern); }
+.voice.mentor::before { background: var(--mentor); }
+.voice p { font-family: var(--font-voice); font-size: 22px; line-height: 1.42; color: var(--text-1); }
+.voice cite { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-style: normal; font-size: var(--fs-14); color: var(--text-3); }
+
+/* подсветка цитаты: маркер проводится слева направо */
+.hl {
+  --hl: var(--risk-hl); --hl-line: var(--risk);
+  background-image: linear-gradient(var(--hl), var(--hl)), linear-gradient(var(--hl-line), var(--hl-line));
+  background-repeat: no-repeat; background-position: 0 0, 0 100%;
+  background-size: 0% 100%, 0% 2px;
+  padding: 0 2px; border-radius: 3px;
+  transition: background-size 900ms var(--ease-out);
+}
+.hl.medium { --hl: var(--watch-hl); --hl-line: var(--watch); }
+.hl.on { background-size: 100% 100%, 100% 2px; }
+
+.feed { list-style: none; margin: 0; padding: 0; position: relative; }
+.feed::before { content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 2px; background: var(--border); border-radius: 2px; }
+.feed li { display: grid; grid-template-columns: 16px 1fr; gap: 16px; padding: 10px 0; position: relative; }
+.feed .dot { width: 16px; height: 16px; margin-top: 4px; display: grid; place-items: center; background: var(--surface-1); }
+.feed .dot i { width: 12px; height: 12px; display: block; }
+.feed .dot i.i { border-radius: 50%; background: var(--intern); }
+.feed .dot i.m { border-radius: 3px; background: var(--mentor); }
+.feed .dot i.x { border-radius: 3px; background: transparent; box-shadow: inset 0 0 0 2px var(--text-3); }
+.feed .t1 { font-weight: 600; }
+.feed .t2 { color: var(--text-2); font-size: var(--fs-16); }
+.feed .t3 { color: var(--text-3); font-size: var(--fs-14); }
+.feed li.new { animation: feednew 2400ms var(--ease-out); border-radius: var(--r-s); }
+@keyframes feednew { 0% { opacity: 0; transform: translateY(-8px); } 18% { opacity: 1; transform: none; } }
+
+/* ---------- Карточка пары ---------- */
+.dossier { padding: 36px; }
+.d-head { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: start; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+.d-head .pid { color: var(--text-3); font-size: var(--fs-16); }
+.d-head h2 { font-size: 48px; line-height: 1.05; letter-spacing: -.025em; font-weight: 600; display: flex; align-items: center; gap: 14px; margin-top: 4px; flex-wrap: wrap; }
+.d-head h2 .mk { width: 18px; height: 18px; }
+.d-head h2 .mk.m { border-radius: 5px; }
+.d-head h2 .and { color: var(--text-3); font-weight: 400; }
+.d-head .summary { margin-top: 14px; color: var(--text-2); font-size: var(--fs-20); max-width: 60ch; }
+.d-head .side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; color: var(--text-2); font-size: var(--fs-16); }
+
+.d-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 40px; padding-top: 28px; }
+.sub-h { font-size: var(--fs-24); font-weight: 600; letter-spacing: -.01em; }
+.sub-p { color: var(--text-2); font-size: var(--fs-16); margin-top: 4px; }
+.legend { display: flex; gap: 22px; flex-wrap: wrap; margin: 14px 0 6px; color: var(--text-2); font-size: var(--fs-16); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend .gapkey { width: 22px; height: 12px; border-radius: 4px; background: var(--gap-fill); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--risk) 35%, transparent); }
+
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .tick { fill: var(--text-3); font: 500 18px var(--font-ui); }
+.chart .lbl { fill: var(--text-1); font: 600 19px var(--font-ui); paint-order: stroke; stroke: var(--halo); stroke-width: 5px; stroke-linejoin: round; }
+.chart .lbl-2 { fill: var(--text-2); font: 600 17px var(--font-ui); paint-order: stroke; stroke: var(--halo); stroke-width: 5px; stroke-linejoin: round; }
+.chart .line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.chart .line.i { stroke: var(--intern); } .chart .line.m { stroke: var(--mentor); }
+.chart .draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw var(--d-4) var(--ease-out) forwards; }
+.chart .draw.m { animation-delay: 160ms; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.chart .ribbon { fill: var(--gap-fill); opacity: 0; animation: fadein 700ms var(--ease-out) 700ms forwards; }
+.chart .late { opacity: 0; animation: fadein 500ms var(--ease-out) 900ms forwards; }
+@keyframes fadein { to { opacity: 1; } }
+.chart .pt { opacity: 0; animation: pop 420ms var(--ease-spring) forwards; transform-box: fill-box; transform-origin: center; }
+@keyframes pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
+.chart .hover-col { fill: transparent; cursor: crosshair; }
+.chart .xhair { stroke: var(--axis); stroke-width: 1; opacity: 0; transition: opacity var(--d-1); }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface-1); color: var(--text-1);
+  border-radius: var(--r-s); box-shadow: var(--shadow-2); padding: 10px 14px; font-size: var(--fs-16);
+  opacity: 0; transform: translateY(4px); transition: opacity var(--d-1), transform var(--d-1) var(--ease-out);
+  min-width: 190px; z-index: 3;
+}
+.tip.on { opacity: 1; transform: none; }
+.tip b { display: block; margin-bottom: 4px; }
+.tip div { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.tip div span:first-child { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); }
+
+.qs { margin-top: 28px; }
+.tabs { display: inline-flex; background: var(--surface-2); border-radius: var(--r-pill); padding: 4px; gap: 2px; margin-top: 12px; }
+.tabs button { border: 0; background: transparent; padding: 7px 16px; border-radius: var(--r-pill); font-size: var(--fs-16); font-weight: 500; color: var(--text-2); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.tabs button[aria-selected="true"] { background: var(--surface-1); color: var(--text-1); box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+.qtable { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: var(--fs-16); table-layout: fixed; }
+.qtable col.n { width: 46px; } .qtable col.sp { width: 112px; }
+.qtable th { text-align: right; font-weight: 500; color: var(--text-3); font-size: var(--fs-14); padding: 6px 8px; }
+.qtable th:first-child { text-align: left; padding-left: 0; }
+.qtable td { padding: 9px 8px; border-top: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+.qtable td:first-child { text-align: left; padding-left: 0; color: var(--text-2); font-weight: 400; }
+.qtable td.low { font-weight: 700; color: var(--text-1); }
+.qtable td.low span { display: inline-grid; place-items: center; min-width: 30px; height: 28px; border-radius: 8px; box-shadow: inset 0 0 0 2px var(--risk); }
+.qtable tr.focus td:first-child { color: var(--text-1); font-weight: 600; }
+.qtable .spark { width: 96px; height: 26px; display: block; margin-left: auto; }
+
+/* сигналы в карточке */
+.sig { border-radius: var(--r-l); background: var(--surface-2); padding: 22px 22px 20px; margin-top: 14px; transition: background-color var(--d-3) var(--ease-out); }
+.sig-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-3); font-size: var(--fs-14); }
+.sig h3 { font-size: var(--fs-24); line-height: 1.22; font-weight: 600; letter-spacing: -.01em; margin-top: 10px; }
+.sig .expl { color: var(--text-2); margin-top: 8px; }
+.sig .expl b { color: var(--text-1); font-weight: 600; }
+.two-voices { display: grid; gap: 4px; margin-top: 6px; }
+.two-voices .voice p { font-size: 21px; }
+.proof { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; color: var(--text-3); font-size: var(--fs-14); line-height: 1.4; }
+.proof svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--ok); }
+.todo { margin-top: 16px; padding: 14px 16px; border-radius: var(--r-m); background: var(--surface-1); }
+.todo b { display: block; font-size: var(--fs-14); color: var(--text-3); font-weight: 500; }
+.todo p { margin-top: 2px; font-weight: 500; }
+.review { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+.review .btn { height: 46px; }
+.stamp { display: none; align-items: center; gap: 10px; font-weight: 600; height: 46px; }
+.stamp svg { width: 26px; height: 26px; }
+.stamp svg path { stroke-dasharray: 30; stroke-dashoffset: 30; transition: stroke-dashoffset 420ms var(--ease-out) 80ms; }
+.sig.done .review .btn { display: none; }
+.sig.done .stamp { display: inline-flex; }
+.sig.done .stamp svg path { stroke-dashoffset: 0; }
+.stamp small { color: var(--text-3); font-weight: 400; font-size: var(--fs-14); }
+.stamp .undo { margin-left: 6px; background: none; border: 0; color: var(--text-2); text-decoration: underline; cursor: pointer; font-size: var(--fs-14); }
+.sig.compact { padding: 16px 20px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+.sig.compact h3 { font-size: var(--fs-18); margin-top: 6px; }
+.older { margin-top: 14px; color: var(--text-3); font-size: var(--fs-16); padding: 0 4px; }
+
+/* лента истории пары */
+.history { margin-top: 44px; padding-top: 32px; border-top: 1px solid var(--border); }
+.h-cols { display: grid; grid-template-columns: 116px 1fr 1fr; gap: 0 32px; margin-top: 20px; color: var(--text-3); font-size: var(--fs-14); }
+.h-cols span { display: inline-flex; align-items: center; gap: 8px; }
+.h-list { list-style: none; margin: 0; padding: 0; position: relative; }
+.h-month { display: grid; grid-template-columns: 116px 1fr 1fr; gap: 0 32px; padding: 22px 0; border-top: 1px solid var(--border); position: relative; }
+.h-month:first-child { border-top: 0; }
+.h-when b { display: block; font-size: var(--fs-20); font-weight: 600; }
+.h-when .gap { display: inline-flex; margin-top: 8px; padding: 3px 10px; border-radius: var(--r-pill); font-size: var(--fs-14); font-weight: 600; background: var(--surface-2); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.h-when .gap.risk { background: var(--risk-fill); color: var(--on-risk); }
+.h-when .gap.watch { background: var(--watch-fill); color: var(--on-watch); }
+.h-voice .score { display: flex; align-items: center; gap: 8px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.h-voice .score small { color: var(--text-3); font-weight: 400; font-size: var(--fs-14); }
+.h-voice p { font-family: var(--font-voice); font-size: 21px; line-height: 1.42; margin-top: 6px; max-width: 46ch; }
+.h-voice p.thin { color: var(--text-3); font-style: italic; }
+.h-sig { grid-column: 2 / -1; margin-top: 12px; display: flex; align-items: center; gap: 12px; color: var(--text-2); font-size: var(--fs-16); }
+.h-sig .sev { font-size: var(--fs-14); }
+.h-more { margin-top: 8px; }
+
+/* ---------- Живое поступление ---------- */
+.live-top { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 48px; align-items: end; margin-bottom: 36px; }
+.live-top h2 { font-size: var(--fs-36); line-height: 1.12; letter-spacing: -.02em; font-weight: 600; max-width: 22ch; }
+.live-top p { color: var(--text-2); font-size: var(--fs-18); max-width: 52ch; }
+.live-top .btn { margin-top: 18px; }
+.stage { position: relative; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 72px; align-items: center; }
+.phone {
+  width: 220px; height: 430px; border-radius: 34px; padding: 10px; background: #2A211D;
+  outline: 1px solid rgba(255, 255, 255, .10); outline-offset: -1px;
+  box-shadow: var(--shadow-2); position: relative; z-index: 1;
+}
+.phone-in { width: 100%; height: 100%; border-radius: 26px; background: var(--surface-1); padding: 24px 14px 14px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.phone-in .ph-t { font-weight: 600; font-size: 16px; line-height: 1.25; }
+.phone-in .ph-s { color: var(--text-3); font-size: 13px; }
+.phone-in .ph-row { display: flex; gap: 5px; }
+.phone-in .ph-row i { flex: 1; height: 30px; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; font-style: normal; font-size: 13px; font-weight: 600; color: var(--text-3); }
+.phone-in .ph-row i.on { background: var(--intern); color: var(--on-intern); }
+.phone-in .ph-q { font-size: 12.5px; color: var(--text-2); margin-top: 4px; }
+.phone-in .ph-c { font-family: var(--font-voice); font-size: 14px; line-height: 1.35; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+.phone-in .ph-b { margin-top: auto; height: 38px; border-radius: 999px; background: var(--brand); color: var(--brand-ink); font-weight: 600; font-size: 14px; display: grid; place-items: center; }
+.desk { position: relative; z-index: 1; background: var(--bg); border-radius: var(--r-l); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.desk-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 8px; }
+.desk-title { text-align: right; }
+.desk-title { font-weight: 600; font-size: var(--fs-20); padding-top: 6px; }
+.desk-title small { display: block; color: var(--text-3); font-weight: 400; font-size: var(--fs-14); }
+.desk .b-row { min-width: 0; grid-template-columns: 84px repeat(6, minmax(0, 1fr)); border-top: 0; padding: 0; }
+.who-ids.stack { flex-direction: column; align-items: flex-start; gap: 2px; }
+.who-ids.stack span { display: inline-flex; align-items: center; gap: 8px; }
+.desk .cell .vals .miss { font-size: 0; gap: 0; }
+.desk .b-row:hover { background: transparent; }
+.desk .who { padding: 0 4px; }
+.desk .b-row .who-ids { font-size: var(--fs-18); }
+.desk .cell { min-height: 74px; padding: 9px 9px 7px; }
+.desk .cell .vals { font-size: 17px; gap: 8px; }
+.desk .cell .vals .mk { width: 9px; height: 9px; }
+.desk .cell.empty { font-size: var(--fs-14); }
+.desk .before { opacity: .6; }
+.desk .tag { display: flex; align-items: center; gap: 12px; font-size: var(--fs-14); color: var(--text-3); margin: 6px 0 0 4px; }
+.desk .tag .pill { height: 30px; font-size: var(--fs-14); padding: 0 12px 0 8px; }
+.desk .tag .pill .glyph { width: 17px; height: 17px; }
+.toast {
+  width: 440px; max-width: 100%; flex: none;
+  background: var(--surface-1); border-radius: var(--r-l); box-shadow: var(--shadow-2); padding: 16px 18px 16px;
+  display: grid; grid-template-columns: 40px 1fr; gap: 14px; z-index: 2;
+}
+.toast .ic { width: 40px; height: 40px; border-radius: 50%; background: var(--risk-fill); color: var(--on-risk); display: grid; place-items: center; position: relative; }
+.toast .ic svg { width: 20px; height: 20px; }
+.toast .t-top { display: flex; justify-content: space-between; gap: 10px; color: var(--text-3); font-size: var(--fs-14); }
+.toast .t-top b { color: var(--text-1); font-size: var(--fs-16); }
+.toast .t-body { margin-top: 2px; font-size: var(--fs-16); color: var(--text-2); line-height: 1.4; }
+.toast .t-body strong { color: var(--text-1); font-weight: 600; }
+.toast .t-quote { font-family: var(--font-voice); font-size: 19px; line-height: 1.35; margin-top: 8px; }
+.toast .t-act { display: flex; gap: 8px; margin-top: 12px; }
+.toast .t-act .btn { height: 38px; padding: 0 14px; font-size: var(--fs-14); }
+.toast.enter { animation: toastin 620ms var(--ease-spring) both; }
+@keyframes toastin { from { opacity: 0; transform: translateY(-14px) scale(.97); } to { opacity: 1; transform: none; } }
+.wire { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: visible; }
+.wire path { fill: none; stroke: var(--border-strong); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+.wire circle { fill: var(--intern); opacity: 0; stroke: var(--surface-1); stroke-width: 3; }
+
+/* ---------- Цвет и бренд ---------- */
+.colors { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 40px; align-items: start; }
+.colors p { color: var(--text-2); max-width: 52ch; margin-top: 10px; }
+.swatches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.sw { border-radius: var(--r-m); background: var(--surface-2); padding: 12px; display: flex; gap: 12px; align-items: center; }
+.sw i { width: 44px; height: 44px; border-radius: 12px; flex: none; display: grid; place-items: center; }
+.sw i .glyph { width: 22px; height: 22px; }
+.sw b { display: block; font-size: var(--fs-16); font-weight: 600; }
+.sw div > span { color: var(--text-3); font-size: var(--fs-14); line-height: 1.3; display: block; }
+.brand-try { display: flex; gap: 8px; align-items: center; margin-top: 18px; flex-wrap: wrap; color: var(--text-2); font-size: var(--fs-16); }
+.brand-try button { width: 32px; height: 32px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5), 0 0 0 1.5px var(--border-strong); }
+.brand-try button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .6), 0 0 0 3px var(--text-1); }
+
+footer { padding: 48px 0 64px; color: var(--text-3); font-size: var(--fs-14); }
+
+/* ---------- Узкие экраны ---------- */
+@media (max-width: 1100px) {
+  .split, .d-grid, .live-top, .stage, .colors { grid-template-columns: minmax(0, 1fr); }
+  .stage { justify-items: center; }
+  .desk { width: 100%; }
+  .desk-head { flex-direction: column; }
+  .hero { grid-template-columns: 1fr; gap: 28px; }
+}
+@media (max-width: 720px) {
+  .wrap { padding: 0 16px; }
+  .top .wrap { gap: 12px; height: 64px; }
+  .nav, .live span { display: none; }
+  .panel, .dossier { padding: 18px; border-radius: var(--r-l); }
+  .q { grid-template-columns: 1fr; gap: 8px; }
+  .h-cols { display: none; }
+  .h-month { grid-template-columns: 1fr; gap: 14px; }
+  .h-sig { grid-column: 1; }
+  .d-head { grid-template-columns: 1fr; }
+  .d-head .side { align-items: flex-start; }
+  .d-head h2 { font-size: 36px; }
+  .desk { overflow-x: auto; }
+  .desk .b-row { min-width: 640px; }
+  .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sw { flex-direction: column; align-items: flex-start; }
+}
+
+/* ---------- Меньше движения ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; transition-delay: 0ms !important; }
+  .chart .draw { stroke-dasharray: none; stroke-dashoffset: 0; }
+  .cell.arrive::after { animation: none; box-shadow: 0 0 0 3px var(--focus); }
+  .b-row.flash { animation: none; box-shadow: inset 0 0 0 2px var(--risk); }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="#overview" aria-label="Стажировки, обзор">
+      <span class="mark-chip" aria-hidden="true">
+        <svg viewBox="0 0 20 20"><circle cx="7" cy="10" r="4.2" fill="var(--brand-ink)"/><rect x="10.6" y="5.8" width="8.4" height="8.4" rx="2.2" fill="none" stroke="var(--brand-ink)" stroke-width="2"/></svg>
+      </span>
+      <b>Стажировки</b>
+    </a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="#overview" aria-current="page">Обзор</a>
+      <a href="#pair">С кем поговорить <span class="count" id="navCount">9</span></a>
+      <a href="form.html">Форма анкеты</a>
+    </nav>
+    <div class="top-right">
+      <div class="live" title="Соединение с сервером анкет"><i class="live-dot" id="liveDot"></i><span id="liveText">На связи, обновлено в 14:32</span></div>
+      <button class="btn btn-ghost" id="themeBtn" type="button" aria-label="Сменить тему">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path id="themeIcon" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <span id="themeLabel">Тёмная тема</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== ОБЗОР ===================== -->
+  <div class="screen-label" id="overview">Экран обзора</div>
+
+  <section class="hero" aria-labelledby="heroTitle">
+    <div>
+      <h1 id="heroTitle">Сегодня стоит поговорить с <span class="roll" id="heroN"><span>3</span></span> <span id="heroWord">парами</span> из 5</h1>
+      <p class="lede">Пять месяцев, 49 анкет. Шестой месяц открыт: ответы приходят через форму и сразу появляются здесь.</p>
+    </div>
+    <ul class="totals" aria-label="Итоги по парам">
+      <li><span class="glyph risk" data-g="risk"></span><span class="n" id="tRisk">3</span><span class="l">пора поговорить</span></li>
+      <li><span class="glyph watch" data-g="watch"></span><span class="n" id="tWatch">1</span><span class="l">присмотреться</span></li>
+      <li><span class="glyph ok" data-g="ok"></span><span class="n" id="tOk">1</span><span class="l">спокойно</span></li>
+      <li class="sep" aria-hidden="true"></li>
+      <li><span></span><span class="n" id="tSig">9</span><span class="l">открытых сигналов</span></li>
+    </ul>
+  </section>
+
+  <section class="panel board" aria-labelledby="boardTitle">
+    <div class="panel-head">
+      <div>
+        <h2 id="boardTitle">Пары по месяцам</h2>
+        <p>В клетке две оценки месяца. Чем дальше друг от друга точки, тем сильнее стороны расходятся.</p>
+      </div>
+      <div class="key" aria-label="Обозначения">
+        <span><i class="mk i"></i>стажёр</span>
+        <span><i class="mk m"></i>наставник</span>
+        <span><span class="glyph ok" data-g="ok"></span>спокойно</span>
+        <span><span class="glyph watch" data-g="watch"></span>присмотреться</span>
+        <span><span class="glyph risk" data-g="risk"></span>пора поговорить</span>
+      </div>
+    </div>
+    <div class="board-scroll">
+      <div class="b-head" role="row">
+        <div>Пара</div><div>Месяц 1</div><div>Месяц 2</div><div>Месяц 3</div><div>Месяц 4</div><div>Месяц 5</div><div class="m6">Месяц 6</div><div>Итог</div>
+      </div>
+      <div id="boardRows"></div>
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="panel" aria-labelledby="queueTitle">
+      <div class="panel-head">
+        <div>
+          <h2 id="queueTitle">С кем поговорить</h2>
+          <p>Сначала срочное. Сигнал предлагает разговор, решение за вами.</p>
+        </div>
+      </div>
+      <ol class="queue" id="queue"></ol>
+    </section>
+    <section class="panel" aria-labelledby="feedTitle">
+      <div class="panel-head"><div><h2 id="feedTitle">Последние анкеты</h2></div></div>
+      <ul class="feed" id="feed"></ul>
+    </section>
+  </div>
+
+  <!-- ===================== КАРТОЧКА ПАРЫ ===================== -->
+  <div class="screen-label" id="pair">Экран карточки пары</div>
+
+  <article class="panel dossier" aria-labelledby="pairTitle">
+    <header class="d-head">
+      <div>
+        <div class="pid">Пара P-03</div>
+        <h2 id="pairTitle"><i class="mk i"></i>S-03 <span class="and">и</span> <i class="mk m"></i>M-03</h2>
+        <p class="summary">Стажёр оценивает месяц на 1,6 балла ниже, чем наставник. Разрыв растёт с первого месяца, а помощь наставника стажёр оценил на 2 из 5.</p>
+      </div>
+      <div class="side">
+        <span class="pill big risk"><span class="glyph" data-g="risk"></span>Пора поговорить</span>
+        <span>2 открытых сигнала</span>
+        <span>Анкеты за 5 месяц пришли вчера</span>
+      </div>
+    </header>
+
+    <div class="d-grid">
+      <div>
+        <h3 class="sub-h">Как каждый оценивает месяц</h3>
+        <p class="sub-p">Средняя оценка анкеты по шкале от 1 до 5. Цифры считает формула, без модели.</p>
+        <div class="legend">
+          <span><i class="mk i"></i>Стажёр S-03</span>
+          <span><i class="mk m"></i>Наставник M-03</span>
+          <span><i class="gapkey"></i>Разрыв между ними</span>
+        </div>
+        <div class="chart" id="chart">
+          <svg id="chartSvg" viewBox="0 0 780 360" role="img" aria-labelledby="chartDesc"><desc id="chartDesc">Оценки стажёра S-03 по месяцам: 3,6, 3,4, 3,4, 3,2, 3,2. Оценки наставника M-03: 4,6, 4,6, 4,7, 4,8, 4,8. Разрыв вырос с 1,0 до 1,6.</desc></svg>
+          <div class="tip" id="tip" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="qs">
+          <h3 class="sub-h">Ответы по вопросам</h3>
+          <div class="tabs" role="tablist">
+            <button role="tab" aria-selected="true"><i class="mk i"></i>Стажёр</button>
+            <button role="tab" aria-selected="false"><i class="mk m"></i>Наставник</button>
+          </div>
+          <table class="qtable" id="qtable"></table>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="sub-h">Сигналы пары</h3>
+        <p class="sub-p">Активны сигналы за последние два месяца.</p>
+
+        <section class="sig" id="sigA" aria-labelledby="sigAt">
+          <div class="sig-top"><span class="sev high" data-sev="high"></span><span>5 месяц, открыт</span></div>
+          <h3 id="sigAt">Стажёру хуже, чем видит наставник</h3>
+          <p class="expl">Стажёр ставит <b>3,2</b>, наставник <b>4,8</b>. Разрыв <b>1,6</b> балла, в первом месяце был 1,0. Помощь наставника стажёр оценил на 2 из 5.</p>
+          <div class="two-voices">
+            <blockquote class="voice">
+              <p>«Пишу вопросы в чат, <span class="hl" data-hl>ответ приходит раз в несколько дней</span>. Хочется хотя бы короткий созвон раз в неделю.»</p>
+              <cite><i class="mk i"></i>Стажёр S-03, 5 месяц</cite>
+            </blockquote>
+            <blockquote class="voice mentor">
+              <p>«Справляется, всё хорошо.»</p>
+              <cite><i class="mk m"></i>Наставник M-03, 5 месяц</cite>
+            </blockquote>
+          </div>
+          <div class="proof">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.2l2.3 2.3 4.7-4.9"/></svg>
+            <span>Фрагмент выделила модель, сервис сверил его с анкетой дословно. Оценки и разрыв посчитаны формулой.</span>
+          </div>
+          <div class="todo"><b>Что сделать</b><p>Поговорить со стажёром один на один, потом с наставником. Предложить короткий созвон раз в неделю.</p></div>
+          <div class="review">
+            <button class="btn btn-ink" type="button" data-review="confirmed">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>Подтвердилось
+            </button>
+            <button class="btn btn-ghost" type="button" data-review="rejected">Ложная тревога</button>
+            <span class="stamp" aria-live="polite">
+              <svg viewBox="0 0 26 26" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="13" r="11" stroke-width="2" opacity=".35"/><path d="M7.5 13.5l3.6 3.6 7.4-8"/></svg>
+              <span class="stamp-text">Подтвердилось</span><small>сегодня, 14:40</small><button class="undo" type="button">Отменить</button>
+            </span>
+          </div>
+        </section>
+
+        <section class="sig compact" aria-labelledby="sigBt">
+          <div>
+            <div class="sig-top"><span class="sev high" data-sev="high"></span><span>4 месяц, открыт</span></div>
+            <h3 id="sigBt">Тот же разрыв месяцем раньше: 4,8 против 3,2</h3>
+          </div>
+          <button class="btn btn-soft" type="button">Подробнее</button>
+        </section>
+        <p class="older">Ещё 3 сигнала за 1–3 месяц. Они старше двух месяцев и на статус пары уже не влияют.</p>
+      </div>
+    </div>
+
+    <section class="history" aria-labelledby="histTitle">
+      <h3 class="sub-h" id="histTitle">История пары</h3>
+      <p class="sub-p">Что писали оба, месяц за месяцем. Подсвечено то, на что опирается сигнал.</p>
+      <div class="h-cols" aria-hidden="true"><span>Месяц</span><span><i class="mk i"></i>Стажёр S-03</span><span><i class="mk m"></i>Наставник M-03</span></div>
+      <ol class="h-list" id="history"></ol>
+      <div class="h-more"><button class="btn btn-soft" type="button">Показать 1 и 2 месяц</button></div>
+    </section>
+  </article>
+
+  <!-- ===================== ЖИВОЕ ПОСТУПЛЕНИЕ ===================== -->
+  <div class="screen-label" id="live">Уведомление о новой анкете</div>
+
+  <section class="panel" aria-labelledby="liveTitle">
+    <div class="live-top">
+      <h2 id="liveTitle">Анкета с телефона появляется на дашборде через секунду</h2>
+      <div>
+        <p>Стажёр S-01 из ровной пары отправляет анкету за 6 месяц. Сервис пересчитывает сигналы, клетка месяца заполняется, пара меняет статус. Перезагружать страницу не нужно.</p>
+        <button class="btn btn-brand" type="button" id="playBtn">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg><span>Отправить тестовую анкету</span>
+        </button>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <svg class="wire" id="wire" aria-hidden="true"><path id="wirePath" d=""/><circle id="wireDot" r="7"/></svg>
+      <div class="phone" aria-label="Форма на телефоне стажёра">
+        <div class="phone-in">
+          <div class="ph-s">Анкета за 6 месяц, S-01</div>
+          <div class="ph-t">Как в целом проходит стажировка?</div>
+          <div class="ph-row"><i>1</i><i class="on">2</i><i>3</i><i>4</i><i>5</i></div>
+          <div class="ph-q">Интересны ли задачи?</div>
+          <div class="ph-row"><i>1</i><i class="on">2</i><i>3</i><i>4</i><i>5</i></div>
+          <div class="ph-q">Что сейчас мешает или помогает?</div>
+          <div class="ph-c">Последние три недели почти нет задач.</div>
+          <div class="ph-b">Отправить анкету</div>
+        </div>
+      </div>
+      <div class="desk" id="desk">
+        <div class="desk-head">
+          <div class="toast" id="toast" role="status" aria-live="polite">
+            <div class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h12v8H8.5L5 16.5v-3H4z"/></svg></div>
+            <div>
+              <div class="t-top"><b>Новая анкета</b><span>только что</span></div>
+              <p class="t-body">Стажёр S-01, 6 месяц, через форму. <strong>Оценка упала с 4,7 до 2,8</strong>, пара P-01 перешла в «Пора поговорить».</p>
+              <p class="t-quote">«Последние три недели <span class="hl" data-hl>почти нет задач</span>.»</p>
+              <div class="t-act"><a class="btn btn-brand" href="#overview">Открыть пару</a><button class="btn btn-ghost" type="button">Позже</button></div>
+            </div>
+          </div>
+          <div class="desk-title">Пары по месяцам<small>так HR видит это у себя</small></div>
+        </div>
+        <div class="tag">Было после 5 месяца <span class="pill ok"><span class="glyph" data-g="ok"></span>Спокойно</span></div>
+        <div id="deskBefore"></div>
+        <div class="tag">Стало после анкеты за 6 месяц <span class="pill risk"><span class="glyph" data-g="risk"></span>Пора поговорить</span></div>
+        <div id="deskAfter"></div>
+      </div>
+    </div>
+  </section>
+
+
+  <div class="screen-label">Цвет бренда и цвета статусов</div>
+
+  <section class="panel colors" aria-labelledby="colorsTitle">
+    <div>
+      <h2 class="sub-h" id="colorsTitle" style="font-size:var(--fs-28)">Красный достаётся бренду</h2>
+      <p>Фирменный цвет МГТС придёт на финале и встанет в один токен. Он красит логотип, кнопки и активный пункт меню. В таблицу, графики и значки статусов бренд не заходит.</p>
+      <p>Риск сливовый, красного в данных нет совсем. Поэтому красный бренд с риском не спорит. Статус всегда читается ещё и формой значка: пустой круг, половина, полный круг.</p>
+      <div class="brand-try" role="group" aria-label="Примерить цвет бренда">
+        <span>Примерить бренд:</span>
+        <button type="button" style="background:#D52B1E" data-brand="#D52B1E" data-hover="#B9231A" aria-pressed="true" aria-label="Красный"></button>
+        <button type="button" style="background:#1F5FBF" data-brand="#1F5FBF" data-hover="#174C9C" aria-pressed="false" aria-label="Синий"></button>
+        <button type="button" style="background:#1E7A4C" data-brand="#1E7A4C" data-hover="#16613C" aria-pressed="false" aria-label="Зелёный"></button>
+        <button type="button" style="background:#2A211D" data-brand="#2A211D" data-hover="#463A33" aria-pressed="false" aria-label="Графитовый"></button>
+      </div>
+    </div>
+    <div class="swatches">
+      <div class="sw"><i style="background:var(--brand)"></i><div><b>Бренд</b><span>логотип, кнопки, меню</span></div></div>
+      <div class="sw"><i style="background:var(--intern)"></i><div><b>Стажёр</b><span>круг, линия на графике</span></div></div>
+      <div class="sw"><i style="background:var(--mentor)"></i><div><b>Наставник</b><span>квадрат, вторая линия</span></div></div>
+      <div class="sw"><i style="background:var(--risk-fill);color:var(--on-risk)"><span class="glyph" data-g="risk" style="--cut:var(--risk-fill)"></span></i><div><b>Пора поговорить</b><span>полный круг</span></div></div>
+      <div class="sw"><i style="background:var(--watch-fill);color:var(--watch)"><span class="glyph" data-g="watch"></span></i><div><b>Присмотреться</b><span>половина круга</span></div></div>
+      <div class="sw"><i style="background:var(--ok-fill);color:var(--ok)"><span class="glyph" data-g="ok"></span></i><div><b>Спокойно</b><span>пустой круг</span></div></div>
+    </div>
+  </section>
+
+  <footer>Концепция «Люди, а не строки». Данные тестовые: 5 пар, 5 месяцев, 6-й открыт для живого демо.</footer>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+  var fmt = function (v) { return v == null ? '' : v.toFixed(1).replace('.', ','); };
+
+  /* ---------- значки ---------- */
+  var G = {
+    ok: '<svg class="glyph-svg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>',
+    watch: '<svg class="glyph-svg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M10 2.8a7.2 7.2 0 0 0 0 14.4z" fill="currentColor"/></svg>',
+    risk: '<svg class="glyph-svg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.4" fill="currentColor"/><rect x="8.8" y="4.9" width="2.4" height="6.6" rx="1.2" fill="var(--cut, var(--surface-1))"/><circle cx="10" cy="14.4" r="1.4" fill="var(--cut, var(--surface-1))"/></svg>'
+  };
+  var STATUS = { risk: 'Пора поговорить', watch: 'Присмотреться', ok: 'Спокойно' };
+  var SEV = { high: ['Срочно', 3], medium: ['Важно', 2], low: ['На заметку', 1] };
+  function sevHTML(s) {
+    var n = SEV[s][1], r = '';
+    for (var k = 0; k < 3; k++) r += '<rect x="' + (1 + k * 6.5) + '" y="' + (12 - k * 5) + '" width="4.4" height="' + (5 + k * 5) + '" rx="1.4" fill="currentColor" opacity="' + (k < n ? 1 : .22) + '"/>';
+    return '<svg viewBox="0 0 20 18" aria-hidden="true">' + r + '</svg>' + SEV[s][0];
+  }
+  function paintGlyphs(scope) {
+    (scope || document).querySelectorAll('[data-g]').forEach(function (el) { el.innerHTML = G[el.dataset.g]; });
+    (scope || document).querySelectorAll('[data-sev]').forEach(function (el) { el.innerHTML = sevHTML(el.dataset.sev); });
+  }
+  function pill(status, big) {
+    return '<span class="pill ' + status + (big ? ' big' : '') + '"><span class="glyph">' + G[status] + '</span>' + STATUS[status] + '</span>';
+  }
+
+  /* ---------- данные тестового набора ---------- */
+  var BASE = [
+    { id: 'P-01', s: 'S-01', m: 'M-01', I: [4.4, 4.6, 4.5, 4.6, 4.7, null], M: [4.5, 4.4, 4.6, 4.6, 4.7, null],
+      cells: ['ok', 'ok', 'ok', 'ok', 'ok', null], status: 'ok', open: 0, cap: 'Пять месяцев без сигналов' },
+    { id: 'P-02', s: 'S-02', m: 'M-02', I: [4.6, 4.4, 3.8, 3.0, null, null], M: [4.6, 4.6, 4.4, 4.2, 4.0, null],
+      cells: ['ok', 'ok', 'watch', 'risk', 'watch', null], missI: [4], status: 'risk', open: 4, cap: 'Перестал писать и пропустил анкету' },
+    { id: 'P-03', s: 'S-03', m: 'M-03', I: [3.6, 3.4, 3.4, 3.2, 3.2, null], M: [4.6, 4.6, 4.7, 4.8, 4.8, null],
+      cells: ['watch', 'watch', 'risk', 'risk', 'risk', null], status: 'risk', open: 2, cap: 'Стажёру хуже, чем видит наставник' },
+    { id: 'P-04', s: 'S-04', m: 'M-04', I: [4.0, 4.2, 4.0, 4.0, 4.0, null], M: [4.4, 4.5, 4.6, 4.6, 4.6, null],
+      cells: ['ok', 'watch', 'watch', 'ok', 'watch', null], status: 'watch', open: 1, cap: 'Ставит 4, а пишет, что задач нет' },
+    { id: 'P-05', s: 'S-05', m: 'M-05', I: [4.6, 4.8, 4.6, 4.8, 4.8, null], M: [4.2, 3.6, 3.0, 2.6, 2.4, null],
+      cells: ['ok', 'watch', 'risk', 'risk', 'risk', null], status: 'risk', open: 2, cap: 'Наставник недоволен, стажёр не знает' }
+  ];
+  var pairs = JSON.parse(JSON.stringify(BASE));
+
+  /* ---------- клетка месяца: две оценки и «гантель» ---------- */
+  function dumbbell(i, m) {
+    var x = function (v) { return 7 + (v - 1) / 4 * 106; };
+    var s = '<svg class="db" viewBox="0 0 120 18" aria-hidden="true">' +
+      '<line x1="7" y1="9" x2="113" y2="9" stroke="currentColor" stroke-opacity=".22" stroke-width="1.5" stroke-linecap="round"/>';
+    if (i != null && m != null) s += '<line x1="' + x(i) + '" y1="9" x2="' + x(m) + '" y2="9" stroke="currentColor" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>';
+    if (m != null) s += '<rect x="' + (x(m) - 5.5) + '" y="3.5" width="11" height="11" rx="3" fill="var(--cm)" stroke="var(--cell-bg)" stroke-width="2"/>';
+    if (i != null) s += '<circle cx="' + x(i) + '" cy="9" r="5.8" fill="var(--ci)" stroke="var(--cell-bg)" stroke-width="2"/>';
+    return s + '</svg>';
+  }
+  function cellHTML(p, k, extra) {
+    var st = p.cells[k], i = p.I[k], m = p.M[k];
+    if (!st) return '<div class="cell empty" role="cell" aria-label="Месяц ' + (k + 1) + ': анкет пока нет">ждём анкеты</div>';
+    var missI = p.missI && p.missI.indexOf(k) > -1;
+    var label = 'Месяц ' + (k + 1) + ': стажёр ' + (i == null ? 'не прислал анкету' : fmt(i)) + ', наставник ' + (m == null ? 'не прислал анкету' : fmt(m)) + '. ' + STATUS[st] + '.';
+    return '<div class="cell ' + st + (extra || '') + '" role="cell" aria-label="' + label + '">' +
+      '<div class="vals">' +
+        (i == null ? '<span class="miss"><i class="mk i hollow"></i>' + (missI ? 'нет' : 'ждём') + '</span>' : '<span><i class="mk i"></i>' + fmt(i) + '</span>') +
+        (m == null ? '<span class="miss"><i class="mk m" style="opacity:.5"></i>—</span>' : '<span><i class="mk m"></i>' + fmt(m) + '</span>') +
+      '</div><div class="foot">' + dumbbell(i, m) + '<span class="st">' + G[st] + '</span></div></div>';
+  }
+  function plural(n, a, b, c) { var m10 = n % 10, m100 = n % 100; if (m10 === 1 && m100 !== 11) return a; if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return b; return c; }
+  function rowHTML(p, opts) {
+    opts = opts || {};
+    var cells = '';
+    for (var k = 0; k < 6; k++) cells += cellHTML(p, k, opts.arrive === k ? ' arrive' : '');
+    var verdict = opts.compact ? '' :
+      '<div class="verdict" role="cell">' + pill(p.status) +
+      '<span class="open">' + (p.open ? '<a href="#pair">' + p.open + ' ' + plural(p.open, 'сигнал', 'сигнала', 'сигналов') + '</a>' : 'сигналов нет') + '</span></div>';
+    return '<div class="b-row' + (opts.flash ? ' flash' : '') + '" role="row" data-pair="' + p.id + '">' +
+      '<div class="who" role="rowheader">' + (opts.compact
+        ? '<div class="who-ids stack"><span><i class="mk i"></i>' + p.s + '</span><span><i class="mk m"></i>' + p.m + '</span></div>'
+        : '<div class="who-ids"><i class="mk i"></i>' + p.s + ' <span class="and">и</span> <i class="mk m"></i>' + p.m + '</div>') +
+      (opts.compact ? '' : '<div class="who-cap"><span class="pid">' + p.id + '</span>' + p.cap + '</div>') + '</div>' +
+      cells + verdict + '</div>';
+  }
+  function renderBoard(arriveId) {
+    document.getElementById('boardRows').innerHTML = pairs.map(function (p) {
+      return rowHTML(p, arriveId === p.id ? { arrive: 5, flash: true } : {});
+    }).join('');
+  }
+
+  /* ---------- очередь «с кем поговорить» ---------- */
+  var QUEUE = [
+    { pair: 'P-05', who: ['S-05', 'M-05'], sev: 'high', month: 5, title: 'Наставник недоволен, а стажёр об этом не знает',
+      expl: 'Наставник ставит 2,4, стажёр 4,8. Оценка наставника падает с первого месяца: 4,2 → 3,6 → 3,0 → 2,6 → 2,4.',
+      role: 'mentor', cite: 'Наставник M-05, 5 месяц', pre: 'Сроки снова сорваны, ', hl: 'две задачи из трёх пришлось переделывать', post: '.', more: 1 },
+    { pair: 'P-03', who: ['S-03', 'M-03'], sev: 'high', month: 5, title: 'Стажёру хуже, чем видит наставник',
+      expl: 'Стажёр ставит 3,2, наставник 4,8. Разрыв 1,6 балла, в первом месяце был 1,0.',
+      role: 'intern', cite: 'Стажёр S-03, 5 месяц', pre: 'Пишу вопросы в чат, ', hl: 'ответ приходит раз в несколько дней', post: '.', more: 1 },
+    { pair: 'P-02', who: ['S-02', 'M-02'], sev: 'medium', month: 5, title: 'Стажёр не прислал анкету за 5 месяц',
+      expl: 'Наставник свою прислал. До этого комментарии стажёра сжались со 180 знаков до слова «нормально», а в 4 месяце поле осталось пустым.',
+      role: 'mentor', cite: 'Наставник M-02, 4 месяц', pre: 'Стал медленнее, ', hl: 'раньше брал задачи сам', post: '.', more: 3 },
+    { pair: 'P-04', who: ['S-04', 'M-04'], sev: 'medium', month: 5, title: 'Оценки хорошие, а в комментарии жалоба',
+      expl: 'Стажёр ставит 4,0, а про нехватку задач пишет уже в третьей анкете.',
+      role: 'intern', cite: 'Стажёр S-04, 5 месяц', pre: 'Всё так же: ', hl: 'задач почти нет', post: ', жду, когда дадут что-то своё.', more: 0 }
+  ];
+  document.getElementById('queue').innerHTML = QUEUE.map(function (q) {
+    return '<li class="q"><div><span class="sev ' + q.sev + '" data-sev="' + q.sev + '"></span></div><div>' +
+      '<div class="q-who"><b>' + q.who[0] + ' и ' + q.who[1] + '</b><span>' + q.pair + '</span><span>' + q.month + ' месяц</span></div>' +
+      '<h3>' + q.title + '</h3><p class="expl">' + q.expl + '</p>' +
+      '<blockquote class="voice' + (q.role === 'mentor' ? ' mentor' : '') + '"><p>«' + q.pre + '<span class="hl ' + (q.sev === 'high' ? '' : 'medium') + '" data-hl>' + q.hl + '</span>' + q.post + '»</p>' +
+      '<cite><i class="mk ' + (q.role === 'mentor' ? 'm' : 'i') + '"></i>' + q.cite + '</cite></blockquote>' +
+      '<div class="q-foot"><a href="#pair">Открыть пару</a>' + (q.more ? '<span>ещё ' + q.more + ' ' + plural(q.more, 'сигнал', 'сигнала', 'сигналов') + '</span>' : '') + '</div>' +
+      '</div></li>';
+  }).join('');
+
+  /* ---------- последние анкеты ---------- */
+  var FEED = [
+    { r: 'm', t1: 'Наставник M-05', t2: 'анкета за 5 месяц, через форму', t3: 'сегодня, 11:02' },
+    { r: 'i', t1: 'Стажёр S-03', t2: 'анкета за 5 месяц, через форму', t3: 'сегодня, 09:47' },
+    { r: 'm', t1: 'Наставник M-03', t2: 'анкета за 5 месяц, через форму', t3: 'вчера, 18:20' },
+    { r: 'i', t1: 'Стажёр S-04', t2: 'анкета за 5 месяц, из Яндекс Форм', t3: 'вчера, 16:05' },
+    { r: 'm', t1: 'Наставник M-02', t2: 'анкета за 5 месяц, через форму', t3: 'вчера, 12:30' },
+    { r: 'x', t1: '44 анкеты из Excel', t2: 'история за 1–5 месяц', t3: '17 ноября' }
+  ];
+  function feedItem(f, isNew) {
+    return '<li' + (isNew ? ' class="new"' : '') + '><span class="dot"><i class="' + f.r + '"></i></span><div><div class="t1">' + f.t1 + '</div><div class="t2">' + f.t2 + '</div><div class="t3">' + f.t3 + '</div></div></li>';
+  }
+  function renderFeed(withNew) {
+    var list = FEED.slice();
+    var html = list.map(function (f) { return feedItem(f); });
+    if (withNew) { html.unshift(feedItem({ r: 'i', t1: 'Стажёр S-01', t2: 'анкета за 6 месяц, через форму', t3: 'только что' }, true)); html.pop(); }
+    document.getElementById('feed').innerHTML = html.join('');
+  }
+  renderFeed(false);
+
+  /* ---------- график пары P-03 ---------- */
+  var P3 = BASE[2];
+  function renderChart() {
+    var svg = document.getElementById('chartSvg');
+    var X = function (m) { return 64 + (m - 1) * 130; };
+    var Y = function (v) { return 296 - (v - 1) / 4 * 256; };
+    var I = P3.I.slice(0, 5), M = P3.M.slice(0, 5);
+    var s = svg.querySelector('desc').outerHTML;
+    for (var v = 1; v <= 5; v++) {
+      s += '<line x1="48" x2="740" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="' + (v === 1 ? 'var(--axis)' : 'var(--grid)') + '" stroke-width="1"/>';
+      s += '<text class="tick" x="36" y="' + (Y(v) + 5) + '" text-anchor="end">' + v + '</text>';
+    }
+    for (var m = 1; m <= 6; m++) s += '<text class="tick" x="' + X(m) + '" y="326" text-anchor="middle">' + (m === 6 ? '6' : m) + '</text>';
+    s += '<text class="tick" x="740" y="352" text-anchor="end">месяц стажировки</text>';
+    s += '<line x1="' + X(6) + '" x2="' + X(6) + '" y1="' + Y(5) + '" y2="' + Y(1) + '" stroke="var(--border-strong)" stroke-width="1.5" stroke-dasharray="3 6" stroke-linecap="round"/>';
+    s += '<text class="tick" x="' + (X(6) - 10) + '" y="' + (Y(1) - 12) + '" text-anchor="end">ждём анкеты</text>';
+    var ptsI = I.map(function (v, k) { return [X(k + 1), Y(v)]; });
+    var ptsM = M.map(function (v, k) { return [X(k + 1), Y(v)]; });
+    var poly = ptsI.concat(ptsM.slice().reverse()).map(function (p) { return p.join(','); }).join(' ');
+    s += '<polygon class="ribbon" points="' + poly + '"/>';
+    var d = function (pts) { return 'M' + pts.map(function (p) { return p.join(','); }).join(' L'); };
+    s += '<path class="line m draw" d="' + d(ptsM) + '"/>';
+    s += '<path class="line i draw" d="' + d(ptsI) + '"/>';
+    // разрыв в 1 и 5 месяце
+    var g1 = (M[0] - I[0]), g5 = (M[4] - I[4]);
+    s += '<g class="late">' +
+      '<line x1="' + (X(5) - 22) + '" x2="' + (X(5) - 22) + '" y1="' + (Y(M[4]) + 10) + '" y2="' + (Y(I[4]) - 10) + '" stroke="var(--risk)" stroke-width="2" stroke-linecap="round"/>' +
+      '<line x1="' + (X(5) - 27) + '" x2="' + (X(5) - 17) + '" y1="' + (Y(M[4]) + 10) + '" y2="' + (Y(M[4]) + 10) + '" stroke="var(--risk)" stroke-width="2" stroke-linecap="round"/>' +
+      '<line x1="' + (X(5) - 27) + '" x2="' + (X(5) - 17) + '" y1="' + (Y(I[4]) - 10) + '" y2="' + (Y(I[4]) - 10) + '" stroke="var(--risk)" stroke-width="2" stroke-linecap="round"/>' +
+      '<text class="lbl" x="' + (X(5) - 34) + '" y="' + ((Y(M[4]) + Y(I[4])) / 2 + 6) + '" text-anchor="end">разрыв ' + fmt(g5) + '</text>' +
+      '<text class="lbl-2" x="' + (X(1) + 14) + '" y="' + ((Y(M[0]) + Y(I[0])) / 2 + 5) + '">' + fmt(g1) + '</text>' +
+      '<text class="lbl" x="' + (X(5) + 14) + '" y="' + (Y(M[4]) + 7) + '">Наставник ' + fmt(M[4]) + '</text>' +
+      '<text class="lbl" x="' + (X(5) + 14) + '" y="' + (Y(I[4]) + 7) + '">Стажёр ' + fmt(I[4]) + '</text>' +
+      '</g>';
+    ptsM.forEach(function (p, k) { s += '<rect class="pt" style="animation-delay:' + (300 + k * 110) + 'ms" x="' + (p[0] - 6.5) + '" y="' + (p[1] - 6.5) + '" width="13" height="13" rx="3.5" fill="var(--mentor)" stroke="var(--halo)" stroke-width="2.5"/>'; });
+    ptsI.forEach(function (p, k) { s += '<circle class="pt" style="animation-delay:' + (300 + k * 110) + 'ms" cx="' + p[0] + '" cy="' + p[1] + '" r="7" fill="var(--intern)" stroke="var(--halo)" stroke-width="2.5"/>'; });
+    s += '<line class="xhair" id="xhair" x1="0" x2="0" y1="' + Y(5) + '" y2="' + Y(1) + '"/>';
+    for (var k = 1; k <= 5; k++) s += '<rect class="hover-col" data-m="' + k + '" x="' + (X(k) - 65) + '" y="20" width="130" height="290" tabindex="0" aria-label="Месяц ' + k + '"/>';
+    svg.innerHTML = s;
+    svg.querySelectorAll('.draw').forEach(function (p) { p.style.setProperty('--len', Math.ceil(p.getTotalLength()) + 1); });
+
+    var tip = document.getElementById('tip'), xh = document.getElementById('xhair'), box = document.getElementById('chart');
+    function show(k) {
+      var i = I[k - 1], m = M[k - 1];
+      tip.innerHTML = '<b>' + k + ' месяц</b>' +
+        '<div><span><i class="mk i"></i>Стажёр</span><span class="num">' + fmt(i) + '</span></div>' +
+        '<div><span><i class="mk m"></i>Наставник</span><span class="num">' + fmt(m) + '</span></div>' +
+        '<div><span>Разрыв</span><span class="num">' + fmt(m - i) + '</span></div>';
+      var r = svg.getBoundingClientRect(), sc = r.width / 780;
+      var left = X(k) * sc + 16; if (left + 210 > r.width) left = X(k) * sc - 226;
+      tip.style.left = left + 'px'; tip.style.top = (Y(m) * sc - 10) + 'px';
+      tip.classList.add('on');
+      xh.setAttribute('x1', X(k)); xh.setAttribute('x2', X(k)); xh.style.opacity = 1;
+    }
+    function hide() { tip.classList.remove('on'); xh.style.opacity = 0; }
+    svg.querySelectorAll('.hover-col').forEach(function (c) {
+      c.addEventListener('mouseenter', function () { show(+c.dataset.m); });
+      c.addEventListener('focus', function () { show(+c.dataset.m); });
+      c.addEventListener('mouseleave', hide); c.addEventListener('blur', hide);
+    });
+  }
+  renderChart();
+
+  /* ---------- ответы по вопросам ---------- */
+  var QS = [
+    ['Как в целом проходит стажировка', [4, 3, 3, 3, 3]],
+    ['Насколько интересны задачи', [4, 4, 4, 4, 4]],
+    ['Насколько понятно, что ждут', [3, 3, 3, 3, 3]],
+    ['Хватает ли помощи наставника', [4, 3, 3, 2, 2]],
+    ['Насколько комфортна нагрузка', [3, 4, 4, 4, 4]]
+  ];
+  function spark(vals) {
+    var x = function (k) { return 4 + k * 22; }, y = function (v) { return 22 - (v - 1) / 4 * 18; };
+    var d = 'M' + vals.map(function (v, k) { return x(k) + ',' + y(v); }).join(' L');
+    var last = vals.length - 1;
+    return '<svg class="spark" viewBox="0 0 96 26" aria-hidden="true"><path d="' + d + '" fill="none" stroke="var(--intern)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="' + x(last) + '" cy="' + y(vals[last]) + '" r="3.5" fill="var(--intern)"/></svg>';
+  }
+  document.getElementById('qtable').innerHTML =
+    '<colgroup><col><col class="n"><col class="n"><col class="n"><col class="n"><col class="n"><col class="sp"></colgroup><thead><tr><th>Вопрос анкеты стажёра</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th><span class="sr">Динамика</span></th></tr></thead><tbody>' +
+    QS.map(function (q) {
+      var focus = q[1].some(function (v) { return v <= 2; });
+      return '<tr' + (focus ? ' class="focus"' : '') + '><td>' + q[0] + '</td>' + q[1].map(function (v) { return v <= 2 ? '<td class="low"><span>' + v + '</span></td>' : '<td>' + v + '</td>'; }).join('') + '<td>' + spark(q[1]) + '</td></tr>';
+    }).join('') + '</tbody>';
+
+  /* ---------- история пары ---------- */
+  var HIST = [
+    { m: 5, i: 3.2, mm: 4.8, gap: 'risk',
+      ti: ['Пишу вопросы в чат, ', 'ответ приходит раз в несколько дней', '. Хочется хотя бы короткий созвон раз в неделю.'],
+      tm: 'Справляется, всё хорошо.', sig: ['high', 'Стажёру хуже, чем видит наставник: разрыв 1,6'] },
+    { m: 4, i: 3.2, mm: 4.8, gap: 'risk',
+      ti: ['', 'Наставник почти не отвечает', '. Разбираюсь сам по коду, но боюсь сделать не то.'],
+      tm: 'Всё хорошо, справляется.', sig: ['high', 'Разрыв 1,6, второй месяц подряд'] },
+    { m: 3, i: 3.4, mm: 4.7, gap: 'risk',
+      ti: ['На вопросы ', 'наставник отвечает раз в несколько дней', ', приходится угадывать, что от меня ждут.'],
+      tm: 'Всё хорошо.', sig: ['high', 'Разрыв 1,3 и растёт второй месяц'] }
+  ];
+  document.getElementById('history').innerHTML = HIST.map(function (h) {
+    return '<li class="h-month"><div class="h-when"><b>' + h.m + ' месяц</b><span class="gap ' + h.gap + '">разрыв ' + fmt(h.mm - h.i) + '</span></div>' +
+      '<div class="h-voice"><div class="score"><i class="mk i"></i>' + fmt(h.i) + ' <small>стажёр S-03</small></div><p>«' + h.ti[0] + '<span class="hl" data-hl>' + h.ti[1] + '</span>' + h.ti[2] + '»</p></div>' +
+      '<div class="h-voice"><div class="score"><i class="mk m"></i>' + fmt(h.mm) + ' <small>наставник M-03</small></div><p>«' + h.tm + '»</p></div>' +
+      '<div class="h-sig"><span class="sev ' + h.sig[0] + '" data-sev="' + h.sig[0] + '"></span><span>' + h.sig[1] + '</span></div></li>';
+  }).join('');
+
+  /* ---------- живое поступление: сцена ---------- */
+  var p1Before = BASE[0];
+  var p1After = JSON.parse(JSON.stringify(BASE[0]));
+  p1After.I[5] = 2.8; p1After.cells[5] = 'risk';
+  function renderDesk(animate) {
+    document.getElementById('deskBefore').innerHTML = '<div class="before">' + rowHTML(p1Before, { compact: true }) + '</div>';
+    document.getElementById('deskAfter').innerHTML = rowHTML(p1After, { compact: true, arrive: animate ? 5 : -1 });
+  }
+  renderDesk(false);
+
+  function layoutWire() {
+    var stage = document.getElementById('stage'), wire = document.getElementById('wire');
+    var phone = stage.querySelector('.phone').getBoundingClientRect();
+    var toast = document.getElementById('toast').getBoundingClientRect();
+    var st = stage.getBoundingClientRect();
+    wire.setAttribute('width', st.width); wire.setAttribute('height', st.height);
+    wire.setAttribute('viewBox', '0 0 ' + st.width + ' ' + st.height);
+    var y2 = toast.top - st.top + Math.min(60, toast.height / 2);
+    var x1 = phone.right - st.left - 4, y1 = Math.max(phone.top - st.top + 60, Math.min(y2 + 40, phone.bottom - st.top - 60));
+    var x2 = toast.left - st.left + 2;
+    if (x2 - x1 < 20) { document.getElementById('wirePath').setAttribute('d', ''); return; }
+    var cx = (x1 + x2) / 2;
+    document.getElementById('wirePath').setAttribute('d', 'M' + x1 + ',' + y1 + ' C' + cx + ',' + y1 + ' ' + cx + ',' + y2 + ' ' + x2 + ',' + y2);
+  }
+
+  function travel(done) {
+    var path = document.getElementById('wirePath'), dot = document.getElementById('wireDot');
+    if (RM || !path.getAttribute('d')) { done(); return; }
+    var len = path.getTotalLength(), t0 = null, dur = 700;
+    dot.style.opacity = 1;
+    function step(ts) {
+      if (!t0) t0 = ts;
+      var t = Math.min(1, (ts - t0) / dur), e = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      var pt = path.getPointAtLength(e * len);
+      dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
+      if (t < 1) requestAnimationFrame(step); else { dot.style.opacity = 0; done(); }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function lightHL(scope, delay) {
+    var els = (scope || document).querySelectorAll('[data-hl]');
+    els.forEach(function (el, k) {
+      el.classList.remove('on');
+      if (RM) { el.classList.add('on'); return; }
+      setTimeout(function () { el.classList.add('on'); }, (delay || 0) + k * 120);
+    });
+  }
+
+  /* ---------- живое поступление: обзор ---------- */
+  function setRoll(el, value) {
+    var old = el.firstElementChild;
+    if (old && old.textContent === String(value)) return;
+    if (RM) { el.innerHTML = '<span>' + value + '</span>'; return; }
+    var nu = document.createElement('span'); nu.textContent = value;
+    nu.style.position = 'absolute'; nu.style.left = 0; nu.style.top = 0; nu.style.transform = 'translateY(100%)';
+    el.appendChild(nu);
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      old.style.transform = 'translateY(-100%)'; nu.style.transform = 'translateY(0)';
+      setTimeout(function () { el.innerHTML = '<span>' + value + '</span>'; }, 520);
+    }); });
+  }
+  function totals() {
+    var t = { risk: 0, watch: 0, ok: 0, open: 0 };
+    pairs.forEach(function (p) { t[p.status]++; t.open += p.open; });
+    setRoll(document.getElementById('heroN'), t.risk);
+    document.getElementById('heroWord').textContent = plural(t.risk, 'парой', 'парами', 'парами');
+    document.getElementById('tRisk').textContent = t.risk;
+    document.getElementById('tWatch').textContent = t.watch;
+    document.getElementById('tOk').textContent = t.ok;
+    document.getElementById('tSig').textContent = t.open;
+    document.getElementById('navCount').textContent = t.open;
+  }
+  var arrived = false;
+  function arrive() {
+    var btn = document.getElementById('playBtn');
+    btn.disabled = true;
+    pairs = JSON.parse(JSON.stringify(BASE));
+    renderBoard(); totals(); renderFeed(false); renderDesk(false);
+    var toast = document.getElementById('toast');
+    toast.style.visibility = 'hidden';
+    layoutWire();
+    setTimeout(function () {
+      travel(function () {
+        toast.style.visibility = 'visible';
+        toast.classList.remove('enter'); void toast.offsetWidth; toast.classList.add('enter');
+        lightHL(toast, 380);
+        renderDesk(true);
+        var p = pairs[0];
+        p.I[5] = 2.8; p.cells[5] = 'risk'; p.status = 'risk'; p.open = 2; p.cap = 'Оценка стажёра упала с 4,7 до 2,8';
+        renderBoard('P-01'); totals(); renderFeed(true);
+        var dot = document.getElementById('liveDot');
+        dot.classList.remove('ping'); void dot.offsetWidth; dot.classList.add('ping');
+        document.getElementById('liveText').textContent = 'На связи, обновлено только что';
+        arrived = true;
+        btn.disabled = false;
+        btn.querySelector('span').textContent = 'Повторить';
+      });
+    }, 250);
+  }
+  document.getElementById('playBtn').addEventListener('click', arrive);
+
+  /* ---------- отметки HR ---------- */
+  var sigA = document.getElementById('sigA');
+  sigA.querySelectorAll('[data-review]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var ok = b.dataset.review === 'confirmed';
+      sigA.querySelector('.stamp-text').textContent = ok ? 'Подтвердилось' : 'Ложная тревога';
+      sigA.querySelector('.stamp svg').setAttribute('stroke', ok ? 'var(--ok)' : 'var(--text-3)');
+      sigA.classList.add('done');
+    });
+  });
+  sigA.querySelector('.undo').addEventListener('click', function () { sigA.classList.remove('done'); });
+
+  /* ---------- тема ---------- */
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function current() { return root.dataset.theme || (mq.matches ? 'dark' : 'light'); }
+  function syncThemeBtn() {
+    var dark = current() === 'dark';
+    document.getElementById('themeLabel').textContent = dark ? 'Светлая тема' : 'Тёмная тема';
+    document.getElementById('themeIcon').setAttribute('d', dark
+      ? 'M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'
+      : 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z');
+  }
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var next = current() === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch (e) {}
+    syncThemeBtn();
+  });
+  mq.addEventListener && mq.addEventListener('change', syncThemeBtn);
+  syncThemeBtn();
+
+  /* ---------- примерка бренда ---------- */
+  document.querySelectorAll('[data-brand]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      root.style.setProperty('--brand', b.dataset.brand);
+      root.style.setProperty('--brand-hover', b.dataset.hover);
+      document.querySelectorAll('[data-brand]').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+    });
+  });
+
+  /* ---------- старт ---------- */
+  renderBoard();
+  paintGlyphs();
+  lightHL(document, 600);
+  window.addEventListener('resize', layoutWire);
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(layoutWire);
+})();
+</script>
+</body>
+</html>
