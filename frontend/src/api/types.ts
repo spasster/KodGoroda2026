@@ -108,3 +108,35 @@ export interface ImportReport {
 // GET /api/events
 export interface ResponseEvent { pair_id: string; role: Role; person_id: string; month: number; source: string; new_signal_keys: string[] }
 export interface ReviewEvent { key: string; status: ReviewStatus }
+
+// ---------- Аналитика, подготовка к разговору, кабинеты ----------
+
+export interface Analytics {
+  months: number[]
+  scale: { min: number; max: number }
+  pairs: number
+  program: { month: number; intern: number | null; mentor: number | null; responses: number; expected: number }[]
+  questions: { role: Role; question_id: string; text: string; values: (number | null)[]; delta: number | null }[]
+  topics: { topic: string; label: string; intern: number; mentor: number }[]
+  early: { pair_id: string; intern_id: string; intern_name: string | null; first_signal_month: number; risk_month: number | null }[]
+}
+
+export interface Brief {
+  summary: string
+  questions: { to: Role; text: string }[]
+  notes: { id: number; text: string; at: string }[]
+}
+
+export interface Cabinet {
+  role: Role
+  id: string
+  name: string | null
+  partner_id: string
+  partner_name: string | null
+  months: number
+  open_month: number
+  next_month: number | null
+  scale: { min: number; max: number }
+  questions: { id: string; text: string }[]
+  history: { month: number; filled: boolean; index: number | null; answers: Record<string, number | null>; comment: string | null }[]
+}

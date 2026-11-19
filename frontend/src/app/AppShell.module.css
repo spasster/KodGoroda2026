@@ -107,3 +107,16 @@
 
 /* ---------- Содержимое: страницы сами оборачивают себя в .wrap ---------- */
 .main { padding-bottom: var(--s-8); }
+
+/* ---------- Роль: чей кабинет показываем ---------- */
+.nav[hidden] { display: none; }
+.role {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; height: 40px; margin-left: -16px; padding: 0 6px 0 12px;
+  border-radius: var(--r-m); background: var(--sunken); color: var(--text-2);
+}
+.role select {
+  max-width: 190px; height: 40px; padding: 0 4px; border: 0; background: transparent; color: var(--text-1);
+  font: inherit; font-size: var(--fs-s); font-weight: var(--fw-medium); cursor: pointer;
+}
+.role select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-s); }
+@media (max-width: 1023px) { .role select { max-width: 120px; } }

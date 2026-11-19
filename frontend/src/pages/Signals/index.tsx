@@ -10,7 +10,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import { queryKeys, useOverview, useReview, useSignals } from '../../api/queries'
 import type { PairDetail, PairStatus, PairSummary, ReviewStatus, Severity, Signal } from '../../api/types'
-import { Hero } from '../../components'
+import { Avatar, Hero } from '../../components'
 import { PAIR_STATUS_LABEL, SEVERITY_LABEL, personName, plural } from '../../lib/format'
 import { dur, ease, useReduced } from '../../lib/motion'
 import { useLive } from '../../live/useLive'
@@ -300,6 +300,7 @@ function Group({ pair, pairId, count, children }: { pair: PairSummary | undefine
   return (
     <section className={s.card}>
       <header className={s.groupHead}>
+        <Avatar name={pair ? personName(pair.intern_name, pair.intern_id) : pairId} id={pair?.intern_id ?? pairId} size={40} />
         <div className={s.who2}>
           <span className={s.groupName}>{pair ? personName(pair.intern_name, pair.intern_id) : pairId}</span>
           {pair && <span className={s.groupMentor}>наставник {personName(pair.mentor_name, pair.mentor_id)}</span>}

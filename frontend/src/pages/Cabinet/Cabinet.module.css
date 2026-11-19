@@ -1,0 +1,41 @@
+.page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; padding-top: 28px; }
+.state { margin-top: 24px; }
+.card { padding: 26px 28px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low); min-width: 0; }
+.full { grid-column: 1 / -1; }
+.title { margin-bottom: 16px; font-size: var(--fs-l); font-weight: var(--fw-bold); }
+.muted { color: var(--text-2); }
+
+.fill {
+  display: inline-flex; align-items: center; height: 48px; padding: 0 22px; border-radius: var(--r-m);
+  background: var(--brand); color: var(--brand-fg); font-size: var(--fs-m); font-weight: var(--fw-medium); text-decoration: none;
+}
+.fill:hover { background: var(--brand-hover); }
+.done { display: inline-flex; align-items: center; gap: 8px; color: var(--hero-muted); font-size: var(--fs-m); }
+
+.track { display: flex; flex-direction: column; gap: 12px; list-style: none; font-size: var(--fs-s); color: var(--text-2); }
+.track li { display: flex; align-items: center; gap: 12px; }
+.track span {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--sunken);
+  font-weight: var(--fw-medium); font-variant-numeric: tabular-nums;
+}
+.track .on { color: var(--text-1); }
+.track .on span { background: var(--brand); color: var(--brand-fg); }
+.track .now { color: var(--text-1); font-weight: var(--fw-medium); }
+.track .now span { box-shadow: 0 0 0 2px var(--brand); background: var(--surface); color: var(--brand-text); }
+
+.history { display: flex; flex-direction: column; list-style: none; }
+.history > li { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; padding: 18px 0; border-top: 1px solid var(--line); }
+.history > li:first-child { border-top: 0; padding-top: 0; }
+.month { display: flex; flex-direction: column; color: var(--text-2); font-size: var(--fs-s); }
+.month b { color: var(--text-1); font-family: var(--font-wide); font-size: var(--fs-xl); font-variant-numeric: tabular-nums; }
+.answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 32px; list-style: none; font-size: var(--fs-s); }
+.answers li { display: flex; justify-content: space-between; gap: 12px; }
+.answers span { color: var(--text-2); }
+.answers b { font-variant-numeric: tabular-nums; }
+.comment { margin: 12px 0 0; padding: 12px 16px; border-radius: var(--r-m); background: var(--sunken); font-family: var(--font-text); font-size: var(--fs-s); line-height: var(--lh-body); }
+
+@media (max-width: 1023px) {
+  .page { grid-template-columns: minmax(0, 1fr); }
+  .history > li { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .answers { grid-template-columns: minmax(0, 1fr); }
+}

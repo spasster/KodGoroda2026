@@ -36,6 +36,12 @@ CREATE TABLE IF NOT EXISTS reviews (
     note       TEXT,
     updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS notes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    pair_id    TEXT NOT NULL,
+    text       TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS text_cache (
     text_hash   TEXT NOT NULL,
     analyzer    TEXT NOT NULL,
@@ -74,6 +80,7 @@ def clear(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM responses")
     conn.execute("DELETE FROM pairs")
     conn.execute("DELETE FROM reviews")
+    conn.execute("DELETE FROM notes")
 
 
 def pair_id_for(intern_id: str) -> str:
@@ -174,3 +181,11 @@ def cache_put(conn: sqlite3.Connection, text_hash: str, analyzer: str, result_js
         "INSERT OR REPLACE INTO text_cache (text_hash, analyzer, result_json) VALUES (?, ?, ?)",
         (text_hash, analyzer, result_json),
     )
+
+
+def get_notes(conn: sqlite3.Connection, pair_id: str) -> list[sqlite3.Row]:
+    return conn.execute("SELECT id, text, created_at FROM notes WHERE pair_id = ? ORDER BY id DESC", (pair_id,)).fetchall()
+
+
+def add_note(conn: sqlite3.Connection, pair_id: str, text: str) -> None:
+    conn.execute("INSERT INTO notes (pair_id, text, created_at) VALUES (?, ?, ?)", (pair_id, text, now_iso()))

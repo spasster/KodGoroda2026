@@ -3,12 +3,19 @@
 
 import { useEffect, useId, useState } from 'react'
 
-import type { Cell, PairStatus } from '../../api/types'
+import type { PairStatus } from '../../api/types'
 import { formatNumber } from '../../lib/format'
 import s from './Stories.module.css'
 
+/** Точка графика: месяц и две оценки. Подходит Cell из обзора. */
+export interface ChartPoint {
+  month: number
+  intern_index: number | null
+  mentor_index: number | null
+}
+
 interface Props {
-  cells: Cell[]
+  cells: ChartPoint[]
   months: number[]
   scale: { min: number; max: number }
   status: PairStatus

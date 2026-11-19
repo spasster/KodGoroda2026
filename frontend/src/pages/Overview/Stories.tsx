@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 
 import type { PairStatus } from '../../api/types'
+import { Avatar } from '../../components'
 import { ROLE_LABEL, formatCount, personName } from '../../lib/format'
 import { layoutSpring } from '../../lib/motion'
 import type { Story } from './model'
@@ -60,6 +61,7 @@ function StoryCard({ story, months, scale, fresh }: { story: Story; months: numb
     <motion.div layout="position" layoutId={pair.pair_id} transition={layoutSpring} className={s.cardWrap}>
       <Link to={`/pairs/${pair.pair_id}`} className={clsx(s.card, compact && s.cardCompact, fresh && s.fresh)} data-status={status}>
         <header className={s.cardHead}>
+          <Avatar name={personName(pair.intern_name, pair.intern_id)} id={pair.intern_id} size={compact ? 36 : 44} />
           <div className={s.person}>
             <span className={s.name}>{personName(pair.intern_name, pair.intern_id)}</span>
             <span className={s.mentor}>наставник {personName(pair.mentor_name, pair.mentor_id)}</span>

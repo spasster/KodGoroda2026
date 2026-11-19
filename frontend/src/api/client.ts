@@ -2,6 +2,9 @@
 // /api проксирует Vite, в Docker nginx.
 
 import type {
+  Analytics,
+  Brief,
+  Cabinet,
   Health,
   ImportReport,
   IngestRequest,
@@ -88,6 +91,11 @@ export const api = {
 
   review: (key: string, input: ReviewInput) =>
     postJson<Signal>(`/signals/${encodeURIComponent(key)}/review`, input),
+
+  analytics: () => request<Analytics>('/analytics'),
+  brief: (pairId: string) => request<Brief>(`/pairs/${encodeURIComponent(pairId)}/brief`),
+  addNote: (pairId: string, text: string) => postJson<Brief>(`/pairs/${encodeURIComponent(pairId)}/notes`, { text }),
+  cabinet: (role: 'intern' | 'mentor', id: string) => request<Cabinet>(`/cabinet/${role}/${encodeURIComponent(id)}`),
 
   ingest: (payload: IngestRequest) => postJson<IngestResult>('/ingest', payload),
   ingestYandex: (payload: Record<string, unknown>) => postJson<IngestResult>('/ingest/yandex', payload),

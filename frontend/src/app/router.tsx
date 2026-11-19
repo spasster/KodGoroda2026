@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
 
 import { EmptyState, LinkButton } from '../components'
+import { AnalyticsPage } from '../pages/Analytics'
+import { CabinetPage } from '../pages/Cabinet'
 import { FormPage } from '../pages/Form'
 import { FormQrPage } from '../pages/Form/Qr'
 import { OverviewPage } from '../pages/Overview'
@@ -31,6 +33,8 @@ export const router = createBrowserRouter([
       { index: true, element: <OverviewPage /> },
       { path: 'pairs/:id', element: <PairPage /> },
       { path: 'signals', element: <SignalsPage /> },
+      { path: 'analytics', element: <AnalyticsPage /> },
+      { path: 'me/:role/:id', element: <CabinetPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },

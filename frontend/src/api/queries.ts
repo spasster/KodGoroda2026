@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey 
 
 import { api, type ApiError } from './client'
 import type {
+  Brief,
   IngestRequest,
   IngestResult,
   PairDetail,
@@ -25,6 +26,9 @@ export const queryKeys = {
   survey: ['survey'] as const,
   people: ['people'] as const,
   health: ['health'] as const,
+  analytics: ['analytics'] as const,
+  brief: (pairId: string) => ['pair', pairId, 'brief'] as const,
+  cabinet: (role: string, id: string) => ['cabinet', role, id] as const,
 }
 
 // Ключ сигнала по контракту: {type}:{pair_id}:{role}:{month}.
@@ -40,6 +44,7 @@ export function invalidateAfterResponse(qc: QueryClient) {
   void qc.invalidateQueries({ queryKey: queryKeys.pairs })
   void qc.invalidateQueries({ queryKey: queryKeys.signals })
   void qc.invalidateQueries({ queryKey: queryKeys.people })
+  void qc.invalidateQueries({ queryKey: queryKeys.analytics })
 }
 
 // Отметка HR меняет сигнал, итоги и статус пары.
@@ -138,4 +143,25 @@ export function useIngest() {
     mutationFn: api.ingest,
     onSuccess: () => invalidateAfterResponse(qc),
   })
+}
+
+export function useAnalytics() {
+  return useQuery({ queryKey: queryKeys.analytics, queryFn: api.analytics })
+}
+
+// Сводка, вопросы для разговора и заметки HR по паре.
+export function useBrief(pairId: string) {
+  return useQuery({ queryKey: queryKeys.brief(pairId), queryFn: () => api.brief(pairId), enabled: pairId !== '' })
+}
+
+export function useAddNote(pairId: string) {
+  const qc = useQueryClient()
+  return useMutation<Brief, ApiError, string>({
+    mutationFn: (text) => api.addNote(pairId, text),
+    onSuccess: (brief) => qc.setQueryData(queryKeys.brief(pairId), brief),
+  })
+}
+
+export function useCabinet(role: 'intern' | 'mentor', id: string) {
+  return useQuery({ queryKey: queryKeys.cabinet(role, id), queryFn: () => api.cabinet(role, id), enabled: id !== '' })
 }

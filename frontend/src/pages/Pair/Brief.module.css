@@ -1,0 +1,31 @@
+.brief {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 32px;
+  margin-bottom: var(--s-5); padding: 26px 28px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low);
+}
+.col { min-width: 0; }
+.title { margin-bottom: 10px; color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: .06em; }
+.summary { font-size: var(--fs-m); line-height: var(--lh-body); }
+.muted { color: var(--text-2); }
+.questions { display: flex; flex-direction: column; gap: 10px; list-style: none; font-size: var(--fs-s); line-height: var(--lh-snug); }
+.questions li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.to { justify-self: start; padding: 2px 8px; border-radius: var(--r-pill); background: var(--brand-wash); color: var(--brand-text); font-size: var(--fs-xs); font-weight: var(--fw-medium); }
+.to[data-role="mentor"] { background: var(--sunken); color: var(--text-2); }
+.form { display: flex; flex-direction: column; gap: 8px; }
+.form textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); color: var(--text-1);
+  font: inherit; font-size: var(--fs-s); resize: vertical;
+}
+.form textarea:focus { outline: 2px solid var(--focus); outline-offset: -1px; border-color: transparent; }
+.form button {
+  align-self: flex-start; height: 36px; padding: 0 16px; border: 0; border-radius: var(--r-m); background: var(--brand); color: var(--brand-fg);
+  font-size: var(--fs-s); font-weight: var(--fw-medium);
+}
+.form button:disabled { opacity: .45; cursor: default; }
+.error { margin-top: 6px; color: var(--risk); font-size: var(--fs-xs); }
+.notes { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; list-style: none; font-size: var(--fs-s); }
+.notes li { display: flex; flex-direction: column; }
+.notes time { color: var(--text-2); font-size: var(--fs-xs); }
+
+@media (max-width: 1023px) {
+  .brief { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+}

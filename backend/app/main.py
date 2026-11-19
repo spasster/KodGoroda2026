@@ -18,7 +18,7 @@ from .context import Context
 from .events import install_shutdown_hook
 from .importer import ImportFileError
 from .ingest import IngestError, load_sample
-from .routes import dashboard, events, intake, meta
+from .routes import dashboard, events, extra, intake, meta
 
 log = logging.getLogger("app")
 
@@ -94,7 +94,7 @@ def create_app(settings: Settings | None = None, analyzer: TextAnalyzer | None =
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    for module in (meta, dashboard, intake, events):
+    for module in (meta, dashboard, extra, intake, events):
         app.include_router(module.router, prefix="/api")
 
     @app.exception_handler(RequestValidationError)

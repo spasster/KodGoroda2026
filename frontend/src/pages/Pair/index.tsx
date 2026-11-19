@@ -15,6 +15,7 @@ import { PAIR_STATUS_LABEL, personName } from '../../lib/format'
 import { Hero } from '../../components'
 import { useReduced, variants } from '../../lib/motion'
 import { collectMonth } from '../../lib/rules'
+import { BriefCard } from './BriefCard'
 import { Chart } from './Chart'
 import { Comments } from './Comments'
 import { clearFreshMarks } from './freshMarks'
@@ -99,6 +100,7 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
       />
       <div className="wrap">
         <div className={s.page}>
+          <BriefCard pairId={p.pair_id} />
           <div className={s.grid}>
           <div className={s.main}>
             <section className={`${s.card} ${s.chartCard}`} aria-labelledby="pair-chart">
