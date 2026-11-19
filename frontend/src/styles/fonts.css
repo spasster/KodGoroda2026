@@ -1,0 +1,8 @@
+/* Шрифты МГТС: те же файлы, что на studchamp.mgts.ru (MTS Wide, MTS Compact, MTS Text). Лежат локально, чтобы работать без интернета. */
+@font-face { font-family: 'MTS Wide'; font-weight: 500; font-display: swap; src: url(./fonts/MTSWide-Medium.woff2) format('woff2'); }
+@font-face { font-family: 'MTS Wide'; font-weight: 700; font-display: swap; src: url(./fonts/MTSWide-Bold.woff2) format('woff2'); }
+@font-face { font-family: 'MTS Compact'; font-weight: 400; font-display: swap; src: url(./fonts/MTSCompact-Regular.woff2) format('woff2'); }
+@font-face { font-family: 'MTS Compact'; font-weight: 500; font-display: swap; src: url(./fonts/MTSCompact-Medium.woff2) format('woff2'); }
+@font-face { font-family: 'MTS Compact'; font-weight: 700; font-display: swap; src: url(./fonts/MTSCompact-Bold.woff2) format('woff2'); }
+@font-face { font-family: 'MTS Text'; font-weight: 400; font-display: swap; src: url(./fonts/MTSText-Regular.woff2) format('woff2'); }
+@font-face { font-family: 'MTS Text'; font-weight: 500; font-display: swap; src: url(./fonts/MTSText-Medium.woff2) format('woff2'); }

@@ -20,7 +20,8 @@ export interface Cell {
   status: PairStatus; signal_keys: string[]; missing: { intern: boolean; mentor: boolean }
 }
 export interface PairSummary {
-  pair_id: string; intern_id: string; mentor_id: string; status: PairStatus; last_month: number
+  pair_id: string; intern_id: string; mentor_id: string; intern_name?: string | null; mentor_name?: string | null
+  status: PairStatus; last_month: number
   intern_index_last: number | null; mentor_index_last: number | null
   trend: 'up' | 'down' | 'flat'; open_signals: number; cells: Cell[]
 }
@@ -28,7 +29,7 @@ export interface Overview {
   updated_at: string; months: number[]; scale: { min: number; max: number }
   totals: { pairs: number; risk: number; watch: number; ok: number; open_signals: number; confirmed: number; rejected: number; responses: number }
   pairs: PairSummary[]
-  recent: { at: string; pair_id: string; role: Role; person_id: string; month: number; source: string }[]
+  recent: { at: string; pair_id: string; role: Role; person_id: string; person_name?: string | null; month: number; source: string }[]
 }
 export interface CommentItem {
   role: Role; month: number; question_id: string; question_text: string; text: string
@@ -68,8 +69,8 @@ export interface Survey {
 
 // GET /api/people. next_month: первый месяц без анкеты, null, если заполнены все.
 export interface People {
-  interns: { id: string; mentor_id: string; pair_id: string; next_month: number | null }[]
-  mentors: { id: string; intern_id: string; pair_id: string; next_month: number | null }[]
+  interns: { id: string; name?: string | null; mentor_id: string; pair_id: string; next_month: number | null }[]
+  mentors: { id: string; name?: string | null; intern_id: string; pair_id: string; next_month: number | null }[]
 }
 
 // GET /api/signals

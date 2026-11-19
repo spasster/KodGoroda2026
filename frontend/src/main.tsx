@@ -1,5 +1,5 @@
-// Шрифт и токены первыми: от них зависят все стили ниже (docs/design/system.md).
-import '@fontsource-variable/geologica'
+// Шрифты и токены МГТС первыми: от них зависят все стили ниже (docs/design/v2.md).
+import './styles/fonts.css'
 import './styles/tokens.css'
 import './styles/base.css'
 

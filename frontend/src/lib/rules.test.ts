@@ -1,18 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Cell, Signal } from '../api/types'
-import {
-  calendarMonthName,
-  clusterRepeats,
-  collectMonth,
-  gapDirection,
-  highGapPoints,
-  mainSignal,
-  sentenceAround,
-  sortPairsByPriority,
-} from './rules'
-
-const scale = { min: 1, max: 5 }
+import type { Signal } from '../api/types'
+import { calendarMonthName, collectMonth, compareSignals, isOpen, sentenceAround } from './rules'
 
 function sig(key: string, severity: Signal['severity'], extra: Partial<Signal> = {}): Signal {
   const [type, pair_id, role, month] = key.split(':')
@@ -52,37 +41,21 @@ const sample: Signal[] = [
   sig('silence:P-02:intern:4', 'low'),
 ]
 
-describe('sortPairsByPriority', () => {
-  it('порядок пар на тестовых данных', () => {
-    // Как в system.md: P-05, P-03, P-02, P-04. У P-05 и P-03 по два high, у P-05 больше сигналов.
-    expect(sortPairsByPriority(['P-01', 'P-02', 'P-03', 'P-04', 'P-05'], sample)).toEqual([
-      'P-05', 'P-03', 'P-02', 'P-04', 'P-01',
-    ])
-  })
-
-  it('неактивные и отклонённые не считаются', () => {
-    const list = [sig('decline:P-01:intern:6', 'high', { active: false }), sig('silence:P-02:intern:6', 'low')]
-    expect(sortPairsByPriority(['P-01', 'P-02'], list)).toEqual(['P-02', 'P-01'])
-  })
-})
-
-describe('mainSignal', () => {
+describe('compareSignals', () => {
   it('важность, потом свежий месяц, потом тип', () => {
-    expect(mainSignal(sample.filter((s) => s.pair_id === 'P-02'))?.key).toBe('gap_intern_low:P-02:both:4')
-    expect(mainSignal(sample.filter((s) => s.pair_id === 'P-05'))?.key).toBe('gap_mentor_low:P-05:both:5')
+    const order = [...sample].sort(compareSignals).map((s) => s.key)
+    expect(order.slice(0, 3)).toEqual(['gap_intern_low:P-03:both:5', 'gap_mentor_low:P-05:both:5', 'gap_intern_low:P-02:both:4'])
     const tie = [sig('silence:P-01:intern:5', 'high'), sig('decline:P-01:intern:5', 'high')]
-    expect(mainSignal(tie)?.key).toBe('decline:P-01:intern:5')
-    expect(mainSignal([])).toBeUndefined()
+    expect(tie.sort(compareSignals)[0].key).toBe('decline:P-01:intern:5')
   })
 })
 
-describe('clusterRepeats', () => {
-  it('сворачивает одно условие в паре, свежий сверху', () => {
-    const groups = clusterRepeats(sample.filter((s) => s.pair_id === 'P-05'))
-    expect(groups.map((g) => [g.head.key, g.repeats.map((r) => r.key)])).toEqual([
-      ['gap_mentor_low:P-05:both:5', ['gap_mentor_low:P-05:both:4']],
-      ['decline:P-05:mentor:5', ['decline:P-05:mentor:4']],
-    ])
+describe('isOpen', () => {
+  it('активный и без отметки HR', () => {
+    expect(isOpen(sig('decline:P-01:intern:5', 'high'))).toBe(true)
+    expect(isOpen(sig('decline:P-01:intern:5', 'high', { active: false }))).toBe(false)
+    const confirmed = sig('decline:P-01:intern:5', 'high', { review: { status: 'confirmed', note: null, updated_at: null } })
+    expect(isOpen(confirmed)).toBe(false)
   })
 })
 
@@ -96,32 +69,6 @@ describe('collectMonth', () => {
     expect(collectMonth(people, 5)).toBe(5)
     expect(collectMonth({ interns: [], mentors: [] }, 6)).toBeNull()
     expect(collectMonth(undefined, 6)).toBeNull()
-  })
-})
-
-describe('gapDirection', () => {
-  const cell = (i: number | null, m: number | null, keys: string[] = []): Cell => ({
-    month: 5,
-    intern_index: i,
-    mentor_index: m,
-    gap: i != null && m != null ? m - i : null,
-    status: 'ok',
-    signal_keys: keys,
-    missing: { intern: i == null, mentor: m == null },
-  })
-
-  it('слово по клетке последнего месяца и её сигналу разрыва', () => {
-    expect(gapDirection(cell(3.0, 4.8, ['gap_intern_low:P-03:both:5']))).toBe('стажёру хуже')
-    expect(gapDirection(cell(4.6, 2.0, ['gap_mentor_low:P-05:both:5']))).toBe('наставник недоволен')
-    expect(gapDirection(cell(null, 4.5))).toBe('нет анкеты стажёра')
-    expect(gapDirection(cell(2.6, null))).toBe('нет анкеты наставника')
-    expect(gapDirection(cell(4.6, 4.8))).toBeNull()
-    // На экране 3,8 и 4,8, разрыв 1,0, но точный 0,95 ниже порога: сигнала нет, слова нет.
-    expect(gapDirection(cell(3.8, 4.8))).toBeNull()
-  })
-
-  it('порог высокой важности в баллах', () => {
-    expect(highGapPoints(scale, { active_months: 2, gap: { min_gap: 0.25, high_gap: 0.4 } })).toBeCloseTo(1.6)
   })
 })
 

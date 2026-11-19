@@ -57,6 +57,7 @@ def pair_summary(snap: Snapshot, pair_id: str) -> PairSummary:
     active = [s for s in signals if s.active]
     return PairSummary(
         pair_id=pair_id, intern_id=pair.intern_id, mentor_id=pair.mentor_id,
+        intern_name=snap.names.get(pair.intern_id), mentor_name=snap.names.get(pair.mentor_id),
         status=status_of(active), last_month=ds.pair_last_month(pair_id),
         intern_index_last=r1(_last_value(snap, pair_id, "intern")),
         mentor_index_last=r1(_last_value(snap, pair_id, "mentor")),
@@ -85,7 +86,8 @@ def overview(snap: Snapshot) -> Overview:
         ),
         pairs=pairs,
         recent=[RecentItem(at=r["submitted_at"] or r["created_at"], pair_id=r["pair_id"], role=r["role"],
-                           person_id=r["person_id"], month=r["month"], source=r["source"]) for r in snap.recent],
+                           person_id=r["person_id"], person_name=snap.names.get(r["person_id"]),
+                           month=r["month"], source=r["source"]) for r in snap.recent],
     )
 
 
@@ -140,9 +142,9 @@ def people(snap: Snapshot) -> People:
 
     pairs = sorted(ds.pairs.values(), key=lambda p: p.intern_id)
     return People(
-        interns=[PersonIntern(id=p.intern_id, mentor_id=p.mentor_id, pair_id=p.pair_id,
+        interns=[PersonIntern(id=p.intern_id, name=snap.names.get(p.intern_id), mentor_id=p.mentor_id, pair_id=p.pair_id,
                               next_month=next_month(p.pair_id, "intern")) for p in pairs],
-        mentors=[PersonMentor(id=p.mentor_id, intern_id=p.intern_id, pair_id=p.pair_id,
+        mentors=[PersonMentor(id=p.mentor_id, name=snap.names.get(p.mentor_id), intern_id=p.intern_id, pair_id=p.pair_id,
                               next_month=next_month(p.pair_id, "mentor"))
                  for p in sorted(pairs, key=lambda p: (p.mentor_id, p.intern_id))],
     )

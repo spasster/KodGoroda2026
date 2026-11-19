@@ -1,19 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  formatClock,
-  formatCount,
-  monthsPhrase,
-  formatDayTime,
-  formatDelta,
-  formatNumber,
-  formatRelative,
-  monthLabel,
-  monthOrdinal,
-  plural,
-  sourceLabel,
-  WORDS,
-} from './format'
+import { formatClock, formatCount, formatNumber, monthsPhrase, PAIR_STATUS_LABEL, personName, plural, type Forms } from './format'
+
+const WORDS = {
+  pair: ['пара', 'пары', 'пар'],
+  signal: ['сигнал', 'сигнала', 'сигналов'],
+  response: ['анкета', 'анкеты', 'анкет'],
+  month: ['месяц', 'месяца', 'месяцев'],
+} as const satisfies Record<string, Forms>
 
 describe('formatNumber', () => {
   it('пишет дробь через запятую с одним знаком', () => {
@@ -33,15 +27,6 @@ describe('formatNumber', () => {
     expect(formatNumber(null)).toBe('—')
     expect(formatNumber(undefined)).toBe('—')
     expect(formatNumber(Number.NaN)).toBe('—')
-  })
-})
-
-describe('formatDelta', () => {
-  it('ставит знак', () => {
-    expect(formatDelta(1.75)).toBe('+1,8')
-    expect(formatDelta(-0.5)).toBe('−0,5')
-    expect(formatDelta(0)).toBe('0,0')
-    expect(formatDelta(null)).toBe('—')
   })
 })
 
@@ -77,72 +62,30 @@ describe('formatCount', () => {
   })
 })
 
-describe('monthLabel', () => {
-  it('месяц с номером', () => {
-    expect(monthLabel(3)).toBe('месяц 3')
-    expect(monthOrdinal(5)).toBe('5-й месяц')
-  })
-})
-
-describe('время и источник', () => {
-  it('часы и дата отметки', () => {
-    expect(formatClock(new Date(2026, 10, 26, 9, 5))).toBe('09:05')
-    expect(formatDayTime(new Date(2026, 10, 26, 14, 5))).toBe('26 ноября в 14:05')
-    expect(formatClock('не дата')).toBe('—')
-  })
-
-  it('источник словами', () => {
-    expect(sourceLabel('form')).toBe('через форму')
-    expect(sourceLabel('excel')).toBe('из Excel')
-    expect(sourceLabel('tabs')).toBe('tabs')
-  })
-})
-
-describe('formatRelative', () => {
-  // Местное время, чтобы тест не зависел от часового пояса.
-  const now = new Date(2026, 10, 19, 15, 0, 0)
-  const ago = (ms: number) => new Date(now.getTime() - ms)
-  const MIN = 60_000
-  const HOUR = 60 * MIN
-
-  it('секунды и будущее', () => {
-    expect(formatRelative(ago(10_000), now)).toBe('только что')
-    expect(formatRelative(ago(-5_000), now)).toBe('только что')
-  })
-
-  it('минуты в винительном падеже', () => {
-    expect(formatRelative(ago(MIN), now)).toBe('1 минуту назад')
-    expect(formatRelative(ago(2 * MIN), now)).toBe('2 минуты назад')
-    expect(formatRelative(ago(5 * MIN), now)).toBe('5 минут назад')
-    expect(formatRelative(ago(21 * MIN), now)).toBe('21 минуту назад')
-    expect(formatRelative(ago(59 * MIN), now)).toBe('59 минут назад')
-  })
-
-  it('часы', () => {
-    expect(formatRelative(ago(HOUR), now)).toBe('1 час назад')
-    expect(formatRelative(ago(3 * HOUR), now)).toBe('3 часа назад')
-    expect(formatRelative(ago(11 * HOUR), now)).toBe('11 часов назад')
-  })
-
-  it('дни и дата', () => {
-    expect(formatRelative(new Date(2026, 10, 18, 9, 0), now)).toBe('вчера')
-    expect(formatRelative(new Date(2026, 10, 16, 9, 0), now)).toBe('3 дня назад')
-    expect(formatRelative(new Date(2026, 10, 14, 9, 0), now)).toBe('5 дней назад')
-    expect(formatRelative(new Date(2026, 10, 9, 9, 0), now)).toBe('9 ноября')
-    expect(formatRelative(new Date(2025, 5, 30, 9, 0), now)).toBe('30 июня 2025 г.')
-  })
-
-  it('строка ISO и мусор', () => {
-    expect(formatRelative(ago(2 * MIN).toISOString(), now)).toBe('2 минуты назад')
-    expect(formatRelative('не дата', now)).toBe('—')
-  })
-})
-
 describe('monthsPhrase', () => {
   it('несколько месяцев во множественном числе', () => {
     expect(monthsPhrase([3])).toBe('3-й месяц')
     expect(monthsPhrase([3, 2])).toBe('2–3-й месяцы')
     expect(monthsPhrase([2, 4])).toBe('2-й и 4-й месяцы')
     expect(monthsPhrase([1, 3, 4])).toBe('1-й, 3-й и 4-й месяцы')
+  })
+})
+
+describe('время', () => {
+  it('часы по местному времени', () => {
+    expect(formatClock(new Date(2026, 10, 26, 9, 5))).toBe('09:05')
+    expect(formatClock('не дата')).toBe('—')
+  })
+})
+
+describe('подписи v2', () => {
+  it('статусы пары', () => {
+    expect(PAIR_STATUS_LABEL).toEqual({ risk: 'Пора поговорить', watch: 'Присмотреться', ok: 'Всё ровно' })
+  })
+
+  it('имя или ID', () => {
+    expect(personName('Илья Морозов', 'S-01')).toBe('Илья Морозов')
+    expect(personName(null, 'S-01')).toBe('S-01')
+    expect(personName('  ', 'S-01')).toBe('S-01')
   })
 })

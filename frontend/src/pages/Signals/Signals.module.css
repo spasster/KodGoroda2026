@@ -1,93 +1,137 @@
-/* Экран «С кем поговорить». Размеры из system.md и эталона reference.html (.filters, .s-group). */
+/* Экран «Сигналы»: белая карточка на сером, строки через тонкую линию. docs/design/v2.md */
 
-.page { padding-bottom: var(--s-9); }
+.page { padding-top: var(--s-6); padding-bottom: 120px; }
 
-/* ---------- Полоса фильтров: липнет под шапкой, линии сверху и снизу ---------- */
-.filters {
-  position: sticky; top: var(--header-h); z-index: 5;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px;
-  padding: 16px 0;
-  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
-  background: var(--bg);
-}
-.seg { max-width: 100%; }
-.check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 15px; color: var(--text-1); cursor: pointer; white-space: nowrap; }
-.check input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+/* ---------- Заголовок и сегменты ---------- */
+.head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-5); }
+.h1 { font-family: var(--font-wide); font-size: var(--fs-2xl); font-weight: var(--fw-bold); line-height: var(--lh-tight); }
 
-.banner { margin-top: 24px; }
-.empty { padding-top: 32px; }
-.collapse { overflow: hidden; }
-
-/* ---------- Группа пары ---------- */
-.group { padding: 32px 0 8px; }
-.head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding-bottom: 4px; }
-.head .people { font-size: var(--fs-s); }
-.open { margin-left: auto; font-size: var(--fs-s); white-space: nowrap; }
-
-/* Сигнал, пришедший с новой анкетой: черта бренда сверху и метка «новое» на кромке
-   над заголовком. Держится, пока HR не откроет пару, как метка в таблице обзора.
-   Слева на кромке она задевала плашку пары, поэтому стоит над колонкой текста:
-   200px боковой колонки сигнала и 24px промежутка (170px до 1360). */
-.item { position: relative; }
-.fresh > article { border-top: 2px solid var(--brand); }
-.newTag {
-  position: absolute; z-index: 1; top: -9px; left: 224px;
-  display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
-  border-radius: var(--r-pill); background: var(--brand); color: var(--brand-fg);
-  font-size: var(--fs-xs); font-weight: var(--fw-bold); line-height: 1;
-}
-
-/* ---------- Отмена отметки: правый нижний угол ---------- */
-.undoDock {
-  position: fixed; z-index: 30; right: var(--gutter); bottom: 16px;
-  display: flex; justify-content: flex-end;
-  width: min(640px, calc(100vw - 2 * var(--gutter)));
-  pointer-events: none;
-}
-.undo {
-  pointer-events: auto;
-  display: flex; align-items: center; gap: 12px;
-  max-width: 100%; padding: 10px 8px 10px 16px;
-  border-radius: var(--r-6); background: var(--surface); box-shadow: var(--shadow-pop);
-}
-.undoIcon { width: 18px; height: 18px; flex: none; }
-.undoText { min-width: 0; font-size: var(--fs-s); line-height: var(--lh-snug); }
-.undoText b { font-weight: var(--fw-bold); }
-.undoClose {
-  display: grid; place-items: center; flex: none; width: 32px; height: 32px;
-  border: 0; border-radius: var(--r-3); background: transparent; color: var(--text-3);
+.segments { display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-low); }
+.segment {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px;
+  border: 0; border-radius: var(--r-m); background: transparent; color: var(--text-1);
+  font-size: var(--fs-s); font-weight: var(--fw-medium); white-space: nowrap;
   transition: background var(--dur-1) linear, color var(--dur-1) linear;
 }
-.undoClose:hover { background: var(--hover); color: var(--text-1); }
-.undoClose svg { width: 16px; height: 16px; }
+.segment:hover { background: var(--hover); }
+.segment[aria-pressed="true"] { background: var(--brand); color: var(--brand-fg); }
+.count { color: var(--text-2); }
+.segment[aria-pressed="true"] .count { color: inherit; opacity: .8; }
 
-/* ---------- Загрузка ---------- */
-.skelFilters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.skelHead { display: flex; align-items: center; gap: 18px; padding-top: 22px; }
-.skelSignal { display: grid; grid-template-columns: 200px minmax(0, 780px); gap: 24px; padding: 28px 0 8px; border-top: 1px solid var(--line); margin-top: 4px; }
-.skelSide { display: grid; gap: 10px; align-content: start; }
-.skelBody { display: grid; gap: 12px; }
-.skelButtons { display: flex; gap: 12px; }
+/* ---------- Карточка и строки ---------- */
+.card { background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-low); overflow: hidden; }
+.list { list-style: none; }
+.item { position: relative; overflow: hidden; }
+.item + .item::before { content: ""; position: absolute; top: 0; left: 28px; right: 28px; height: 1px; background: var(--line); }
 
-/* ---------- Ноутбук и проектор: полоса фильтров в одну строку ---------- */
-/* На 1280 сегменты с обычными полями не помещаются в 1216px, флажок уезжал на
-   вторую строку и липкая полоса съедала 125px из 720. Ужимаем поля кнопок. */
-@media (max-width: 1359px) {
-  .filters { gap: 12px; }
-  .newTag { left: 194px; }
-  .seg button { padding: 0 9px; gap: 6px; }
-  .skelSignal { grid-template-columns: 170px minmax(0, 780px); }
+.row {
+  display: grid; grid-template-columns: 10px minmax(150px, 200px) minmax(0, 1fr) auto 20px;
+  align-items: center; column-gap: var(--s-4);
+  width: 100%; min-height: 64px; padding: 14px 28px;
+  border: 0; background: transparent; text-align: left; font-size: var(--fs-m); line-height: var(--lh-snug);
+  transition: background var(--dur-1) linear;
+}
+.row:hover { background: var(--hover); }
+.row:focus-visible { outline-offset: -2px; border-radius: 0; }
+
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.high { background: var(--risk); }
+.medium { background: var(--watch); }
+.low { background: var(--text-3); }
+.dotDone { box-shadow: inset 0 0 0 2px var(--line-strong); }
+
+.name { font-weight: var(--fw-medium); }
+.title { min-width: 0; }
+.meta { display: flex; align-items: center; gap: var(--s-3); justify-self: end; white-space: nowrap; }
+.month { min-width: 64px; text-align: right; color: var(--text-2); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+.markLabel { color: var(--text-2); font-size: var(--fs-s); }
+.fresh {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: var(--r-pill);
+  background: var(--brand-wash); color: var(--brand-text); font-size: var(--fs-xs); font-weight: var(--fw-medium);
+}
+.chevron { color: var(--text-3); transition: transform var(--dur-2) var(--ease-out); }
+.row[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+
+/* ---------- Раскрытая строка ---------- */
+.panel { overflow: hidden; }
+.panelInner {
+  display: flex; flex-direction: column; gap: var(--s-4); max-width: 820px;
+  /* Под колонкой имени: поле 28 + точка 10 + промежуток 16. */
+  padding: 4px 28px 28px 54px;
+}
+.explain { font-size: var(--fs-m); }
+.quote {
+  margin: 0; padding: var(--s-4) var(--s-5); border-radius: 16px; background: var(--sunken);
+  font-family: var(--font-text); font-size: var(--fs-m); line-height: var(--lh-body);
+}
+.quote mark { background: var(--mark-bg); box-shadow: none; border-radius: 3px; padding: 0; }
+.who { color: var(--text-2); white-space: nowrap; }
+.todo { font-size: var(--fs-m); }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-top: 4px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px;
+  border: 0; border-radius: var(--r-m); font-size: var(--fs-s); font-weight: var(--fw-medium); white-space: nowrap;
+  transition: background var(--dur-1) linear;
+}
+.secondary { background: var(--sunken); color: var(--text-1); }
+.secondary:hover { background: color-mix(in srgb, var(--sunken) 92%, var(--text-1)); }
+.pairLink { margin-left: var(--s-2); color: var(--brand-text); font-weight: var(--fw-medium); text-decoration: none; }
+.pairLink:hover { text-decoration: underline; }
+
+/* ---------- Пусто, ошибка, загрузка ---------- */
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); padding: 72px var(--s-5); text-align: center; }
+.emptyText { font-family: var(--font-wide); font-size: var(--fs-l); font-weight: var(--fw-medium); }
+
+.skelRow { display: flex; align-items: center; gap: var(--s-4); height: 64px; padding: 0 28px; }
+.skel { display: block; height: 16px; border-radius: 6px; background: var(--sunken); }
+
+/* ---------- Плашка отмены ---------- */
+.dock {
+  position: fixed; z-index: 40; left: 0; right: 0; bottom: 24px;
+  display: flex; justify-content: center; padding: 0 var(--gutter); pointer-events: none;
+}
+.undo {
+  pointer-events: auto; display: flex; align-items: center; gap: var(--s-4);
+  min-height: 52px; padding: 6px 6px 6px 20px; border-radius: 16px;
+  background: var(--surface); box-shadow: var(--shadow-high), inset 0 0 0 1px var(--line); font-weight: var(--fw-medium);
+}
+.undoBtn {
+  height: 40px; padding: 0 14px; border: 0; border-radius: var(--r-m); background: transparent;
+  color: var(--brand-text); font-weight: var(--fw-medium);
+}
+.undoBtn:hover { background: var(--brand-wash); }
+
+/* ---------- Ноутбук ---------- */
+@media (max-width: 1199px) {
+  .row { grid-template-columns: 10px minmax(130px, 170px) minmax(0, 1fr) auto 20px; }
 }
 
-/* ---------- Телефон: фильтры не липнут, сегменты листаются вбок ---------- */
+/* ---------- Телефон ---------- */
 @media (max-width: 767px) {
-  .filters { position: static; flex-direction: column; align-items: flex-start; gap: 12px; }
-  .seg { overflow-x: auto; scrollbar-width: none; }
-  .seg::-webkit-scrollbar { display: none; }
-  .group { padding-top: 24px; }
-  .open { margin-left: 0; }
-  .newTag { left: auto; right: 0; }
-  .skelSignal { grid-template-columns: 1fr; }
-  .skelFilters > * { max-width: 100%; }
-  .undoDock { left: var(--gutter); right: var(--gutter); width: auto; }
+  .page { padding-top: var(--s-5); }
+  .head { flex-direction: column; align-items: stretch; gap: var(--s-4); margin-bottom: var(--s-4); }
+  .h1 { font-size: var(--fs-xl); }
+  .segment { flex: 1; justify-content: center; padding: 0 8px; }
+
+  .card { border-radius: 20px; }
+  .item + .item::before { left: 16px; right: 16px; }
+  .row {
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    grid-template-areas: "dot name meta" ". title title";
+    column-gap: var(--s-3); row-gap: 2px; padding: 14px 16px; font-size: var(--fs-s);
+  }
+  .dot { grid-area: dot; }
+  .name { grid-area: name; }
+  .title { grid-area: title; }
+  .meta { grid-area: meta; }
+  .month { min-width: 0; }
+  .chevron { display: none; }
+
+  .panelInner { padding: 0 16px 20px 38px; gap: var(--s-3); }
+  .explain, .todo, .quote { font-size: var(--fs-s); }
+  .quote { padding: var(--s-3) var(--s-4); }
+  .actions .btn { flex: 1 1 0; padding: 0 12px; }
+  .pairLink { flex-basis: 100%; margin-left: 0; padding: 6px 0; }
+  .dock { bottom: 16px; }
 }

@@ -1,14 +1,13 @@
-// Пустая база: первый запуск или после сброса. Говорим, что сделать: загрузить
-// выгрузку из Excel. Форма без пар не откроется: ID в ней берутся из базы.
+// Пустая база: первый запуск или после сброса. Одна кнопка: загрузить выгрузку
+// из Excel. Форма без пар не откроется: люди в ней берутся из базы.
 
 import { useQueryClient } from '@tanstack/react-query'
-import clsx from 'clsx'
 import { Upload } from 'lucide-react'
 import { useState, type ChangeEvent } from 'react'
 
 import { api, ApiError } from '../../api/client'
 import type { ImportReport } from '../../api/types'
-import { buttonClass, EmptyState, ErrorBanner } from '../../components'
+import { ErrorBanner } from '../../components'
 import s from './Overview.module.css'
 
 export function EmptyOverview() {
@@ -39,18 +38,14 @@ export function EmptyOverview() {
 
   return (
     <div className="wrap">
-      <EmptyState
-        className={s.empty}
-        title="Анкет пока нет"
-        text="Загрузите выгрузку из Excel: из неё появятся пары, и форма откроется для стажёров и наставников. Дашборд обновится сам."
-        actions={
-          <label className={clsx(buttonClass('brand'), s.upload)} aria-busy={busy || undefined}>
-            <Upload aria-hidden="true" />
-            Загрузить Excel
-            <input type="file" accept=".xlsx,.csv" multiple className="sr-only" onChange={upload} disabled={busy} />
-          </label>
-        }
-      />
+      <div className={s.empty}>
+        <h1 className={s.emptyTitle}>Анкет пока нет</h1>
+        <label className={s.upload} aria-busy={busy || undefined}>
+          <Upload aria-hidden="true" strokeWidth={1.8} />
+          Загрузить Excel
+          <input type="file" accept=".xlsx,.csv" multiple className="sr-only" onChange={upload} disabled={busy} />
+        </label>
+      </div>
       {error && <ErrorBanner className={s.emptyError} title={error} />}
     </div>
   )

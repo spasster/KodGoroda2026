@@ -1,86 +1,70 @@
-// Мобильная форма для стажёра и наставника (system.md, «Мобильная форма и
-// «Спасибо»»). Без оболочки дашборда: ссылку открывают с телефона. Вопросы из
-// /api/survey, ID и месяц из /api/people, отправка в POST /api/ingest.
-// ?role=intern&id=S-01 заполняет роль, ID и месяц сразу.
+// Анкета стажёра и наставника (docs/design/v2.md, «Форма»). Без оболочки
+// дашборда: ссылку открывают с телефона. Вопросы из /api/survey, люди и месяц
+// из /api/people, отправка в POST /api/ingest.
+// Шаг 1: роль и человек. Шаг 2: вопросы. ?role=intern&id=S-01 сразу открывает шаг 2.
 
 import clsx from 'clsx'
-import { CircleAlert, Lock } from 'lucide-react'
-import { motion } from 'motion/react'
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import type { ApiError } from '../../api/client'
 import { useIngest, usePeople, useSurvey } from '../../api/queries'
 import type { People, Role, Survey } from '../../api/types'
-import { Button, ErrorBanner, Loading, Segmented, Skeleton, type SegmentOption } from '../../components'
-import { formatNumber, plural } from '../../lib/format'
-import { dur, ease, transition, useReduced } from '../../lib/motion'
-import { FormHeader, useDocumentTitle } from './FormHeader'
+import { personName, ROLE_LABEL, ROLE_TITLE } from '../../lib/format'
+import { useDocumentTitle } from './title'
 import s from './Form.module.css'
 
 type Answers = Record<string, number | string>
 
-// Черновик анкеты одной роли. Роль переключили и вернулись: ответы на месте.
-interface Draft {
-  // Person.key: у наставника бывает несколько стажёров, один ID на две кнопки.
-  personKey: string
-  // Месяц ставится при выборе ID и дальше меняется только руками, поэтому
-  // свежий /api/people после чужой анкеты его не сдвигает.
-  month: number | null
-  monthOpen: boolean
-  answers: Answers
-}
-
 interface Person {
-  // ID и вторая сторона: пара однозначна, даже если ID повторяется.
+  // ID и вторая сторона: у наставника бывает несколько стажёров, один ID на две строки.
   key: string
   id: string
-  // ID второй стороны пары: наставник стажёра или стажёр наставника.
+  name: string
+  // Есть имя в справочнике. Нет: вместо имени ID, и второй раз его не пишем.
+  named: boolean
   other: string
+  otherName: string
   // Первый месяц без анкеты, null: заполнены все.
   next: number | null
 }
 
-interface Sent {
-  role: Role
-  personId: string
-  month: number
-  avg: number | null
-  last: boolean
+// Черновик одной роли. Роль переключили и вернулись: ответы на месте.
+interface Draft {
+  personKey: string
+  // Ставится при выборе человека и дальше меняется только руками, поэтому
+  // свежий /api/people после отправки его не сдвигает.
+  month: number | null
+  answers: Answers
 }
 
-const EMPTY_DRAFT: Draft = { personKey: '', month: null, monthOpen: false, answers: {} }
-
-const ROLE_OPTIONS: readonly SegmentOption<Role>[] = [
-  { value: 'intern', label: 'Я стажёр' },
-  { value: 'mentor', label: 'Я наставник' },
-]
-
-const OTHER_TITLE: Record<Role, string> = { intern: 'Наставник', mentor: 'Стажёр' }
-
-const PRIVACY_REST: Record<Role, string> = {
-  intern: 'Наставнику их не показывают.',
-  mentor: 'Стажёру их не показывают.',
-}
-
-const PLACEHOLDER: Record<Role, string> = {
-  intern: 'Например: чего не хватает, что получилось, о чём хотелось бы поговорить',
-  mentor: 'Например: что у стажёра получилось, где ему нужна помощь',
-}
-
-const QUESTION_WORDS = ['вопрос', 'вопроса', 'вопросов'] as const
+const ROLES: readonly Role[] = ['intern', 'mentor']
+const OTHER: Record<Role, Role> = { intern: 'mentor', mentor: 'intern' }
+const EMPTY_DRAFT: Draft = { personKey: '', month: null, answers: {} }
 
 function range(from: number, to: number): number[] {
   return Array.from({ length: Math.max(0, to - from + 1) }, (_, i) => from + i)
 }
 
 function personsOf(people: People, role: Role): Person[] {
-  return role === 'intern'
-    ? people.interns.map((p) => ({ key: `${p.id}:${p.mentor_id}`, id: p.id, other: p.mentor_id, next: p.next_month }))
-    : people.mentors.map((p) => ({ key: `${p.id}:${p.intern_id}`, id: p.id, other: p.intern_id, next: p.next_month }))
+  const list =
+    role === 'intern'
+      ? people.interns.map((p) => ({ id: p.id, name: p.name, other: p.mentor_id, next: p.next_month }))
+      : people.mentors.map((p) => ({ id: p.id, name: p.name, other: p.intern_id, next: p.next_month }))
+  const names = new Map<string, string | null | undefined>()
+  for (const p of [...people.interns, ...people.mentors]) names.set(p.id, p.name)
+  return list.map((p) => ({
+    key: `${p.id}:${p.other}`,
+    id: p.id,
+    name: personName(p.name, p.id),
+    named: Boolean(p.name?.trim()),
+    other: p.other,
+    otherName: personName(names.get(p.other), p.other),
+    next: p.next,
+  }))
 }
 
-// Месяц по умолчанию: первый без анкеты. Заполнены все, значит последний.
+// Первый месяц без анкеты. Заполнены все, значит последний.
 function defaultMonth(p: Person, survey: Survey): number {
   return p.next ?? survey.months
 }
@@ -90,27 +74,14 @@ function alreadySent(p: Person, month: number): boolean {
   return p.next == null || month < p.next
 }
 
-// Колонки ряда кнопок: ID по пять, месяцы по шесть, шкала в один ряд до 6 кнопок.
-function cols(n: number): CSSProperties {
-  return { '--cols': n } as CSSProperties
-}
-
-// «4», «4 и 5», «1, 2, 3 и 4».
-function joinAnd(items: ReactNode[]): ReactNode {
-  return items.map((item, i) => (
-    <Fragment key={i}>
-      {i > 0 && (i === items.length - 1 ? ' и ' : ', ')}
-      {item}
-    </Fragment>
-  ))
-}
-
-function fromParams(params: URLSearchParams, people: People, survey: Survey): { role: Role; drafts: Record<Role, Draft> } {
+function fromParams(params: URLSearchParams, people: People, survey: Survey) {
   const id = (params.get('id') ?? '').trim().toUpperCase()
-  const asked: Role = params.get('role') === 'mentor' ? 'mentor' : 'intern'
+  const raw = params.get('role')
+  const asked: Role | null = raw === 'intern' || raw === 'mentor' ? raw : null
   const drafts: Record<Role, Draft> = { intern: EMPTY_DRAFT, mentor: EMPTY_DRAFT }
   // ID сам говорит, чья это анкета: S-01 стажёр, даже если в ссылке role=mentor.
-  for (const role of [asked, asked === 'intern' ? 'mentor' : 'intern'] as const) {
+  const roles: readonly Role[] = asked ? [asked, OTHER[asked]] : ROLES
+  for (const role of roles) {
     const p = id ? personsOf(people, role).find((x) => x.id === id) : undefined
     if (p) {
       drafts[role] = { ...EMPTY_DRAFT, personKey: p.key, month: defaultMonth(p, survey) }
@@ -118,6 +89,37 @@ function fromParams(params: URLSearchParams, people: People, survey: Survey): { 
     }
   }
   return { role: asked, drafts }
+}
+
+// Предлоги и частицы (в, и, не, ли) не висят в конце строки.
+function nbsp(text: string): string {
+  return text.replace(/(?<=^|[\s«(])([а-яё]{1,2}) /gi, '$1\u00A0')
+}
+
+function reveal(el: Element, block: ScrollLogicalPosition) {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block })
+}
+
+// Карточки шага появляются друг за другом, номер задаёт задержку.
+function order(i: number): CSSProperties {
+  return { '--i': i } as CSSProperties
+}
+
+function Shell({ children }: { children: ReactNode }) {
+  return (
+    <div className={s.page}>
+      <div className={s.wrap}>
+        <header className={s.top}>
+          <span className={s.mark} aria-hidden="true">
+            МГТС
+          </span>
+          <span className={s.product}>Анкета стажировки</span>
+        </header>
+        <main>{children}</main>
+      </div>
+    </div>
+  )
 }
 
 export function FormPage() {
@@ -128,146 +130,161 @@ export function FormPage() {
   // Данные уже были, а повторный запрос упал: форма остаётся на экране.
   if (survey.data && people.data) return <FormFlow survey={survey.data} people={people.data} />
 
-  const failed = survey.isError || people.isError
-  const retry = () => {
-    if (survey.isError) void survey.refetch()
-    if (people.isError) void people.refetch()
+  if (survey.isError || people.isError) {
+    const busy = survey.isFetching || people.isFetching
+    return (
+      <Shell>
+        <section className={clsx(s.card, s.center)} role="alert">
+          <h1 className={s.title}>Анкета не загрузилась</h1>
+          <button
+            type="button"
+            className={s.secondary}
+            aria-busy={busy || undefined}
+            onClick={() => {
+              if (survey.isError) void survey.refetch()
+              if (people.isError) void people.refetch()
+            }}
+          >
+            Повторить
+          </button>
+        </section>
+      </Shell>
+    )
   }
-  return (
-    <div className={s.page}>
-      <FormHeader />
-      <main className={s.wrap}>
-        {failed ? (
-          <ErrorBanner
-            className={s['load-error']}
-            title="Не удалось загрузить данные"
-            text="Сервер не ответил. Проверьте связь и нажмите «Повторить»."
-            onRetry={retry}
-            retrying={survey.isFetching || people.isFetching}
-          />
-        ) : (
-          <FormSkeleton />
-        )}
-      </main>
-    </div>
-  )
-}
 
-function SkeletonRow({ n, height }: { n: number; height: number }) {
   return (
-    <div className={s['skel-row']}>
-      {range(1, n).map((i) => (
-        <Skeleton key={i} height={height} radius={12} />
-      ))}
-    </div>
-  )
-}
-
-// Серые блоки по форме анкеты: заголовок, роль, ID, приватность, первый вопрос.
-function FormSkeleton() {
-  return (
-    <Loading className={s.skeleton}>
-      <Skeleton width="88%" height={34} />
-      <Skeleton width="70%" height={22} />
-      <Skeleton width={150} height={22} style={{ marginTop: 24 }} />
-      <Skeleton height={56} radius={14} />
-      <Skeleton width={110} height={22} style={{ marginTop: 24 }} />
-      <SkeletonRow n={5} height={52} />
-      <Skeleton height={98} radius={12} style={{ marginTop: 24 }} />
-      <Skeleton width="78%" height={24} style={{ marginTop: 24 }} />
-      <SkeletonRow n={5} height={56} />
-    </Loading>
-  )
-}
-
-function Option({
-  name,
-  checked,
-  onChange,
-  label,
-  children,
-}: {
-  name: string
-  checked: boolean
-  onChange: () => void
-  // Подпись для скринридера, если цифры на кнопке мало: «2 из 5».
-  label?: string
-  children: ReactNode
-}) {
-  return (
-    <label className={s.opt}>
-      <input type="radio" name={name} checked={checked} onChange={onChange} aria-label={label} />
-      <span>{children}</span>
-    </label>
+    <Shell>
+      <section className={clsx(s.card, s.skeleton)} aria-busy="true" aria-label="Загрузка">
+        <i style={{ width: '40%', height: 28 }} />
+        <div className={s.roles}>
+          <i />
+          <i />
+        </div>
+      </section>
+    </Shell>
   )
 }
 
 function FormFlow({ survey, people }: { survey: Survey; people: People }) {
   const [params] = useSearchParams()
   const [init] = useState(() => fromParams(params, people, survey))
-  const [role, setRole] = useState<Role>(init.role)
+  const [role, setRole] = useState<Role | null>(init.role)
   const [drafts, setDrafts] = useState(init.drafts)
+  // «Изменить»: снова список людей, хотя человек уже выбран.
+  const [picking, setPicking] = useState(false)
   // Нажали «Отправить» с пропусками: пропуски подсвечены, пока их не заполнят.
   const [tried, setTried] = useState(false)
-  const [sent, setSent] = useState<Sent | null>(null)
+  const [sent, setSent] = useState(false)
   const ingest = useIngest()
-  const reduce = useReduced()
+  const nameRef = useRef<HTMLHeadingElement>(null)
 
-  const def = survey.roles[role]
-  const draft = drafts[role]
-  const persons = personsOf(people, role)
+  const draft = role ? drafts[role] : EMPTY_DRAFT
+  const persons = role ? personsOf(people, role) : []
   const person = persons.find((p) => p.key === draft.personKey) ?? null
-  const month = person ? (draft.month ?? defaultMonth(person, survey)) : null
-  const scaleQs = def.questions.filter((q) => q.type === 'scale')
-  const textQs = def.questions.filter((q) => q.type === 'text')
-  const missing = scaleQs.filter((q) => typeof draft.answers[q.id] !== 'number')
-  const answered = scaleQs.length - missing.length
-  const scale = range(survey.scale.min, survey.scale.max)
-  const months = range(1, survey.months)
-  const replaces = person != null && month != null && alreadySent(person, month)
-  const commentEmpty = textQs.every((q) => !String(draft.answers[q.id] ?? '').trim())
+  const step2 = role != null && person != null && !picking
 
-  const patch = (fn: (d: Draft) => Draft) => setDrafts((all) => ({ ...all, [role]: fn(all[role]) }))
+  // Шаг сменился: наверх, фокус на имя, чтобы скринридер не потерялся.
+  useEffect(() => {
+    if (!step2) return
+    window.scrollTo(0, 0)
+    nameRef.current?.focus({ preventScroll: true })
+  }, [step2])
+
+  const patch = (fn: (d: Draft) => Draft) => {
+    if (role) setDrafts((all) => ({ ...all, [role]: fn(all[role]) }))
+  }
 
   const chooseRole = (next: Role) => {
-    if (next === role) return
     setRole(next)
     setTried(false)
     ingest.reset()
   }
 
-  // Прокрутка к блоку и фокус на его первое поле. Плавно, если движение не выключено.
-  const goTo = (id: string) => {
-    const el = document.getElementById(id)
-    if (!el) return
-    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
-    el.querySelector<HTMLElement>('input:checked, input, textarea')?.focus({ preventScroll: true })
-  }
-  const jump = (id: string) => (e: MouseEvent) => {
-    e.preventDefault()
-    goTo(id)
+  const choosePerson = (p: Person) => {
+    // Тот же человек: месяц, который поменяли руками, не сбрасываем.
+    if (p.key !== draft.personKey) patch((d) => ({ ...d, personKey: p.key, month: defaultMonth(p, survey) }))
+    setPicking(false)
   }
 
-  const openMonths = () => {
-    patch((d) => ({ ...d, monthOpen: true }))
-    // Кнопка «Поменять месяц» исчезает, фокус переходит на выбранный месяц.
-    requestAnimationFrame(() => document.querySelector<HTMLElement>('#form-months input:checked')?.focus())
+  const again = () => {
+    if (role) setDrafts((all) => ({ ...all, [role]: EMPTY_DRAFT }))
+    setTried(false)
+    setSent(false)
+    ingest.reset()
+    window.scrollTo(0, 0)
   }
+
+  if (sent) return <Done onAgain={again} />
+
+  if (!step2) {
+    return (
+      <Shell>
+        <section className={s.card} aria-labelledby="form-who">
+          <h1 className={s.title} id="form-who">
+            Кто вы?
+          </h1>
+          <div className={s.roles}>
+            {ROLES.map((r) => (
+              <button key={r} type="button" className={s.choice} aria-pressed={r === role} onClick={() => chooseRole(r)}>
+                {ROLE_TITLE[r]}
+              </button>
+            ))}
+          </div>
+          {role &&
+            (persons.length ? (
+              <div className={s.people} key={role}>
+                {persons.map((p) => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    className={clsx(s.choice, s.person)}
+                    aria-pressed={p.key === draft.personKey}
+                    onClick={() => choosePerson(p)}
+                  >
+                    <span>
+                      {p.name}
+                      {persons.some((x) => x.id === p.id && x.key !== p.key) && (
+                        <span className={s.sub}>
+                          {ROLE_LABEL[OTHER[role]]} {p.otherName}
+                        </span>
+                      )}
+                    </span>
+                    {p.named && <span className={s.id}>{p.id}</span>}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className={s.empty}>Список пока пуст</p>
+            ))}
+        </section>
+      </Shell>
+    )
+  }
+
+  const def = survey.roles[role]
+  const month = draft.month ?? defaultMonth(person, survey)
+  const scaleQs = def.questions.filter((q) => q.type === 'scale')
+  const missing = scaleQs.filter((q) => typeof draft.answers[q.id] !== 'number')
+  const scale = range(survey.scale.min, survey.scale.max)
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (ingest.isPending) return
     setTried(true)
-    if (!person || month == null) return goTo('form-id')
-    if (missing.length) return goTo(`form-q-${missing[0].id}`)
-
+    if (missing.length) {
+      const el = document.getElementById(`form-q-${missing[0].id}`)
+      if (el) {
+        reveal(el, 'center')
+        el.querySelector<HTMLElement>('input')?.focus({ preventScroll: true })
+      }
+      return
+    }
     const answers: Answers = {}
     for (const q of def.questions) {
       const v = draft.answers[q.id]
       if (q.type === 'scale' && typeof v === 'number') answers[q.id] = v
       if (q.type === 'text') answers[q.id] = typeof v === 'string' ? v.trim() : ''
     }
-    const scores = scaleQs.map((q) => draft.answers[q.id]).filter((v): v is number => typeof v === 'number')
     ingest.mutate(
       // Вторая сторона пары явно: у наставника с двумя стажёрами без неё анкета не найдёт пару.
       {
@@ -278,324 +295,135 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
         answers,
         source: 'form',
       },
-      {
-        onSuccess: () => {
-          setSent({
-            role,
-            personId: person.id,
-            month,
-            avg: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null,
-            last: month >= survey.months,
-          })
-          window.scrollTo(0, 0)
-        },
-      },
+      { onSuccess: () => setSent(true) },
     )
   }
-
-  // «Заполнить ещё одну анкету»: роль остаётся, ID и ответы этой роли с нуля.
-  const again = () => {
-    setDrafts((all) => ({ ...all, [role]: EMPTY_DRAFT }))
-    setTried(false)
-    setSent(null)
-    ingest.reset()
-    window.scrollTo(0, 0)
-  }
-
-  if (sent) {
-    return (
-      <div className={s.page}>
-        <FormHeader />
-        <Done sent={sent} label={survey.roles[sent.role].person_label} onAgain={again} />
-      </div>
-    )
-  }
-
-  const left: ReactNode[] = []
-  if (!person) {
-    left.push(
-      <a key="id" href="#form-id" onClick={jump('form-id')}>
-        выберите ID
-      </a>,
-    )
-  }
-  if (missing.length) {
-    left.push(
-      <Fragment key="q">
-        ответьте на {missing.length === 1 ? 'вопрос' : 'вопросы'}{' '}
-        {joinAnd(
-          missing.map((q) => (
-            <a key={q.id} href={`#form-q-${q.id}`} onClick={jump(`form-q-${q.id}`)} className="num">
-              {def.questions.indexOf(q) + 1}
-            </a>
-          )),
-        )}
-      </Fragment>,
-    )
-  }
-
-  const lead = `${scaleQs.length} ${plural(scaleQs.length, QUESTION_WORDS)} с оценкой${textQs.length ? ' и комментарий' : ''}, это около двух минут.`
 
   return (
-    <div className={s.page}>
-      <FormHeader progress={scaleQs.length ? answered / scaleQs.length : 0}>
-        <span className={clsx(s.counter, 'num')}>
-          Оценок <b>{answered}</b> из {scaleQs.length}
-        </span>
-      </FormHeader>
+    <Shell>
+      <form className={s.stack} noValidate onSubmit={submit}>
+        <section className={s.card} style={order(0)}>
+          <div className={s.head}>
+            <h1 className={s.name} ref={nameRef} tabIndex={-1}>
+              {person.name}
+            </h1>
+            <button type="button" className={s.link} onClick={() => setPicking(true)}>
+              Изменить
+            </button>
+          </div>
+          <p className={s.sub}>
+            {ROLE_LABEL[OTHER[role]]} {person.otherName}
+          </p>
+          <div className={s.select}>
+            <select aria-label="Месяц" value={month} onChange={(e) => patch((d) => ({ ...d, month: Number(e.target.value) }))}>
+              {range(1, survey.months).map((m) => (
+                <option key={m} value={m}>
+                  {m}-й месяц{alreadySent(person, m) ? ', анкета уже есть' : ''}
+                </option>
+              ))}
+            </select>
+            <ChevronDown aria-hidden="true" strokeWidth={1.8} />
+          </div>
+        </section>
 
-      <main className={s.wrap}>
-        <div className={s.intro}>
-          <h1>{month != null ? `Анкета за ${month}-й месяц` : 'Анкета за месяц стажировки'}</h1>
-          <p>{lead}</p>
-        </div>
+        <p className={s.note} style={order(1)}>
+          Ответы видит только HR программы.
+        </p>
 
-        <form noValidate onSubmit={submit}>
-          <section className={s.field} aria-labelledby="form-role-l">
-            <h2 className={s.lbl} id="form-role-l">
-              Кто заполняет
-            </h2>
-            <Segmented
-              label="Кто заполняет"
-              size="l"
-              className={s['role-seg']}
-              value={role}
-              onChange={chooseRole}
-              options={ROLE_OPTIONS}
-            />
-          </section>
-
-          <section id="form-id" className={clsx(s.field, tried && !person && s.missing)} aria-labelledby="form-id-l">
-            <h2 className={s.lbl} id="form-id-l">
-              {def.person_label}
-            </h2>
-            {persons.length > 0 ? (
-              <div className={s.row} role="radiogroup" aria-labelledby="form-id-l" style={cols(Math.min(persons.length, 5))}>
-                {persons.map((p) => (
-                  <Option key={p.key} name={`person-${role}`} checked={p.key === person?.key} onChange={() => patch((d) => ({ ...d, personKey: p.key, month: defaultMonth(p, survey) }))}>
-                    {persons.filter((x) => x.id === p.id).length > 1 ? `${p.id} · ${p.other}` : p.id}
-                  </Option>
+        {def.questions.map((q, i) => {
+          if (q.type === 'text') {
+            return (
+              <section key={`${role}-${q.id}`} className={s.card} style={order(i + 2)}>
+                <label className={s.qt} htmlFor={`form-t-${q.id}`}>
+                  {nbsp(q.text)}
+                </label>
+                <textarea
+                  id={`form-t-${q.id}`}
+                  className={s.text}
+                  rows={4}
+                  value={String(draft.answers[q.id] ?? '')}
+                  onChange={(e) => patch((d) => ({ ...d, answers: { ...d.answers, [q.id]: e.target.value } }))}
+                />
+              </section>
+            )
+          }
+          const miss = tried && typeof draft.answers[q.id] !== 'number'
+          return (
+            <section
+              key={`${role}-${q.id}`}
+              id={`form-q-${q.id}`}
+              className={clsx(s.card, miss && s.miss)}
+              style={order(i + 2)}
+              aria-labelledby={`form-qt-${q.id}`}
+            >
+              <h2 className={s.qt} id={`form-qt-${q.id}`}>
+                {nbsp(q.text)}
+              </h2>
+              <div
+                className={s.scale}
+                role="radiogroup"
+                aria-labelledby={`form-qt-${q.id}`}
+                aria-invalid={miss || undefined}
+                style={{ '--n': scale.length } as CSSProperties}
+              >
+                {scale.map((v) => (
+                  <label key={v} className={s.opt}>
+                    <input
+                      type="radio"
+                      name={`${role}-${q.id}`}
+                      checked={draft.answers[q.id] === v}
+                      onChange={() => patch((d) => ({ ...d, answers: { ...d.answers, [q.id]: v } }))}
+                      aria-label={`${v} из ${survey.scale.max}${v === survey.scale.min ? `, ${survey.scale.min_label}` : v === survey.scale.max ? `, ${survey.scale.max_label}` : ''}`}
+                    />
+                    <span>{v}</span>
+                  </label>
                 ))}
               </div>
-            ) : (
-              <p className={s.bind}>Список пока пуст. Анкета откроется, когда HR загрузит пары из Excel.</p>
-            )}
-            {person && month != null ? (
-              <>
-                <p className={s.bind}>
-                  {OTHER_TITLE[role]} <b>{person.other}</b>. Анкета за {month}-й месяц.
-                  {!draft.monthOpen && (
-                    <>
-                      {' '}
-                      <button type="button" className={s['link-btn']} onClick={openMonths} aria-expanded={false} aria-controls="form-months">
-                        Поменять месяц
-                      </button>
-                    </>
-                  )}
-                </p>
-                {draft.monthOpen && (
-                  <div id="form-months" className={s.months}>
-                    <p className={s.sublbl} id="form-month-l">
-                      Месяц стажировки
-                    </p>
-                    <div className={s.row} role="radiogroup" aria-labelledby="form-month-l" style={cols(Math.min(months.length, 6))}>
-                      {months.map((m) => (
-                        <Option key={m} name={`month-${role}`} checked={m === month} onChange={() => patch((d) => ({ ...d, month: m }))} label={`${m}-й месяц`}>
-                          {m}
-                        </Option>
-                      ))}
-                    </div>
-                    {person.next !== 1 && (
-                      <p className={s.hint}>
-                        {person.next == null
-                          ? 'Анкеты за все месяцы уже есть.'
-                          : person.next === 2
-                            ? 'Анкета за 1-й месяц уже есть.'
-                            : `Анкеты за 1–${person.next - 1}-й месяц уже есть.`}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : (
-              persons.length > 0 && <p className={s.hint}>ID есть в письме о начале стажировки.</p>
-            )}
-            {tried && !person && persons.length > 0 && <p className={s.need}>Выберите свой ID</p>}
-          </section>
-
-          {persons.length > 0 && (
-            <>
-              <div className={s.privacy}>
-                <Lock aria-hidden="true" strokeWidth={1.6} />
-                <p>
-                  <b>Ответы видит только HR программы.</b> {PRIVACY_REST[role]}
-                </p>
+              <div className={s.edges} aria-hidden="true">
+                <span>{survey.scale.min_label}</span>
+                <span>{survey.scale.max_label}</span>
               </div>
+            </section>
+          )
+        })}
 
-              {def.questions.map((q, i) => {
-                const n = (
-                  <span className={clsx(s.n, 'num')} aria-hidden="true">
-                    {i + 1}
-                  </span>
-                )
-                if (q.type === 'text') {
-                  return (
-                    <div key={`${role}-${q.id}`} id={`form-q-${q.id}`} className={s.q}>
-                      <div className={s['q-head']}>
-                        {n}
-                        <label className={s.qt} htmlFor={`form-t-${q.id}`}>
-                          {q.text}
-                        </label>
-                      </div>
-                      <textarea
-                        id={`form-t-${q.id}`}
-                        className={s.text}
-                        value={String(draft.answers[q.id] ?? '')}
-                        onChange={(e) => patch((d) => ({ ...d, answers: { ...d.answers, [q.id]: e.target.value } }))}
-                        placeholder={PLACEHOLDER[role]}
-                        aria-describedby={`form-th-${q.id}`}
-                      />
-                      <p className={s.hint} id={`form-th-${q.id}`}>
-                        Пишите как есть. Можно коротко, можно пропустить.
-                      </p>
-                    </div>
-                  )
-                }
-                const miss = tried && typeof draft.answers[q.id] !== 'number'
-                return (
-                  <section key={`${role}-${q.id}`} id={`form-q-${q.id}`} className={clsx(s.q, miss && s.missing)} aria-labelledby={`form-qt-${q.id}`}>
-                    <div className={s['q-head']}>
-                      {n}
-                      <h2 className={s.qt} id={`form-qt-${q.id}`}>
-                        {q.text}
-                      </h2>
-                    </div>
-                    <div
-                      className={clsx(s.row, s.scale)}
-                      role="radiogroup"
-                      aria-labelledby={`form-qt-${q.id}`}
-                      aria-describedby={miss ? `form-need-${q.id}` : undefined}
-                      style={cols(scale.length <= 6 ? scale.length : Math.ceil(scale.length / 2))}
-                    >
-                      {scale.map((v) => (
-                        <Option
-                          key={v}
-                          name={`${role}-${q.id}`}
-                          checked={draft.answers[q.id] === v}
-                          onChange={() => patch((d) => ({ ...d, answers: { ...d.answers, [q.id]: v } }))}
-                          label={`${v} из ${survey.scale.max}${v === survey.scale.min ? `, ${survey.scale.min_label}` : v === survey.scale.max ? `, ${survey.scale.max_label}` : ''}`}
-                        >
-                          {v}
-                        </Option>
-                      ))}
-                    </div>
-                    <div className={s.edges} aria-hidden="true">
-                      <span>{survey.scale.min_label}</span>
-                      <span>{survey.scale.max_label}</span>
-                    </div>
-                    {miss && (
-                      <p className={s.need} id={`form-need-${q.id}`}>
-                        Нужен ответ
-                      </p>
-                    )}
-                  </section>
-                )
-              })}
-
-              <div className={s.send}>
-                {replaces && (
-                  <p className={s.replace}>
-                    Анкета {person.id} за {month}-й месяц уже есть. Новая заменит её.
-                  </p>
-                )}
-                {ingest.isError && <SendError error={ingest.error} />}
-                <Button type="submit" variant="brand" busy={ingest.isPending} className={s.submit}>
-                  {ingest.isPending ? 'Отправляем…' : 'Отправить анкету'}
-                </Button>
-                <p className={s.left} aria-live="polite">
-                  {left.length ? (
-                    <>
-                      Осталось:{' '}
-                      {left.map((part, i) => (
-                        <Fragment key={i}>
-                          {i > 0 && ', '}
-                          {part}
-                        </Fragment>
-                      ))}
-                    </>
-                  ) : textQs.length && commentEmpty ? (
-                    'Всё готово. Комментарий по желанию.'
-                  ) : (
-                    'Всё готово.'
-                  )}
-                </p>
-              </div>
-            </>
+        <div className={s.dock}>
+          {ingest.isError && (
+            <p className={s.error} role="alert">
+              {ingest.error.status >= 400 && ingest.error.status < 500
+                ? ingest.error.message
+                : 'Нет связи с сервером. Ответы на месте, отправьте ещё раз.'}
+            </p>
           )}
-        </form>
-      </main>
-    </div>
+          <button type="submit" className={s.submit} aria-busy={ingest.isPending || undefined}>
+            {ingest.isPending ? 'Отправляем…' : 'Отправить'}
+          </button>
+        </div>
+      </form>
+    </Shell>
   )
 }
 
-// Сеть упала или сервер не ответил: просим нажать ещё раз. 422: текст detail.
-function SendError({ error }: { error: ApiError }) {
-  const offline = !(error.status >= 400 && error.status < 500)
-  return (
-    <div className={s.error} role="alert">
-      <CircleAlert aria-hidden="true" strokeWidth={1.7} />
-      <p>
-        <b>Не получилось отправить</b>
-        {offline ? 'Нет связи с сервером. Ответы остались на экране, нажмите «Отправить анкету» ещё раз.' : error.message}
-      </p>
-    </div>
-  )
-}
-
-// «Спасибо»: круг рисуется 700 мс, потом галочка 420 мс (CSS, при reduce сразу).
-function Done({ sent, label, onAgain }: { sent: Sent; label: string; onAgain: () => void }) {
-  const reduce = useReduced()
+function Done({ onAgain }: { onAgain: () => void }) {
   const head = useRef<HTMLHeadingElement>(null)
-  useEffect(() => head.current?.focus({ preventScroll: true }), [])
-
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    head.current?.focus({ preventScroll: true })
+  }, [])
   return (
-    <motion.main
-      className={clsx(s.wrap, s.done)}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={transition(reduce, { duration: dur.m, ease: ease.out })}
-    >
-      <svg className={s.check} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle className={s.ring} pathLength={1} cx={32} cy={32} r={29} />
-        <path className={s.tick} pathLength={1} d="m20 33 8 8 16-17" />
-      </svg>
-      <h1 ref={head} tabIndex={-1}>
-        Спасибо, анкета отправлена
-      </h1>
-      <p className={s['done-lead']}>
-        {sent.last
-          ? 'HR программы видит её сразу. Это была последняя анкета стажировки, спасибо, что заполняли их каждый месяц.'
-          : 'HR программы видит её сразу. Следующая анкета через месяц.'}
-      </p>
-      <dl className={s.sum}>
-        <div>
-          <dt>{label}</dt>
-          <dd>{sent.personId}</dd>
-        </div>
-        <div>
-          <dt>Месяц</dt>
-          <dd className="num">{sent.month}-й</dd>
-        </div>
-        {sent.avg != null && (
-          <div>
-            <dt>Средняя оценка</dt>
-            <dd className="num">{formatNumber(sent.avg)}</dd>
-          </div>
-        )}
-      </dl>
-      <Button className={s.again} onClick={onAgain}>
-        Заполнить ещё одну анкету
-      </Button>
-    </motion.main>
+    <Shell>
+      <section className={clsx(s.card, s.center)}>
+        <svg className={s.check} viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx={32} cy={32} r={32} />
+          <path pathLength={1} d="m20 33 8 8 16-17" />
+        </svg>
+        <h1 className={s.title} ref={head} tabIndex={-1}>
+          Спасибо, анкета отправлена
+        </h1>
+        <button type="button" className={s.secondary} onClick={onAgain}>
+          Заполнить ещё одну
+        </button>
+      </section>
+    </Shell>
   )
 }

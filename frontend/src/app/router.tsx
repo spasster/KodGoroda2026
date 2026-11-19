@@ -1,7 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 
-import { EmptyState } from '../components/EmptyState'
-import { LinkButton } from '../components/Button'
+import { EmptyState, LinkButton } from '../components'
 import { FormPage } from '../pages/Form'
 import { FormQrPage } from '../pages/Form/Qr'
 import { OverviewPage } from '../pages/Overview'
@@ -13,11 +12,7 @@ import { AppShell } from './AppShell'
 function NotFound() {
   return (
     <div className="wrap">
-      <EmptyState
-        title="Такой страницы нет"
-        text="Проверьте адрес или вернитесь к обзору."
-        actions={<LinkButton to="/">К обзору</LinkButton>}
-      />
+      <EmptyState title="Такой страницы нет" actions={<LinkButton to="/" variant="brand">К обзору</LinkButton>} />
     </div>
   )
 }

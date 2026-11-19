@@ -3,10 +3,10 @@
 // По умолчанию проверяет Docker (make up) на http://localhost:8080.
 // Другой адрес: BASE_URL=http://localhost:5173 pnpm e2e
 //
-// В начале сбрасывает базу к data/sample, потому что сценарий начинается со
-// спокойной P-01. Если всё прошло, сбрасывает ещё раз, чтобы демо начиналось
-// с чистых данных. Если шаг упал, база остаётся как есть, а снимок экрана
-// лежит во временной папке, путь печатается.
+// В начале сбрасывает базу к data/sample, потому что сценарий начинается с пары
+// Ильи Морозова (P-01) в статусе «Всё ровно». Если всё прошло, сбрасывает ещё
+// раз, чтобы демо начиналось с чистых данных. Если шаг упал, база остаётся как
+// есть, а снимок экрана лежит во временной папке, путь печатается.
 
 import { readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -69,13 +69,14 @@ async function waitVisible(locator, what, timeout = WAIT) {
   }
 }
 
-// Строка пары в таблице обзора.
-const pairRow = (page, id) =>
-  page
-    .locator('section[aria-labelledby="board-h"] tbody tr')
-    .filter({ has: page.getByRole('link', { name: id, exact: true }) })
+// Строка пары в таблице обзора по имени стажёра.
+const pairRow = (page, intern) =>
+  page.locator('main table tbody tr').filter({ has: page.getByRole('link', { name: intern, exact: true }) })
 
-const nowCell = (page, id) => pairRow(page, id).locator('td').last()
+// Последняя колонка строки: «Главное».
+const mainCell = (page, intern) => pairRow(page, intern).locator('td').last()
+
+const liveDot = (page) => page.locator('header').getByText('онлайн', { exact: true })
 
 // Путь QR-кода так же, как его строит pages/Form/Qr.tsx.
 function qrPath(value) {
@@ -115,26 +116,35 @@ let failed = false
 let touched = false // база уже сброшена и меняется сценарием
 
 try {
+  // Пары и люди по именам из справочника survey/people.json.
+  let names = {}
+
   await step('Бэкенд отвечает, база сброшена к data/sample', null, async () => {
     const health = await api('GET', '/api/health')
     check(health?.ok, `/api/health: ${JSON.stringify(health)}`)
     await api('POST', '/api/admin/reset')
     touched = true
     const overview = await api('GET', '/api/overview')
-    const p01 = overview.pairs.find((p) => p.pair_id === 'P-01')
-    check(p01, 'В /api/overview нет пары P-01. Это не data/sample?')
-    check(p01.status === 'ok', `P-01 после сброса в статусе ${p01.status}, ждали ok`)
+    const pair = (id) => overview.pairs.find((p) => p.pair_id === id)
+    check(pair('P-01'), 'В /api/overview нет пары P-01. Это не data/sample?')
+    check(pair('P-01').status === 'ok', `P-01 после сброса в статусе ${pair('P-01').status}, ждали ok`)
+    names = {
+      ilya: pair('P-01').intern_name,
+      timur: pair('P-03').intern_name,
+      olga: pair('P-04').mentor_name,
+    }
+    check(names.ilya && names.timur && names.olga, `В /api/overview нет имён: ${JSON.stringify(names)}`)
   })
 
   const desk = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'ru-RU' })
   const dash = await desk.newPage()
   watch(dash, 'дашборд')
 
-  await step('Обзор открылся, P-01 спокойная, поток событий подключён', dash, async () => {
+  await step('Обзор открылся, у Ильи Морозова «Всё ровно», связь онлайн', dash, async () => {
     await dash.goto(BASE + '/')
-    await waitVisible(pairRow(dash, 'P-01'), 'Строка P-01 в таблице обзора')
-    await waitText(nowCell(dash, 'P-01'), 'Спокойно', 'Колонка «Сейчас» у P-01')
-    await waitVisible(dash.getByText('На связи', { exact: false }), 'Лампа «На связи» в шапке')
+    await waitVisible(pairRow(dash, names.ilya), `Строка «${names.ilya}» в таблице обзора`)
+    await waitText(mainCell(dash, names.ilya), 'Всё ровно', `Колонка «Главное» у «${names.ilya}»`)
+    await waitVisible(liveDot(dash), 'Точка связи «онлайн» в шапке')
   })
 
   await step('POST /api/ingest: демо-анкета S-01 за 6-й месяц', dash, async () => {
@@ -147,39 +157,69 @@ try {
     check(res.new_signals.length > 0, 'Анкета S-01 не дала новых сигналов')
   })
 
-  await step('Без перезагрузки: уведомление, P-01 стала «Пора поговорить»', dash, async () => {
-    const toast = dash.getByRole('status').filter({ hasText: 'S-01 прислал анкету за 6-й месяц' })
-    await waitVisible(toast, 'Уведомление «Стажёр S-01 прислал анкету за 6-й месяц»')
-    await waitText(toast, 'Пора поговорить', 'Уведомление о новой анкете')
-    await waitText(nowCell(dash, 'P-01'), 'Пора поговорить', 'Колонка «Сейчас» у P-01')
+  await step('Без перезагрузки: уведомление и смена статуса пары Ильи Морозова', dash, async () => {
+    const who = `${names.ilya}, стажёр, 6-й месяц`
+    const toast = dash.getByRole('status').filter({ hasText: who })
+    await waitVisible(toast, `Уведомление «Новая анкета: ${who}»`)
+    await waitText(toast, 'Новая анкета', 'Уведомление о новой анкете')
+    await waitText(toast, 'Всё ровно', 'Уведомление: статус до анкеты')
+    await waitText(toast, 'Пора поговорить', 'Уведомление: статус после анкеты')
+    // Пара ушла из «Всё ровно»: в «Главном» заголовок сигнала, у клетки 6-го месяца метка «новое».
+    const until = Date.now() + WAIT
+    let main = ''
+    while (Date.now() < until) {
+      main = await mainCell(dash, names.ilya).innerText().catch(() => '')
+      if (main && !main.includes('Всё ровно')) break
+      await sleep(150)
+    }
+    check(main && !main.includes('Всё ровно'), `Колонка «Главное» у «${names.ilya}» осталась «${squash(main)}»`)
+    await waitText(pairRow(dash, names.ilya), 'новое', `Метка «новое» в строке «${names.ilya}»`)
+    const overview = await api('GET', '/api/overview')
+    const p01 = overview.pairs.find((p) => p.pair_id === 'P-01')
+    check(p01.status === 'risk', `P-01 после анкеты в статусе ${p01.status}, ждали risk`)
     const same = await dash.evaluate(() => window.__e2eNoReload === true)
     check(same, 'Страница обзора перезагрузилась, а данные должны были прийти через /api/events')
   })
 
-  await step('Карточка P-03: «Подтвердилось» сохраняется после перезагрузки', dash, async () => {
-    await dash.goto(BASE + '/pairs/P-03')
+  await step('Карточка Тимура Галиева: «Подтвердилось» сохраняется после перезагрузки', dash, async () => {
+    await dash.goto(BASE + '/')
+    await pairRow(dash, names.timur).getByRole('link', { name: names.timur, exact: true }).click()
+    await waitVisible(dash.getByRole('heading', { level: 1, name: names.timur }), `Заголовок «${names.timur}» на карточке пары`)
     const confirm = (scope) => scope.getByRole('button', { name: 'Подтвердилось', exact: true })
-    const open = dash.locator('article[data-signal]').filter({ has: confirm(dash) })
-    await waitVisible(open, 'Открытый сигнал с кнопкой «Подтвердилось» на карточке P-03')
-    const key = await open.first().getAttribute('data-signal')
-    const saved = dash.waitForResponse(
-      (r) => r.request().method() === 'POST' && decodeURIComponent(r.url()).includes(`/api/signals/${key}/review`),
-      { timeout: WAIT },
-    )
+    const open = dash.locator('article').filter({ has: confirm(dash) })
+    await waitVisible(open, 'Открытый сигнал с кнопкой «Подтвердилось»')
+    // В заголовке точка важности со скрытым словом, текст сигнала в последнем span.
+    const title = (await open.first().locator('h3 > span').last().innerText()).split(' · ')[0].replace(/\s+/g, ' ').trim()
+
+    // Карточка может нести повторы за несколько месяцев: отметка уходит на каждый.
+    const keys = []
+    const onRequest = (r) => {
+      const m = decodeURIComponent(r.url()).match(/\/api\/signals\/(.+)\/review$/)
+      if (m && r.method() === 'POST') keys.push(m[1])
+    }
+    dash.on('request', onRequest)
+    const saved = dash.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/review'), { timeout: WAIT })
     await confirm(open.first()).click()
     const res = await saved.catch(() => null)
-    check(res, `Запрос отметки ${key} не ушёл`)
-    check(res.ok(), `Отметка ${key}: ответ ${res.status()}`)
+    check(res, `Запрос отметки сигнала «${title}» не ушёл`)
+    check(res.ok(), `Отметка «${title}»: ответ ${res.status()}`)
+    await sleep(500)
+    dash.off('request', onRequest)
+    check(keys.length > 0, `Не поймали ключ сигнала «${title}»`)
 
     await dash.reload()
-    const block = dash.locator(`article[data-signal="${key}"]`)
-    await waitVisible(block, `Сигнал ${key} после перезагрузки`)
-    await waitVisible(block.getByRole('button', { name: 'Снять отметку' }), `Кнопка «Снять отметку» у ${key}`)
-    await waitText(block, 'Подтвердилось', `Сигнал ${key} после перезагрузки`)
-    check((await confirm(block).count()) === 0, `У ${key} после перезагрузки снова кнопка «Подтвердилось»`)
+    const done = dash.getByRole('button', { name: /^Разобранные: \d+/ })
+    await waitVisible(done, 'Строка «Разобранные: N»')
+    await done.click()
+    const item = dash.locator('#pair-done li').filter({ hasText: title })
+    await waitVisible(item, `«${title}» в разобранных после перезагрузки`)
+    await waitText(item, 'подтвердилось', `«${title}» в разобранных`)
+    await waitVisible(item.getByRole('button', { name: 'Вернуть' }), `Кнопка «Вернуть» у «${title}»`)
     const pair = await api('GET', '/api/pairs/P-03')
-    const signal = pair.signals.find((s) => s.key === key)
-    check(signal?.review.status === 'confirmed', `В /api/pairs/P-03 у ${key} отметка ${signal?.review.status}`)
+    for (const key of keys) {
+      const signal = pair.signals.find((x) => x.key === key)
+      check(signal?.review.status === 'confirmed', `В /api/pairs/P-03 у ${key} отметка ${signal?.review.status}`)
+    }
   })
 
   const phone = await browser.newContext({
@@ -196,20 +236,23 @@ try {
   await step('Форма на 390×844: наставник M-04 отправил анкету, «Спасибо»', form, async () => {
     // Обзор открыт и ждёт уведомление о новой анкете.
     await dash.goto(BASE + '/')
-    await waitVisible(pairRow(dash, 'P-04'), 'Строка P-04 в таблице обзора')
-    await waitVisible(dash.getByText('На связи', { exact: false }), 'Лампа «На связи» в шапке')
+    await waitVisible(pairRow(dash, names.ilya), 'Таблица обзора')
+    await waitVisible(liveDot(dash), 'Точка связи «онлайн» в шапке')
 
     const people = await api('GET', '/api/people')
     month = people.mentors.find((p) => p.id === 'M-04')?.next_month
     check(month, `У наставника M-04 нет свободного месяца: ${JSON.stringify(people.mentors)}`)
 
     await form.goto(BASE + '/form')
-    await waitVisible(form.getByRole('button', { name: 'Я наставник' }), 'Переключатель «Я наставник»')
-    await form.getByRole('button', { name: 'Я наставник' }).click()
-    const id = form.locator('label').filter({ has: form.getByRole('radio', { name: 'M-04', exact: true }) })
-    await waitVisible(id, 'Кнопка ID M-04')
-    await id.click()
-    await waitText(form.locator('h1'), `Анкета за ${month}-й месяц`, 'Заголовок формы')
+    const mentorBtn = form.getByRole('button', { name: 'Наставник', exact: true })
+    await waitVisible(mentorBtn, 'Кнопка «Наставник»')
+    await mentorBtn.click()
+    const person = form.getByRole('button', { name: new RegExp(`^${names.olga}`) })
+    await waitVisible(person, `Кнопка «${names.olga}» в списке наставников`)
+    await person.click()
+    await waitText(form.locator('h1'), names.olga, 'Имя наставника на втором шаге')
+    const chosen = await form.getByLabel('Месяц', { exact: true }).inputValue()
+    check(Number(chosen) === month, `Месяц в форме ${chosen}, ждали ${month}`)
 
     const groups = form.locator('[role="radiogroup"][aria-labelledby^="form-qt-"]')
     const n = await groups.count()
@@ -223,16 +266,17 @@ try {
     const sent = form.waitForResponse((r) => r.url().endsWith('/api/ingest') && r.request().method() === 'POST', {
       timeout: WAIT,
     })
-    await form.getByRole('button', { name: 'Отправить анкету' }).click()
+    await form.getByRole('button', { name: 'Отправить', exact: true }).click()
     const res = await sent.catch(() => null)
     check(res, 'Форма не отправила POST /api/ingest. Есть пропущенные вопросы?')
     check(res.ok(), `POST /api/ingest из формы: ответ ${res.status()} ${squash(await res.text())}`)
     await waitVisible(form.getByRole('heading', { name: 'Спасибо, анкета отправлена' }), 'Экран «Спасибо»')
+    await waitVisible(form.getByRole('button', { name: 'Заполнить ещё одну' }), 'Кнопка «Заполнить ещё одну»')
   })
 
   await step('На обзоре пришло уведомление об анкете M-04', dash, async () => {
-    const text = `M-04 прислал анкету за ${month}-й месяц через форму`
-    await waitVisible(dash.getByRole('status').filter({ hasText: text }), `Уведомление «Наставник ${text}»`)
+    const who = `${names.olga}, наставник, ${month}-й месяц`
+    await waitVisible(dash.getByRole('status').filter({ hasText: who }), `Уведомление «Новая анкета: ${who}»`)
   })
 
   await step('/form/qr без туннеля просит адрес, с адресом показывает QR-код', null, async () => {
@@ -240,11 +284,13 @@ try {
     watch(qr, 'QR')
     shotPage = qr
     await qr.goto(BASE + '/form/qr')
+    await waitVisible(qr.getByRole('heading', { name: 'Анкета стажировки МГТС' }), 'Заголовок «Анкета стажировки МГТС»')
     const code = qr.locator('svg[role="img"]')
     const local = new URL(ORIGIN).hostname
-    if (local === 'localhost' || local.startsWith('127.')) {
+    const isLocal = local === 'localhost' || local.startsWith('127.')
+    if (isLocal) {
       // Телефон в зале localhost не откроет: кода нет, есть просьба вставить адрес туннеля.
-      await waitVisible(qr.getByRole('heading', { name: 'Сначала адрес туннеля' }), 'Заголовок «Сначала адрес туннеля»')
+      await waitVisible(qr.getByText('Вставьте адрес туннеля', { exact: true }), 'Подсказка «Вставьте адрес туннеля»')
       check((await code.count()) === 0, 'На localhost QR-код рисоваться не должен')
       await qr.getByLabel('Адрес туннеля').fill('abc-def.trycloudflare.com')
       await qr.getByRole('button', { name: 'Показать' }).click()
@@ -252,12 +298,17 @@ try {
     await waitVisible(code, 'QR-код')
     const box = await code.first().boundingBox()
     check(box && box.width >= 160 && box.height >= 160, `QR-код слишком маленький: ${JSON.stringify(box)}`)
-    const base = local === 'localhost' || local.startsWith('127.') ? 'https://abc-def.trycloudflare.com' : ORIGIN
-    const url = `${base}/form`
+    const url = `${isLocal ? 'https://abc-def.trycloudflare.com' : ORIGIN}/form`
     const d = await code.first().locator('path').getAttribute('d')
     check(d === qrPath(url), `QR-код ведёт не на ${url}`)
     await waitVisible(qr.locator(`a[href="${url}"]`), `Ссылка на ${url} рядом с QR-кодом`)
-    await qr.getByRole('button', { name: 'Сбросить адрес' }).click()
+    if (isLocal) {
+      // Пустое поле возвращает адрес этого компьютера, чтобы прогон не оставлял следов.
+      await qr.getByRole('button', { name: 'Изменить адрес' }).click()
+      await qr.getByLabel('Адрес туннеля').fill('')
+      await qr.getByRole('button', { name: 'Показать' }).click()
+      await waitVisible(qr.getByText('Вставьте адрес туннеля', { exact: true }), 'Подсказка после сброса адреса')
+    }
   })
 
   check(browserErrors.length === 0, `Ошибки в консоли браузера:\n  ${browserErrors.join('\n  ')}`)

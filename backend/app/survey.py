@@ -81,6 +81,7 @@ class SurveyFiles:
         self._survey = _JsonFile(survey_dir / "survey.json")
         self._signals = _JsonFile(survey_dir / "signals.json")
         self._import_map = _JsonFile(survey_dir / "import_map.json")
+        self._people = _JsonFile(survey_dir / "people.json")
         self._survey_obj: Survey | None = None
         self._survey_src: Any = None
 
@@ -106,3 +107,9 @@ class SurveyFiles:
     @property
     def import_map(self) -> dict:
         return self._import_map.get({}) or {}
+
+    @property
+    def names(self) -> dict[str, str]:
+        """ID → имя из people.json. Файла нет — словарь пустой, интерфейс покажет ID."""
+        raw = self._people.get({}) or {}
+        return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, str) and v.strip()}

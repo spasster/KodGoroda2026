@@ -17,10 +17,10 @@ SIGNAL = {"key", "type", "pair_id", "role", "month", "severity", "title", "expla
 QUOTE = {"role", "month", "question_id", "text", "start", "end"}
 CELL = {"month", "intern_index", "mentor_index", "gap", "status", "signal_keys", "missing"}
 PAIR_SUMMARY = {"pair_id", "intern_id", "mentor_id", "status", "last_month", "intern_index_last", "mentor_index_last",
-                "trend", "open_signals", "cells"}
+                "trend", "open_signals", "cells", "intern_name", "mentor_name"}
 OVERVIEW = {"updated_at", "months", "scale", "totals", "pairs", "recent"}
 TOTALS = {"pairs", "risk", "watch", "ok", "open_signals", "confirmed", "rejected", "responses"}
-RECENT = {"at", "pair_id", "role", "person_id", "month", "source"}
+RECENT = {"at", "pair_id", "role", "person_id", "person_name", "month", "source"}
 COMMENT = {"role", "month", "question_id", "question_text", "text", "sentiment", "topics", "highlights"}
 SERIES = {"month", "intern_index", "mentor_index", "intern", "mentor"}
 
@@ -197,8 +197,10 @@ def test_people_next_month(client, post):
     post.pair("01", 1, 4.0, 4.0)
     post("intern", "S-01", 2, 4.0)
     people = client.get("/api/people").json()
-    assert people["interns"] == [{"id": "S-01", "mentor_id": "M-01", "pair_id": "P-01", "next_month": 3}]
-    assert people["mentors"] == [{"id": "M-01", "intern_id": "S-01", "pair_id": "P-01", "next_month": 2}]
+    intern, = people["interns"]
+    mentor, = people["mentors"]
+    assert intern | {"name": None} == {"id": "S-01", "name": None, "mentor_id": "M-01", "pair_id": "P-01", "next_month": 3}
+    assert mentor | {"name": None} == {"id": "M-01", "name": None, "intern_id": "S-01", "pair_id": "P-01", "next_month": 2}
 
 
 def _sample_files(folder):
@@ -327,3 +329,14 @@ def test_event_stream_pings_and_closes():
 def test_cors_for_vite(client):
     r = client.options("/api/overview", headers={"Origin": "http://localhost:5173", "Access-Control-Request-Method": "GET"})
     assert r.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+def test_names_from_people_json(client):
+    """Имена из survey/people.json приходят в обзор, people и последние анкеты; без записи в справочнике — null."""
+    ov = client.get("/api/overview").json()
+    if not ov["pairs"]:
+        return
+    names = {p["intern_id"]: p["intern_name"] for p in ov["pairs"]}
+    assert all(v is None or isinstance(v, str) for v in names.values())
+    people = client.get("/api/people").json()
+    assert all("name" in p for p in people["interns"] + people["mentors"])

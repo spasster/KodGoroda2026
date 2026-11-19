@@ -1,7 +1,6 @@
 /*
   База поверх tokens.css: сброс, типографика, фокус, выделение, скролл и общие
-  классы. Подключается в main.tsx сразу после токенов. Правила и размеры:
-  docs/design/system.md, разделы «Типографика» и «Сетка».
+  классы. Подключается в main.tsx сразу после токенов. Стиль: docs/design/v2.md.
 */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -41,18 +40,18 @@ button { cursor: pointer; }
 button:disabled { cursor: default; }
 textarea { resize: vertical; }
 
-/* Фокус только с клавиатуры: кольцо 2px цвета бренда с отступом 2px. */
+/* Фокус только с клавиатуры: кольцо 2px цвета бренда с отступом 2px. Скругление
+   кольца повторяет элемент: карточка 24px, кнопка 12px. */
 :focus { outline: none; }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-2); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 ::selection { background: color-mix(in srgb, var(--brand) 24%, transparent); color: var(--text-1); }
 
-/* Подсветка цитаты: подложка и черта 2px снизу. */
+/* Подсветка цитаты: только подложка, без черты (v2: подчёркнуты только ссылки). */
 mark {
   background: var(--mark-bg);
   color: inherit;
-  box-shadow: inset 0 -2px 0 var(--mark-line);
-  border-radius: var(--r-1);
+  border-radius: 4px;
   padding: 0 1px;
 }
 

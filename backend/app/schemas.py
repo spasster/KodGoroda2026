@@ -67,6 +67,8 @@ class PairSummary(BaseModel):
     pair_id: str
     intern_id: str
     mentor_id: str
+    intern_name: str | None = None
+    mentor_name: str | None = None
     status: PairStatus
     last_month: int
     intern_index_last: float | None
@@ -97,6 +99,7 @@ class RecentItem(BaseModel):
     pair_id: str
     role: Role
     person_id: str
+    person_name: str | None = None
     month: int
     source: str
 
@@ -157,6 +160,7 @@ class Health(BaseModel):
 
 class PersonIntern(BaseModel):
     id: str
+    name: str | None = None
     mentor_id: str
     pair_id: str
     next_month: int | None
@@ -164,6 +168,7 @@ class PersonIntern(BaseModel):
 
 class PersonMentor(BaseModel):
     id: str
+    name: str | None = None
     intern_id: str
     pair_id: str
     next_month: int | None

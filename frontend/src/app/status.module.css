@@ -1,0 +1,10 @@
+.dot {
+  display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--text-3);
+  transition: background-color var(--dur-3) var(--ease-out);
+}
+.risk { background: var(--risk); }
+.watch { background: var(--watch); }
+.ok { background: var(--ok); }
+
+.label { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--text-1); }

@@ -6,10 +6,10 @@ API ?= http://localhost:8000
 # Потоки /api/events бэкенд закрывает сам по Ctrl+C. Таймаут на случай, если что-то ещё держит соединение.
 UVICORN := uv run uvicorn app.main:app --reload --port 8000 --timeout-graceful-shutdown 2
 
-.PHONY: dev api web test data reset up down tunnel demo
+.PHONY: dev api web test data reset up down tunnel demo fonts
 
 # Бэкенд и фронт вместе. Ctrl+C гасит оба.
-dev: frontend/node_modules
+dev: frontend/node_modules fonts
 	@echo "Бэкенд http://localhost:8000, дашборд http://localhost:5173, форма http://localhost:5173/form"
 	@trap 'trap - INT TERM; kill 0' INT TERM; \
 	(cd backend && $(UVICORN)) & \
@@ -19,7 +19,7 @@ dev: frontend/node_modules
 api:
 	cd backend && $(UVICORN)
 
-web: frontend/node_modules
+web: frontend/node_modules fonts
 	cd frontend && pnpm dev
 
 test: frontend/node_modules
@@ -41,7 +41,7 @@ reset:
 	  && echo "База сброшена через $(API), открытые дашборды обновятся" \
 	  || (echo "$(API) не отвечает, сбрасываю локальную базу" && cd backend && uv run python -m app.cli reset)
 
-up:
+up: fonts
 	docker compose up -d --build
 	@echo "Дашборд http://localhost:8080, форма http://localhost:8080/form"
 
@@ -60,3 +60,7 @@ demo:
 frontend/node_modules: frontend/package.json frontend/pnpm-lock.yaml
 	cd frontend && pnpm install
 	@touch $@
+
+# Шрифты МГТС: скачиваются с studchamp.mgts.ru, в git не хранятся.
+fonts:
+	@sh frontend/scripts/fetch-fonts.sh

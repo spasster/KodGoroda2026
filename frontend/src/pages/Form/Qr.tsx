@@ -1,14 +1,14 @@
-// QR-код со ссылкой на /form для проектора: жюри сканирует его с телефона.
-// Без оболочки дашборда. Адрес туннеля cloudflared (make tunnel) вставляется в
-// поле и запоминается в localStorage. Пока адрес локальный, кода нет: телефон
-// в зале localhost не откроет, а рабочий на вид код обещал бы обратное.
+// QR-код со ссылкой на /form для проектора: жюри сканирует его с телефона
+// (docs/design/v2.md, «QR»). Адрес туннеля cloudflared (make tunnel) вставляется
+// в поле и запоминается в localStorage. Пока адрес локальный, кода нет: телефон
+// в зале localhost не откроет.
 
 import clsx from 'clsx'
+import { QrCode as QrIcon } from 'lucide-react'
 import QRCode from 'qrcode'
-import { useId, useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 
-import { Button } from '../../components'
-import { FormHeader, useDocumentTitle } from './FormHeader'
+import { useDocumentTitle } from './title'
 import s from './Qr.module.css'
 
 const STORAGE_KEY = 'form-qr-base'
@@ -31,7 +31,7 @@ function writeStored(value: string) {
 }
 
 // «abc.trycloudflare.com/form/» → «https://abc.trycloudflare.com». null: не адрес.
-export function normalizeBase(raw: string): string | null {
+function normalizeBase(raw: string): string | null {
   let value = raw.trim()
   if (!value) return null
   if (!/^[a-z][a-z\d+.-]*:\/\//i.test(value)) value = `https://${value}`
@@ -53,9 +53,8 @@ function isLocalHost(base: string): boolean {
   return host === 'localhost' || host === '0.0.0.0' || host === '[::1]' || host.startsWith('127.')
 }
 
-// Свой SVG по матрице qrcode: цвет и фон задаёт CSS, тема меняется без перерисовки.
-// Поле в 4 модуля вокруг кода входит в viewBox.
-function QrCode({ value, label }: { value: string; label: string }) {
+// Свой SVG по матрице qrcode. Поле в 4 модуля вокруг кода входит в viewBox.
+function QrCode({ value }: { value: string }) {
   const { d, size } = useMemo(() => {
     const { modules } = QRCode.create(value, { errorCorrectionLevel: 'M' })
     let path = ''
@@ -67,117 +66,100 @@ function QrCode({ value, label }: { value: string; label: string }) {
     return { d: path, size: modules.size }
   }, [value])
   return (
-    <svg className={s.code} viewBox={`-4 -4 ${size + 8} ${size + 8}`} role="img" aria-label={label} shapeRendering="crispEdges">
-      <path d={d} fill="currentColor" />
+    <svg className={s.code} viewBox={`-4 -4 ${size + 8} ${size + 8}`} role="img" aria-label={`QR-код: ${value}`} shapeRendering="crispEdges">
+      <path d={d} />
     </svg>
   )
 }
 
 export function FormQrPage() {
   useDocumentTitle('QR-код анкеты')
-  const inputId = useId()
   const [stored, setStored] = useState(readStored)
   const [draft, setDraft] = useState(stored)
+  const [editing, setEditing] = useState(false)
   const [invalid, setInvalid] = useState(false)
 
   const base = normalizeBase(stored) ?? window.location.origin
   const formUrl = `${base}/form`
   const local = isLocalHost(base)
 
-  const apply = (e: FormEvent) => {
-    e.preventDefault()
-    if (!draft.trim()) {
-      reset()
-      return
-    }
-    const next = normalizeBase(draft)
-    if (!next) {
-      setInvalid(true)
-      return
-    }
-    setInvalid(false)
+  const save = (next: string) => {
     setStored(next)
     setDraft(next)
     writeStored(next)
+    setInvalid(false)
+    setEditing(false)
   }
 
-  const reset = () => {
-    setInvalid(false)
-    setStored('')
-    setDraft('')
-    writeStored('')
+  const apply = (e: FormEvent) => {
+    e.preventDefault()
+    // Пустое поле: снова адрес этого компьютера.
+    if (!draft.trim()) return save('')
+    const next = normalizeBase(draft)
+    if (next) save(next)
+    else setInvalid(true)
   }
 
   return (
-    <div className={s.page}>
-      <FormHeader wide />
-      <main className={`wrap ${s.main}`}>
-        <div className={s.text}>
-          {local ? (
-            <>
-              <h1>Сначала адрес туннеля</h1>
-              <p className={s.lead}>
-                Телефон в зале не откроет адрес ноутбука. Запустите make tunnel и вставьте адрес из его вывода в поле ниже.
-              </p>
-            </>
-          ) : (
-            <>
-              <h1>Откройте камерой телефона</h1>
-              <p className={s.lead}>Откроется анкета стажёра и наставника. Ответ сразу появится на дашборде.</p>
-              <p className={s.url}>
-                <a href={formUrl} target="_blank" rel="noopener">
-                  {formUrl.replace(/^https?:\/\//, '')}
-                </a>
-              </p>
-            </>
-          )}
-
-          <form className={s.form} onSubmit={apply} noValidate>
-            <label className={s.label} htmlFor={inputId}>
-              Адрес туннеля
-            </label>
-            <div className={s.row}>
-              <input
-                id={inputId}
-                className={s.input}
-                type="url"
-                inputMode="url"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="https://….trycloudflare.com"
-                value={draft}
-                onChange={(e) => {
-                  setDraft(e.target.value)
-                  setInvalid(false)
-                }}
-                aria-invalid={invalid || undefined}
-                aria-describedby={`${inputId}-hint`}
-              />
-              <Button type="submit">Показать</Button>
-            </div>
-            <p className={clsx(s.hint, invalid && s['hint-error'])} id={`${inputId}-hint`}>
-              {invalid
-                ? 'Это не похоже на адрес. Пример: https://abc-def.trycloudflare.com'
-                : 'Адрес из make tunnel. Он запомнится в этом браузере.'}
-            </p>
-            {stored && (
-              <Button variant="quiet" size="s" className={s.reset} onClick={reset}>
-                Сбросить адрес
-              </Button>
-            )}
-          </form>
-        </div>
-
+    <main className={s.page}>
+      <section className={s.card}>
         {local ? (
-          <div className={clsx(s.plate, s.placeholder)}>
-            <p>Вставьте адрес из make tunnel, и здесь появится QR&#8209;код.</p>
+          <div className={s.plate}>
+            <QrIcon className={s.icon} aria-hidden="true" strokeWidth={1.5} />
+            <p>Вставьте адрес туннеля</p>
           </div>
         ) : (
-          <figure className={s.plate}>
-            <QrCode value={formUrl} label={`QR-код ссылки на анкету: ${formUrl}`} />
-          </figure>
+          <div className={clsx(s.plate, s.white)} key={formUrl}>
+            <QrCode value={formUrl} />
+          </div>
         )}
-      </main>
-    </div>
+
+        <h1 className={s.title}>Анкета стажировки МГТС</h1>
+        <a className={s.url} href={formUrl} target="_blank" rel="noopener">
+          {formUrl.replace(/^https?:\/\//, '')}
+        </a>
+
+        {local || editing ? (
+          <form className={s.form} onSubmit={apply} noValidate>
+            <input
+              className={clsx(s.input, invalid && s.invalid)}
+              type="url"
+              inputMode="url"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="xxx.trycloudflare.com"
+              aria-label="Адрес туннеля"
+              aria-invalid={invalid || undefined}
+              aria-describedby={invalid ? 'qr-invalid' : undefined}
+              value={draft}
+              autoFocus={editing}
+              onChange={(e) => {
+                setDraft(e.target.value)
+                setInvalid(false)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' && editing) {
+                  setDraft(stored)
+                  setInvalid(false)
+                  setEditing(false)
+                }
+              }}
+            />
+            <button type="submit" className={s.button}>
+              Показать
+            </button>
+            {invalid && (
+              <p className={s.error} id="qr-invalid" role="alert">
+                Не похоже на адрес
+              </p>
+            )}
+          </form>
+        ) : (
+          <button type="button" className={s.link} onClick={() => setEditing(true)}>
+            Изменить адрес
+          </button>
+        )}
+      </section>
+    </main>
   )
 }

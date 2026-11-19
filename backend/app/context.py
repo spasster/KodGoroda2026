@@ -24,6 +24,7 @@ class Snapshot:
     recent: list[dict]
     responses: int
     updated_at: str
+    names: dict[str, str]
 
     def pair_signals(self, pair_id: str) -> list[Signal]:
         return [s for s in self.signals if s.pair_id == pair_id]
@@ -66,7 +67,7 @@ class Context:
                 " UNION ALL SELECT MAX(updated_at) FROM reviews)").fetchone()[0]
         insights = analyze_texts(ds, self.analyzer, int(th["quote_min_length"]))
         signals = compute_signals(ds, insights, th, reviews)
-        return Snapshot(ds, insights, signals, recent, len(ds.responses), updated or db.now_iso())
+        return Snapshot(ds, insights, signals, recent, len(ds.responses), updated or db.now_iso(), self.files.names)
 
     def warm(self) -> None:
         """С моделью первый разбор всех комментариев долгий: делаем его в фоне."""
