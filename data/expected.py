@@ -9,14 +9,13 @@
 Читает interns.xlsx и mentors.xlsx, считает сигналы по правилам docs/contract.md и порогам
 survey/signals.json и пишет truth.json рядом с таблицами. С бэкендом код не делит.
 
-Часть правил контракта можно прочитать по-разному. Скрипт считает каждое прочтение:
-в signals попадает то, что срабатывает при любом прочтении, в optional остальное с пометкой,
-при каком прочтении сработает. Сигналы по тексту опираются на ручную разметку
+Спорные места правил закреплены в docs/contract.md, раздел «Как читать условия». Скрипт считает
+по ним, поэтому signals совпадает с тем, что должен дать бэкенд, а optional пуст. Другие прочтения
+перечислены в READINGS для справки. Сигналы по тексту опираются на ручную разметку
 из data/scenarios.py и помечены text_analysis: true.
 """
 
 import argparse
-import itertools
 import json
 import sys
 from pathlib import Path
@@ -52,24 +51,27 @@ READINGS = {
         "any_pair": "Месяц прошёл, если по нему есть анкета хотя бы у одной другой пары.",
     },
     "silence_length_mean": {
-        "with_empty": "Средняя длина прошлых комментариев считается по всем прошлым анкетам, пустой комментарий даёт 0.",
         "non_empty": "Средняя длина считается только по непустым прошлым комментариям.",
+        "with_empty": "Средняя длина прошлых комментариев считается по всем прошлым анкетам, пустой комментарий даёт 0.",
     },
     "silence_same_scores": {
         "within_form": "Все оценки внутри анкеты одинаковые, и так три анкеты подряд.",
         "same_answers": "Три анкеты подряд с одинаковыми ответами на все вопросы.",
     },
     "text": {
-        "sure": "Сигналы по тексту считаются только по комментариям с уверенной разметкой.",
         "all": "Сигналы по тексту считаются и по спорной разметке (sure: false).",
+        "sure": "Сигналы по тексту считаются только по комментариям с уверенной разметкой.",
     },
     "active_window": {
         "pair_last_month": "Активные месяцы отсчитываются от последнего месяца, по которому у пары есть анкета.",
         "dataset_last_month": "Активные месяцы отсчитываются от последнего месяца во всём наборе.",
     },
 }
+# Первое значение в каждом измерении закреплено в docs/contract.md, раздел «Как читать условия».
+# Эталон считается только по нему. Чтобы посмотреть, что меняют другие прочтения, переберите
+# в ALL_READINGS все сочетания значений (itertools.product по READINGS).
 PRIMARY = {k: next(iter(v)) for k, v in READINGS.items()}
-ALL_READINGS = [dict(zip(READINGS, combo)) for combo in itertools.product(*READINGS.values())]
+ALL_READINGS = [PRIMARY]
 BASIS = {
     "scores": "только оценки",
     "presence": "есть ли анкета",
@@ -156,37 +158,49 @@ def compute(data: dict, people: dict, labels: dict, rd: dict, near: Near) -> dic
 
         # decline
         t2, t1 = TH["decline"]["two_month_drop"], TH["decline"]["single_drop"]
+        # Пропущенная анкета ряд не рвёт: сравниваем с прошлой анкетой той же роли.
         for role in ROLES:
             s = series[role]
-            for m in sorted(s):
-                if m - 1 not in s:
-                    continue
-                d2 = norm(s[m - 1]) - norm(s[m])
+            ms = sorted(s)
+            for k in range(1, len(ms)):
+                m0, m1, m = (ms[k - 2] if k >= 2 else None), ms[k - 1], ms[k]
+                d2 = norm(s[m1]) - norm(s[m])
                 if near.ge(d2, t1, f"{pair} {role} м{m}: спад за месяц"):
                     add("decline", pair, role, m, "high", "scores",
-                        f"Индекс {WHO[role]} за месяц: {num(s[m - 1])} → {num(s[m])}.")
+                        f"Индекс {WHO[role]} за месяц: {num(s[m1])} → {num(s[m])}." if m - m1 == 1 else
+                        f"Индекс {WHO[role]} с {m1}-го по {m}-й месяц: {num(s[m1])} → {num(s[m])}.")
                     continue
-                if m - 2 not in s:
+                if m0 is None:
                     continue
-                d1 = norm(s[m - 2]) - norm(s[m - 1])
-                by_sum = near.ge(d1 + d2, t2, f"{pair} {role} м{m}: спад за два месяца")
-                by_each = near.ge(min(d1, d2), t2, f"{pair} {role} м{m}: меньший из двух месячных спадов")
-                fired = {"both_months": d1 > 0 and d2 > 0 and by_sum, "two_month_sum": by_sum, "each_month": by_each}
-                if fired[rd["decline"]]:
+                d1 = norm(s[m0]) - norm(s[m1])
+                def by_sum():
+                    return near.ge(d1 + d2, t2, f"{pair} {role} м{m}: спад за два месяца")
+
+                fired = {
+                    "both_months": lambda: d1 > 0 and d2 > 0 and by_sum(),
+                    "two_month_sum": by_sum,
+                    "each_month": lambda: near.ge(min(d1, d2), t2, f"{pair} {role} м{m}: меньший из двух месячных спадов"),
+                }[rd["decline"]]
+                if fired():
                     add("decline", pair, role, m, "medium", "scores",
-                        f"Индекс {WHO[role]} за три месяца: {num(s[m - 2])} → {num(s[m - 1])} → {num(s[m])}.")
+                        f"Индекс {WHO[role]} по месяцам {m0}, {m1} и {m}: {num(s[m0])} → {num(s[m1])} → {num(s[m])}."
+                        if m - m0 != 2 else
+                        f"Индекс {WHO[role]} за три месяца: {num(s[m0])} → {num(s[m1])} → {num(s[m])}.")
 
         # gap
         gaps = {m: series["mentor"][m] - series["intern"][m] for m in series["intern"] if m in series["mentor"]}
         g_min, g_high = TH["gap"]["min_gap"], TH["gap"]["high_gap"]
-        for m in sorted(gaps):
+        gm = sorted(gaps)
+        for k, m in enumerate(gm):
+            p1 = gm[k - 1] if k >= 1 else None  # прошлый месяц, где ответили оба
+            p2 = gm[k - 2] if k >= 2 else None
             g = gaps[m] / RANGE
             i, mt = series["intern"][m], series["mentor"][m]
             if near.ge(g, g_min, f"{pair} м{m}: разрыв, стажёру хуже"):
                 sev = "high" if near.ge(g, g_high, f"{pair} м{m}: сильный разрыв, стажёру хуже") else "medium"
                 grow = {
-                    "raw": m - 1 in gaps and m - 2 in gaps and gaps[m] > gaps[m - 1] > gaps[m - 2],
-                    "after_signal": m - 1 in gaps and gaps[m - 1] / RANGE >= g_min and gaps[m] > gaps[m - 1],
+                    "raw": p2 is not None and gaps[m] > gaps[p1] > gaps[p2],
+                    "after_signal": p1 is not None and gaps[p1] / RANGE >= g_min and gaps[m] > gaps[p1],
                 }[rd["gap_growth"]]
                 why = f"Наставник {num(mt)}, стажёр {num(i)}, разрыв {num(gaps[m])} балла."
                 if grow:
@@ -391,10 +405,10 @@ def main() -> None:
     truth = {
         "dataset": args.dir.as_posix(),
         "generated_by": f"uv run data/expected.py {args.dir.as_posix()}",
-        "how_to_use": ("signals срабатывают при любом прочтении правил и должны быть у бэкенда. optional зависят от "
-                       "прочтения, fires_when говорит, при каком. Сигналов вне signals и optional быть не должно. "
-                       "text_analysis: true значит, что сигнал держится на разборе текста и разметке из "
-                       "data/scenarios.py, а не только на оценках."),
+        "how_to_use": ("signals посчитаны по прочтениям из docs/contract.md, раздел «Как читать условия», и должны "
+                       "быть у бэкенда. Сигналов вне signals и optional быть не должно. optional пуст, пока все "
+                       "прочтения закреплены в контракте. text_analysis: true значит, что сигнал держится на разборе "
+                       "текста и разметке из data/scenarios.py, а не только на оценках."),
         "thresholds": {k: v for k, v in TH.items() if not k.startswith("_")},
         "readings": {dim: {"primary": PRIMARY[dim], "values": vals} for dim, vals in READINGS.items()},
         "basis": BASIS,

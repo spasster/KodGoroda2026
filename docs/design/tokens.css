@@ -1,0 +1,217 @@
+/*
+  Токены дизайн-системы «Сверка». Описание каждого токена: docs/design/system.md, раздел «Токены».
+
+  Правило системы: чернила показывают тяжесть, цвет бренда показывает, куда нажать.
+  Статусы (--status-*) и данные (--series-*, --heat-*) никогда не берут цвет бренда.
+  Бренд (--brand-*) красит только интерактив и метку «новое».
+
+  Перекраска под МГТС: меняются только 5 токенов --brand-* в светлой теме и 5 в тёмной.
+  Пример красного бренда в конце файла, в комментарии.
+*/
+
+:root {
+  color-scheme: light;
+
+  /* Поверхности */
+  --bg: #FCFCFD;
+  --surface: #FFFFFF;
+  --sunken: #F1F2F4;
+  --hover: #F4F5F7;
+
+  /* Текст */
+  --text-1: #14171C;
+  --text-2: #474D57;
+  --text-3: #5D646E;
+
+  /* Линии */
+  --line: #E3E5E9;
+  --line-strong: #C3C8CF;
+
+  /* Чернила: основа статусов */
+  --ink: #14171C;
+  --ink-fg: #FCFCFD;
+  --ink-soft: rgb(20 23 28 / .08);
+
+  /* Статус пары и клетки месяца */
+  --status-risk-bg: var(--ink);
+  --status-risk-fg: var(--ink-fg);
+  --status-risk-track: rgb(252 252 253 / .40);
+  --status-watch-border: var(--ink);
+  --status-watch-bg: var(--surface);
+  --status-ok-bg: transparent;
+  --status-ok-chip: #ECEEF1;
+  --status-collect-bg: var(--sunken);
+
+  /* Важность сигнала: столбики */
+  --severity-on: var(--ink);
+  --severity-off: var(--line-strong);
+
+  /* Графики */
+  --series-intern: var(--text-1);
+  --series-mentor: var(--text-2);
+  --series-gap: rgb(20 23 28 / .08);
+  --chart-grid: var(--line);
+  --chart-axis: var(--line-strong);
+  --dumbbell-track: var(--line-strong);
+
+  /* Тепловая карта ответов: 5 светлая, 1 тёмная */
+  --heat-5: #F3F4F5;
+  --heat-4: #E5E7EA;
+  --heat-3: #CBCFD4;
+  --heat-2: #5D626B;
+  --heat-1: #22262D;
+  --heat-fg-strong: #FFFFFF;
+
+  /* Цитата */
+  --mark-bg: rgb(20 23 28 / .08);
+  --mark-line: var(--ink);
+
+  /* Бренд. Заглушка до финала, синий. Меняется только этот блок. */
+  --brand: #2F48D8;
+  --brand-hover: #2439B8;
+  --brand-fg: #FFFFFF;
+  --brand-text: #2F48D8;
+  --brand-wash: rgb(47 72 216 / .10);
+  --focus: var(--brand);
+
+  /* Тени: только у того, что висит поверх страницы */
+  --shadow-pop: 0 1px 2px rgb(20 23 28 / .06), 0 18px 44px -18px rgb(20 23 28 / .30);
+
+  /* Шрифт */
+  --font: "Geologica Variable", "Geologica", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fs-xs: 14px;
+  --fs-s: 16px;
+  --fs-m: 18px;
+  --fs-l: 20px;
+  --fs-xl: 24px;
+  --fs-2xl: 32px;
+  --fs-3xl: 40px;
+  --fs-4xl: 64px;
+  --lh-tight: 1.1;
+  --lh-snug: 1.3;
+  --lh-body: 1.5;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 600;
+
+  /* Отступы, шаг 4 */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+
+  /* Радиусы растут с размером объекта */
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-3: 6px;
+  --r-4: 8px;
+  --r-5: 12px;
+  --r-6: 14px;
+  --r-pill: 999px;
+
+  /* Сетка */
+  --content-max: 1312px;
+  --gutter: 64px;
+  --header-h: 60px;
+
+  /* Движение */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 480ms;
+  --dur-5: 900ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-io: cubic-bezier(.65, 0, .35, 1);
+}
+
+@media (max-width: 1359px) {
+  :root { --gutter: 32px; }
+}
+@media (max-width: 767px) {
+  :root { --gutter: 16px; --header-h: 56px; }
+}
+
+/* Тёмная тема по системной настройке, если пользователь не выбрал светлую */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #131519;
+    --surface: #1E2126;
+    --sunken: #1A1D22;
+    --hover: #191C21;
+    --text-1: #EEF0F3;
+    --text-2: #B4BAC3;
+    --text-3: #9198A3;
+    --line: #2A2E35;
+    --line-strong: #444A53;
+    --ink: #EEF0F3;
+    --ink-fg: #131519;
+    --ink-soft: rgb(238 240 243 / .12);
+    --status-risk-track: rgb(19 21 25 / .40);
+    --status-watch-bg: transparent;
+    --status-ok-chip: #262A31;
+    --series-gap: rgb(238 240 243 / .10);
+    --heat-5: #1B1E23;
+    --heat-4: #262A30;
+    --heat-3: #3A3F47;
+    --heat-2: #A8AEB8;
+    --heat-1: #E8EAED;
+    --heat-fg-strong: #131519;
+    --mark-bg: rgb(238 240 243 / .14);
+    --brand: #8D9AFF;
+    --brand-hover: #A9B3FF;
+    --brand-fg: #0D1030;
+    --brand-text: #9AA6FF;
+    --brand-wash: rgb(141 154 255 / .14);
+    --shadow-pop: 0 0 0 1px #30353C, 0 22px 50px -18px rgb(0 0 0 / .75);
+  }
+}
+
+/* Тёмная тема, выбранная переключателем */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #131519;
+  --surface: #1E2126;
+  --sunken: #1A1D22;
+  --hover: #191C21;
+  --text-1: #EEF0F3;
+  --text-2: #B4BAC3;
+  --text-3: #9198A3;
+  --line: #2A2E35;
+  --line-strong: #444A53;
+  --ink: #EEF0F3;
+  --ink-fg: #131519;
+  --ink-soft: rgb(238 240 243 / .12);
+  --status-risk-track: rgb(19 21 25 / .40);
+  --status-watch-bg: transparent;
+  --status-ok-chip: #262A31;
+  --series-gap: rgb(238 240 243 / .10);
+  --heat-5: #1B1E23;
+  --heat-4: #262A30;
+  --heat-3: #3A3F47;
+  --heat-2: #A8AEB8;
+  --heat-1: #E8EAED;
+  --heat-fg-strong: #131519;
+  --mark-bg: rgb(238 240 243 / .14);
+  --brand: #8D9AFF;
+  --brand-hover: #A9B3FF;
+  --brand-fg: #0D1030;
+  --brand-text: #9AA6FF;
+  --brand-wash: rgb(141 154 255 / .14);
+  --shadow-pop: 0 0 0 1px #30353C, 0 22px 50px -18px rgb(0 0 0 / .75);
+}
+
+/*
+  Пример: красный бренд. Подставить реальные значения из брендбука МГТС.
+  Светлая тема (:root):
+    --brand: #D3122A;  --brand-hover: #B00E22;  --brand-fg: #FFFFFF;
+    --brand-text: #C4102A;  --brand-wash: rgb(211 18 42 / .09);
+  Тёмная тема (оба тёмных блока):
+    --brand: #FF5C64;  --brand-hover: #FF7A80;  --brand-fg: #1A0507;
+    --brand-text: #FF6B72;  --brand-wash: rgb(255 92 100 / .14);
+*/

@@ -1,7 +1,7 @@
 {
   "dataset": "data/sample-12",
   "generated_by": "uv run data/expected.py data/sample-12",
-  "how_to_use": "signals срабатывают при любом прочтении правил и должны быть у бэкенда. optional зависят от прочтения, fires_when говорит, при каком. Сигналов вне signals и optional быть не должно. text_analysis: true значит, что сигнал держится на разборе текста и разметке из data/scenarios.py, а не только на оценках.",
+  "how_to_use": "signals посчитаны по прочтениям из docs/contract.md, раздел «Как читать условия», и должны быть у бэкенда. Сигналов вне signals и optional быть не должно. optional пуст, пока все прочтения закреплены в контракте. text_analysis: true значит, что сигнал держится на разборе текста и разметке из data/scenarios.py, а не только на оценках.",
   "thresholds": {
     "active_months": 2,
     "decline": {
@@ -46,10 +46,10 @@
       }
     },
     "silence_length_mean": {
-      "primary": "with_empty",
+      "primary": "non_empty",
       "values": {
-        "with_empty": "Средняя длина прошлых комментариев считается по всем прошлым анкетам, пустой комментарий даёт 0.",
-        "non_empty": "Средняя длина считается только по непустым прошлым комментариям."
+        "non_empty": "Средняя длина считается только по непустым прошлым комментариям.",
+        "with_empty": "Средняя длина прошлых комментариев считается по всем прошлым анкетам, пустой комментарий даёт 0."
       }
     },
     "silence_same_scores": {
@@ -60,10 +60,10 @@
       }
     },
     "text": {
-      "primary": "sure",
+      "primary": "all",
       "values": {
-        "sure": "Сигналы по тексту считаются только по комментариям с уверенной разметкой.",
-        "all": "Сигналы по тексту считаются и по спорной разметке (sure: false)."
+        "all": "Сигналы по тексту считаются и по спорной разметке (sure: false).",
+        "sure": "Сигналы по тексту считаются только по комментариям с уверенной разметкой."
       }
     },
     "active_window": {
@@ -232,13 +232,15 @@
           "signal_keys": [
             "decline:P-02:intern:4",
             "gap_intern_low:P-02:both:4",
+            "text_vs_score:P-02:mentor:4",
             "silence:P-02:intern:4"
           ]
         },
         {
           "month": 5,
-          "status": "watch",
+          "status": "risk",
           "signal_keys": [
+            "text_vs_score:P-02:mentor:5",
             "silence:P-02:intern:5"
           ]
         }
@@ -255,6 +257,17 @@
           "text_analysis": true,
           "quote": "две недели были переработки",
           "why": "Индекс стажёра 4,4, а в комментарии: «две недели были переработки»."
+        },
+        {
+          "key": "decline:P-02:intern:3",
+          "pair_id": "P-02",
+          "type": "decline",
+          "role": "intern",
+          "month": 3,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "Индекс стажёра за три месяца: 4,6 → 4,4 → 3,8."
         },
         {
           "key": "silence:P-02:intern:3",
@@ -301,36 +314,6 @@
           "why": "Комментарий пустой, хотя в прошлые месяцы был. Комментарий 0 симв., раньше в среднем 166."
         },
         {
-          "key": "silence:P-02:intern:5",
-          "pair_id": "P-02",
-          "type": "silence",
-          "role": "intern",
-          "month": 5,
-          "severity": "medium",
-          "basis": "presence",
-          "text_analysis": false,
-          "why": "Анкеты стажёра за 5-й месяц нет, а наставник свою заполнил."
-        }
-      ],
-      "optional": [
-        {
-          "key": "decline:P-02:intern:3",
-          "pair_id": "P-02",
-          "type": "decline",
-          "role": "intern",
-          "month": 3,
-          "severity": "medium",
-          "basis": "scores",
-          "text_analysis": false,
-          "fires_when": {
-            "decline": [
-              "both_months",
-              "two_month_sum"
-            ]
-          },
-          "why": "Индекс стажёра за три месяца: 4,6 → 4,4 → 3,8."
-        },
-        {
           "key": "text_vs_score:P-02:mentor:4",
           "pair_id": "P-02",
           "type": "text_vs_score",
@@ -340,12 +323,18 @@
           "basis": "text",
           "text_analysis": true,
           "quote": "Стал медленнее",
-          "fires_when": {
-            "text": [
-              "all"
-            ]
-          },
           "why": "Индекс наставника 4,75, а в комментарии: «Стал медленнее»."
+        },
+        {
+          "key": "silence:P-02:intern:5",
+          "pair_id": "P-02",
+          "type": "silence",
+          "role": "intern",
+          "month": 5,
+          "severity": "medium",
+          "basis": "presence",
+          "text_analysis": false,
+          "why": "Анкеты стажёра за 5-й месяц нет, а наставник свою заполнил."
         },
         {
           "key": "text_vs_score:P-02:mentor:5",
@@ -357,14 +346,10 @@
           "basis": "text",
           "text_analysis": true,
           "quote": "Раньше брал задачи сам",
-          "fires_when": {
-            "text": [
-              "all"
-            ]
-          },
           "why": "Индекс наставника 4,5, а в комментарии: «Раньше брал задачи сам»."
         }
-      ]
+      ],
+      "optional": []
     },
     {
       "pair_id": "P-03",
@@ -1343,6 +1328,17 @@
       "why": "Индекс стажёра 4,4, а в комментарии: «две недели были переработки»."
     },
     {
+      "key": "decline:P-02:intern:3",
+      "pair_id": "P-02",
+      "type": "decline",
+      "role": "intern",
+      "month": 3,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "Индекс стажёра за три месяца: 4,6 → 4,4 → 3,8."
+    },
+    {
       "key": "silence:P-02:intern:3",
       "pair_id": "P-02",
       "type": "silence",
@@ -1387,6 +1383,18 @@
       "why": "Комментарий пустой, хотя в прошлые месяцы был. Комментарий 0 симв., раньше в среднем 166."
     },
     {
+      "key": "text_vs_score:P-02:mentor:4",
+      "pair_id": "P-02",
+      "type": "text_vs_score",
+      "role": "mentor",
+      "month": 4,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "Стал медленнее",
+      "why": "Индекс наставника 4,75, а в комментарии: «Стал медленнее»."
+    },
+    {
       "key": "silence:P-02:intern:5",
       "pair_id": "P-02",
       "type": "silence",
@@ -1396,6 +1404,18 @@
       "basis": "presence",
       "text_analysis": false,
       "why": "Анкеты стажёра за 5-й месяц нет, а наставник свою заполнил."
+    },
+    {
+      "key": "text_vs_score:P-02:mentor:5",
+      "pair_id": "P-02",
+      "type": "text_vs_score",
+      "role": "mentor",
+      "month": 5,
+      "severity": "medium",
+      "basis": "text",
+      "text_analysis": true,
+      "quote": "Раньше брал задачи сам",
+      "why": "Индекс наставника 4,5, а в комментарии: «Раньше брал задачи сам»."
     },
     {
       "key": "gap_intern_low:P-03:both:2",
@@ -1589,63 +1609,8 @@
       "why": "Комментарий 27 симв., раньше в среднем 177."
     }
   ],
-  "optional": [
-    {
-      "key": "decline:P-02:intern:3",
-      "pair_id": "P-02",
-      "type": "decline",
-      "role": "intern",
-      "month": 3,
-      "severity": "medium",
-      "basis": "scores",
-      "text_analysis": false,
-      "fires_when": {
-        "decline": [
-          "both_months",
-          "two_month_sum"
-        ]
-      },
-      "why": "Индекс стажёра за три месяца: 4,6 → 4,4 → 3,8."
-    },
-    {
-      "key": "text_vs_score:P-02:mentor:4",
-      "pair_id": "P-02",
-      "type": "text_vs_score",
-      "role": "mentor",
-      "month": 4,
-      "severity": "medium",
-      "basis": "text",
-      "text_analysis": true,
-      "quote": "Стал медленнее",
-      "fires_when": {
-        "text": [
-          "all"
-        ]
-      },
-      "why": "Индекс наставника 4,75, а в комментарии: «Стал медленнее»."
-    },
-    {
-      "key": "text_vs_score:P-02:mentor:5",
-      "pair_id": "P-02",
-      "type": "text_vs_score",
-      "role": "mentor",
-      "month": 5,
-      "severity": "medium",
-      "basis": "text",
-      "text_analysis": true,
-      "quote": "Раньше брал задачи сам",
-      "fires_when": {
-        "text": [
-          "all"
-        ]
-      },
-      "why": "Индекс наставника 4,5, а в комментарии: «Раньше брал задачи сам»."
-    }
-  ],
+  "optional": [],
   "near_threshold": [
-    "P-05 mentor м3: меньший из двух месячных спадов: 0.1250 при пороге 0.12",
-    "P-05 mentor м4: меньший из двух месячных спадов: 0.1250 при пороге 0.12",
-    "P-05 mentor м5: меньший из двух месячных спадов: 0.1250 при пороге 0.12",
     "P-07 intern м3: спад за два месяца: 0.1000 при пороге 0.12"
   ],
   "comments": [
@@ -2948,30 +2913,7 @@
           }
         ],
         "gone_signals": [],
-        "may_appear_by_reading": [
-          "silence:P-02:intern:6",
-          "silence:P-02:mentor:6",
-          "silence:P-03:intern:6",
-          "silence:P-03:mentor:6",
-          "silence:P-04:intern:6",
-          "silence:P-04:mentor:6",
-          "silence:P-05:intern:6",
-          "silence:P-05:mentor:6",
-          "silence:P-06:intern:6",
-          "silence:P-06:mentor:6",
-          "silence:P-07:intern:6",
-          "silence:P-07:mentor:6",
-          "silence:P-08:intern:6",
-          "silence:P-08:mentor:6",
-          "silence:P-09:intern:6",
-          "silence:P-09:mentor:6",
-          "silence:P-10:intern:6",
-          "silence:P-10:mentor:6",
-          "silence:P-11:intern:6",
-          "silence:P-11:mentor:6",
-          "silence:P-12:intern:6",
-          "silence:P-12:mentor:6"
-        ],
+        "may_appear_by_reading": [],
         "pair_status": {
           "P-01": "risk",
           "P-02": "risk",
@@ -2986,45 +2928,7 @@
           "P-11": "ok",
           "P-12": "ok"
         },
-        "pair_status_by_reading": {
-          "P-02": [
-            "risk",
-            "watch"
-          ],
-          "P-04": [
-            "risk",
-            "watch"
-          ],
-          "P-12": [
-            "ok",
-            "risk"
-          ],
-          "P-07": [
-            "risk",
-            "watch"
-          ],
-          "P-10": [
-            "ok",
-            "risk",
-            "watch"
-          ],
-          "P-06": [
-            "ok",
-            "risk"
-          ],
-          "P-09": [
-            "ok",
-            "risk"
-          ],
-          "P-08": [
-            "ok",
-            "risk"
-          ],
-          "P-11": [
-            "ok",
-            "risk"
-          ]
-        }
+        "pair_status_by_reading": {}
       },
       {
         "file": "mentor_M-01_m6.json",
@@ -3061,45 +2965,7 @@
           "P-11": "ok",
           "P-12": "ok"
         },
-        "pair_status_by_reading": {
-          "P-02": [
-            "risk",
-            "watch"
-          ],
-          "P-04": [
-            "risk",
-            "watch"
-          ],
-          "P-12": [
-            "ok",
-            "risk"
-          ],
-          "P-07": [
-            "risk",
-            "watch"
-          ],
-          "P-10": [
-            "ok",
-            "risk",
-            "watch"
-          ],
-          "P-06": [
-            "ok",
-            "risk"
-          ],
-          "P-09": [
-            "ok",
-            "risk"
-          ],
-          "P-08": [
-            "ok",
-            "risk"
-          ],
-          "P-11": [
-            "ok",
-            "risk"
-          ]
-        }
+        "pair_status_by_reading": {}
       },
       {
         "file": "mentor_M-02_m6.json",
@@ -3116,12 +2982,23 @@
             "text_analysis": false,
             "why": "Анкеты стажёра за 6-й месяц нет, а наставник свою заполнил.",
             "required": true
+          },
+          {
+            "key": "text_vs_score:P-02:mentor:6",
+            "pair_id": "P-02",
+            "type": "text_vs_score",
+            "role": "mentor",
+            "month": 6,
+            "severity": "medium",
+            "basis": "text",
+            "text_analysis": true,
+            "quote": "На дейликах отвечает односложно",
+            "why": "Индекс наставника 4,5, а в комментарии: «На дейликах отвечает односложно».",
+            "required": true
           }
         ],
         "gone_signals": [],
-        "may_appear_by_reading": [
-          "text_vs_score:P-02:mentor:6"
-        ],
+        "may_appear_by_reading": [],
         "pair_status": {
           "P-01": "risk",
           "P-02": "risk",
@@ -3136,41 +3013,7 @@
           "P-11": "ok",
           "P-12": "ok"
         },
-        "pair_status_by_reading": {
-          "P-04": [
-            "risk",
-            "watch"
-          ],
-          "P-12": [
-            "ok",
-            "risk"
-          ],
-          "P-07": [
-            "risk",
-            "watch"
-          ],
-          "P-10": [
-            "ok",
-            "risk",
-            "watch"
-          ],
-          "P-06": [
-            "ok",
-            "risk"
-          ],
-          "P-09": [
-            "ok",
-            "risk"
-          ],
-          "P-08": [
-            "ok",
-            "risk"
-          ],
-          "P-11": [
-            "ok",
-            "risk"
-          ]
-        }
+        "pair_status_by_reading": {}
       },
       {
         "file": "intern_S-03_m6.json",
@@ -3205,41 +3048,7 @@
           "P-11": "ok",
           "P-12": "ok"
         },
-        "pair_status_by_reading": {
-          "P-04": [
-            "risk",
-            "watch"
-          ],
-          "P-12": [
-            "ok",
-            "risk"
-          ],
-          "P-07": [
-            "risk",
-            "watch"
-          ],
-          "P-10": [
-            "ok",
-            "risk",
-            "watch"
-          ],
-          "P-06": [
-            "ok",
-            "risk"
-          ],
-          "P-09": [
-            "ok",
-            "risk"
-          ],
-          "P-08": [
-            "ok",
-            "risk"
-          ],
-          "P-11": [
-            "ok",
-            "risk"
-          ]
-        }
+        "pair_status_by_reading": {}
       },
       {
         "file": "intern_S-04_m6.json",
@@ -3287,37 +3096,7 @@
           "P-11": "ok",
           "P-12": "ok"
         },
-        "pair_status_by_reading": {
-          "P-12": [
-            "ok",
-            "risk"
-          ],
-          "P-07": [
-            "risk",
-            "watch"
-          ],
-          "P-10": [
-            "ok",
-            "risk",
-            "watch"
-          ],
-          "P-06": [
-            "ok",
-            "risk"
-          ],
-          "P-09": [
-            "ok",
-            "risk"
-          ],
-          "P-08": [
-            "ok",
-            "risk"
-          ],
-          "P-11": [
-            "ok",
-            "risk"
-          ]
-        }
+        "pair_status_by_reading": {}
       },
       {
         "file": "mentor_M-05_m6.json",
@@ -3364,37 +3143,7 @@
           "P-11": "ok",
           "P-12": "ok"
         },
-        "pair_status_by_reading": {
-          "P-12": [
-            "ok",
-            "risk"
-          ],
-          "P-07": [
-            "risk",
-            "watch"
-          ],
-          "P-10": [
-            "ok",
-            "risk",
-            "watch"
-          ],
-          "P-06": [
-            "ok",
-            "risk"
-          ],
-          "P-09": [
-            "ok",
-            "risk"
-          ],
-          "P-08": [
-            "ok",
-            "risk"
-          ],
-          "P-11": [
-            "ok",
-            "risk"
-          ]
-        }
+        "pair_status_by_reading": {}
       }
     ]
   }
