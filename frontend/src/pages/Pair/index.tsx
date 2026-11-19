@@ -12,6 +12,7 @@ import { api, ApiError } from '../../api/client'
 import { queryKeys, useOverview, usePair, usePeople, useSurvey } from '../../api/queries'
 import type { Overview, PairDetail, PairStatus } from '../../api/types'
 import { PAIR_STATUS_LABEL, personName } from '../../lib/format'
+import { Hero } from '../../components'
 import { useReduced, variants } from '../../lib/motion'
 import { collectMonth } from '../../lib/rules'
 import { Chart } from './Chart'
@@ -85,18 +86,20 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
   const collect = collectMonth(people.data, months)
 
   return (
-    <div className="wrap">
-      <div className={s.page}>
-        <Top id={p.pair_id} overview={overview} />
-        <header className={s.head}>
-          <div>
-            <h1 className={s.name}>{personName(p.intern_name, p.intern_id)}</h1>
-            <p className={s.mentor}>наставник {personName(p.mentor_name, p.mentor_id)}</p>
+    <>
+      <Hero
+        top={
+          <div className={s.heroNav}>
+            <Top id={p.pair_id} overview={overview} />
           </div>
-          <Status status={p.status} />
-        </header>
-
-        <div className={s.grid}>
+        }
+        title={personName(p.intern_name, p.intern_id)}
+        sub={`наставник ${personName(p.mentor_name, p.mentor_id)}`}
+        aside={<Status status={p.status} />}
+      />
+      <div className="wrap">
+        <div className={s.page}>
+          <div className={s.grid}>
           <div className={s.main}>
             <section className={`${s.card} ${s.chartCard}`} aria-labelledby="pair-chart">
               <h2 id="pair-chart" className={s.cardTitle}>
@@ -107,9 +110,10 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
             <Comments pair={p} collect={collect} className={s.commentsCard} />
           </div>
           <SignalList pair={p} className={s.signalsCard} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

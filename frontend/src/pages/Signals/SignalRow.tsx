@@ -1,11 +1,10 @@
-// Строка сигнала: точка важности, стажёр, заголовок, месяц. По клику
+// Строка сигнала: точка важности, заголовок, тип, месяц. По клику
 // раскрывается на месте: объяснение, цитата, что сделать, отметка.
 
 import clsx from 'clsx'
 import { ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 
 import type { CommentItem, PairDetail, Quote, ReviewStatus, Signal } from '../../api/types'
 import { ROLE_LABEL, SEVERITY_LABEL } from '../../lib/format'
@@ -18,7 +17,8 @@ const MARK_LABEL: Record<Mark, string> = { confirmed: 'Подтвердилос�
 
 interface Props {
   signal: Signal
-  name: string
+  /** Тип сигнала словами: «Расхождение», «Молчание». */
+  kind: string
   detail?: PairDetail
   open: boolean
   fresh: boolean
@@ -27,7 +27,7 @@ interface Props {
   onMark: (status: ReviewStatus) => void
 }
 
-export function SignalRow({ signal: head, name, detail, open, fresh, reduce, onToggle, onMark }: Props) {
+export function SignalRow({ signal: head, kind, detail, open, fresh, reduce, onToggle, onMark }: Props) {
   const status = head.review.status
   const panelId = `signal-${head.key}`
   const t = reduce ? { duration: 0 } : { duration: dur.s, ease: ease.out }
@@ -44,7 +44,6 @@ export function SignalRow({ signal: head, name, detail, open, fresh, reduce, onT
         {/* Цвет только у открытых: разобранные и старые не требуют внимания. */}
         <span className={clsx(s.dot, head.active && status === 'open' ? s[head.severity] : s.dotDone)} aria-hidden="true" />
         <span className="sr-only">Важность {SEVERITY_LABEL[head.severity]}.</span>
-        <span className={s.name}>{name}</span>
         <span className={s.title}>{head.title}</span>
         <span className={s.meta}>
           {status !== 'open' ? (
@@ -52,7 +51,8 @@ export function SignalRow({ signal: head, name, detail, open, fresh, reduce, onT
           ) : (
             fresh && <span className={s.fresh}>новое</span>
           )}
-          <span className={s.month}>{head.month} мес</span>
+          <span className={s.kind}>{kind}</span>
+          <span className={s.month}>{head.month}-й месяц</span>
         </span>
         <ChevronRight className={s.chevron} aria-hidden="true" size={20} strokeWidth={1.8} />
       </button>
@@ -87,9 +87,6 @@ export function SignalRow({ signal: head, name, detail, open, fresh, reduce, onT
                     Снять отметку
                   </button>
                 )}
-                <Link to={`/pairs/${head.pair_id}`} className={s.pairLink}>
-                  Открыть пару
-                </Link>
               </div>
             </div>
           </motion.div>

@@ -1,12 +1,12 @@
 // Обзор «Истории»: герой с главным числом и карточки стажёров.
-// Кнопка «Показать динамику» проигрывает месяцы: линии растут, карточки переезжают между группами.
 
-import { Pause, Play } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { QrCode } from 'lucide-react'
+import { useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 
-import { useOverview, usePeople, useSignals, useSurvey, useThresholds } from '../../api/queries'
+import { useOverview, usePeople, useSignals, useSurvey } from '../../api/queries'
 import type { Overview, Role } from '../../api/types'
-import { LoadError, Loading, Skeleton } from '../../components'
+import { Hero, LoadError, Loading, Skeleton } from '../../components'
 import { calendarMonthName, collectMonth } from '../../lib/rules'
 import { useLive } from '../../live/useLive'
 import { EmptyOverview } from './EmptyOverview'
@@ -17,7 +17,6 @@ import { Stories } from './Stories'
 import h from './Stories.module.css'
 
 const ROLES: Role[] = ['intern', 'mentor']
-const STEP_MS = 1400
 
 function hasResponse(o: Overview, key: string): boolean {
   const [pairId, role, month] = key.split(':')
@@ -30,11 +29,8 @@ export function OverviewPage() {
   const signals = useSignals({ status: 'all' })
   const people = usePeople()
   const survey = useSurvey()
-  const thresholds = useThresholds()
   const { last, isFreshResponse } = useLive()
   const fresh = useFreshEntries()
-  // Проигрывание: месяц, на котором стоим; null — показываем как есть.
-  const [play, setPlay] = useState<number | null>(null)
 
   // Метки «новая анкета» из src/live переносим в localStorage, чтобы пережили перезагрузку.
   const o = overview.data
@@ -56,16 +52,10 @@ export function OverviewPage() {
   }, [o, overview.dataUpdatedAt, last, isFreshResponse])
 
   const dataEnd = o ? Math.max(0, ...o.months) : 0
-  useEffect(() => {
-    if (play == null) return
-    const id = setTimeout(() => setPlay(play >= dataEnd ? null : play + 1), play >= dataEnd ? STEP_MS * 1.5 : STEP_MS)
-    return () => clearTimeout(id)
-  }, [play, dataEnd])
-
   const freshPairs = useMemo(() => new Set(fresh.map((e) => e.key.split(':')[0])), [fresh])
   const stories = useMemo(
-    () => sortStories((o?.pairs ?? []).map((p) => storyOf(p, signals.data ?? [], play, thresholds.active_months))),
-    [o, signals.data, play, thresholds.active_months],
+    () => sortStories((o?.pairs ?? []).map((p) => storyOf(p, signals.data ?? []))),
+    [o, signals.data],
   )
 
   if (overview.isError && !o) {
@@ -86,48 +76,45 @@ export function OverviewPage() {
 
   const total = o.pairs.length
   const risk = stories.filter((st) => st.status === 'risk').length
-  const eyebrow =
-    play != null
-      ? `Месяц ${play} из ${dataEnd}`
-      : `${calendar ? `${capitalize(calendar)} · ` : ''}${month}-й месяц · анкет ${responsesIn(o.pairs, month)} из ${total * 2}`
+  const got = month > 0 ? responsesIn(o.pairs, month) : 0
 
   return (
     <>
-      <section className={h.hero}>
-        <div className={`wrap ${h.heroIn}`}>
-          <div>
-            <p className={h.eyebrow}>{eyebrow}</p>
-            <h1 className={h.headline}>
-              {risk === 0 ? (
-                'Все стажировки идут ровно'
-              ) : (
-                <>
-                  <em>
-                    {risk} из {total}
-                  </em>{' '}
-                  {total === 1 ? 'стажёра' : 'стажёров'} {risk === 1 ? 'ждёт' : 'ждут'} разговора
-                </>
-              )}
-            </h1>
-          </div>
-          {dataEnd > 1 && (
-            <div className={h.playBox}>
-              <button type="button" className={h.play} onClick={() => setPlay(play == null ? 1 : null)}>
-                {play == null ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}
-                {play == null ? 'Показать динамику' : 'Остановить'}
-              </button>
-              <div className={h.pips} aria-hidden="true">
-                {Array.from({ length: dataEnd }, (_, i) => (
-                  <i key={i} className={`${h.pip} ${play == null || i < play ? h.pipOn : ''}`} />
-                ))}
-              </div>
+      <Hero
+        top={month > 0 ? `${calendar ? `${capitalize(calendar)} · ` : ''}${month}-й месяц стажировки` : undefined}
+        title={
+          risk === 0 ? (
+            'Все стажировки идут ровно'
+          ) : (
+            <>
+              <em>
+                {risk} из {total}
+              </em>{' '}
+              {total === 1 ? 'стажёра' : 'стажёров'} {risk === 1 ? 'ждёт' : 'ждут'} разговора
+            </>
+          )
+        }
+        aside={
+          <div className={h.collect}>
+            <div className={h.collectLine}>
+              Анкеты за месяц
+              <span className={h.collectNum}>
+                {got} из {total * 2}
+              </span>
             </div>
-          )}
-        </div>
-      </section>
+            <div className={h.bar}>
+              <div className={h.barFill} style={{ width: `${total ? (got / (total * 2)) * 100 : 0}%` }} />
+            </div>
+            <Link to="/form/qr" className={h.qr}>
+              <QrCode size={18} aria-hidden="true" />
+              QR-код анкеты
+            </Link>
+          </div>
+        }
+      />
       <div className="wrap">
         {overview.isError && <LoadError query={overview} className={s.error} />}
-        <Stories stories={stories} months={months} scale={o.scale} upto={play} isFresh={(id) => play == null && freshPairs.has(id)} />
+        <Stories stories={stories} months={months} scale={o.scale} isFresh={(id) => freshPairs.has(id)} />
       </div>
     </>
   )

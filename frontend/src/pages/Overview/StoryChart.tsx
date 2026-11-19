@@ -1,5 +1,5 @@
 // График истории: оценки стажёра и наставника по месяцам, между линиями залит разрыв.
-// Линии открываются слева направо: при загрузке и при проигрывании месяцев (upto).
+// Линии открываются слева направо при загрузке и дорисовываются, когда приходит анкета.
 
 import { useEffect, useId, useState } from 'react'
 
@@ -12,13 +12,12 @@ interface Props {
   months: number[]
   scale: { min: number; max: number }
   status: PairStatus
-  upto: number | null
   compact?: boolean
 }
 
 type Point = { month: number; x: number; y: number; value: number }
 
-export function StoryChart({ cells, months, scale, status, upto, compact = false }: Props) {
+export function StoryChart({ cells, months, scale, status, compact = false }: Props) {
   const clipId = useId()
   const values = cells.flatMap((c) => [c.intern_index, c.mentor_index]).filter((v): v is number => v != null)
   const dataMonths = cells.filter((c) => c.intern_index != null || c.mentor_index != null).map((c) => c.month)
@@ -53,7 +52,7 @@ export function StoryChart({ cells, months, scale, status, upto, compact = false
       : null
 
   const dataEnd = Math.max(0, ...intern.map((p) => p.month), ...mentor.map((p) => p.month))
-  const end = Math.min(upto ?? dataEnd, dataEnd)
+  const end = dataEnd
   const lastOf = (pts: Point[]) => [...pts].reverse().find((p) => p.month <= end)
   const li = lastOf(intern)
   const lm = lastOf(mentor)

@@ -23,11 +23,10 @@ interface Props {
   stories: Story[]
   months: number[]
   scale: { min: number; max: number }
-  upto: number | null
   isFresh: (pairId: string) => boolean
 }
 
-export function Stories({ stories, months, scale, upto, isFresh }: Props) {
+export function Stories({ stories, months, scale, isFresh }: Props) {
   return (
     <div className={s.sections}>
       {SECTIONS.map(({ status, title }) => {
@@ -43,7 +42,7 @@ export function Stories({ stories, months, scale, upto, isFresh }: Props) {
             <div className={clsx(s.grid, status === 'ok' && s.gridCompact)}>
               <AnimatePresence initial={false}>
                 {list.map((st) => (
-                  <StoryCard key={st.pair.pair_id} story={st} months={months} scale={scale} upto={upto} fresh={isFresh(st.pair.pair_id)} />
+                  <StoryCard key={st.pair.pair_id} story={st} months={months} scale={scale} fresh={isFresh(st.pair.pair_id)} />
                 ))}
               </AnimatePresence>
             </div>
@@ -54,7 +53,7 @@ export function Stories({ stories, months, scale, upto, isFresh }: Props) {
   )
 }
 
-function StoryCard({ story, months, scale, upto, fresh }: { story: Story; months: number[]; scale: Props['scale']; upto: number | null; fresh: boolean }) {
+function StoryCard({ story, months, scale, fresh }: { story: Story; months: number[]; scale: Props['scale']; fresh: boolean }) {
   const { pair, status, title, quote, signals } = story
   const compact = status === 'ok'
   return (
@@ -68,7 +67,7 @@ function StoryCard({ story, months, scale, upto, fresh }: { story: Story; months
           {fresh ? <span className={s.new}>новая анкета</span> : !compact && signals > 0 && <span className={s.signals}>{formatCount(signals, SIGNAL_FORMS)}</span>}
         </header>
         {!compact && <p className={s.verdict}>{title ?? 'Всё ровно'}</p>}
-        <StoryChart cells={pair.cells} months={months} scale={scale} status={status} upto={upto} compact={compact} />
+        <StoryChart cells={pair.cells} months={months} scale={scale} status={status} compact={compact} />
         {!compact && quote && (
           <blockquote className={s.quote}>
             «{/^[а-яё]/.test(quote.text) ? '…' : ''}{quote.text}»<cite>{ROLE_LABEL[quote.role]}, {quote.month}-й месяц</cite>
