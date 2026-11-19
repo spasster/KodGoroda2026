@@ -61,6 +61,7 @@ docker-compose.yml, Makefile, .env.example
 - Индекс роли за месяц — среднее всех ответов типа `scale` этой роли. Нет анкеты, значит `null`.
 - Нормированный индекс: `(index - min) / (max - min)`, от 0 до 1. Пороги в `signals.json` заданы в долях размаха шкалы.
 - Разрыв за месяц: `gap = mentor_index - intern_index` в баллах шкалы. Положительный — стажёру хуже, чем видит наставник.
+- Пороги сигналов считаются по точным индексам. В ответах API (`Cell.gap`, тексты сигналов) разрыв равен разнице уже округлённых индексов: оценки 4,4 и 4,8 дают разрыв 0,4, даже если точная разница 0,35.
 
 ## Разбор текста
 
@@ -73,7 +74,7 @@ def analyze(text: str, role: str, question_id: str) -> TextInsight
 
 - `rules` (по умолчанию): словарь русских ключевых слов и основ. Работает без сети и модели.
 - `openai`: OpenAI-совместимый клиент (Ollama с Qwen локально или внешний API), включается `LLM_PROVIDER=openai`. Промпт и схема ответа лежат в `backend/app/analyzer/llm.py`, их дорабатывает ML.
-- Каждая цитата проверяется функцией `verify_quote(quote, text)`: точное вхождение после нормализации (регистр, пробелы, `ё`/`е`, кавычки), длина не меньше `quote_min_length`. Не прошла проверку — цитата и основанный на ней вывод отбрасываются. Позиции `start`/`end` считаются по исходному тексту.
+- Каждая цитата проверяется функцией `verify_quote(quote, text)`: точное вхождение после нормализации (регистр, пробелы, `ё`/`е`, кавычки), длина не меньше `quote_min_length`. Не прошла проверку — цитата и основанный на ней вывод отбрасываются. Позиции `start`/`end` считаются по исходному тексту, в ответах API в кодовых единицах UTF-16, как `String.prototype.slice` в JS: эмодзи перед цитатой не сдвигают подчёркивание.
 
 Темы (`topics`): `tasks_shortage` нехватка задач, `overload` перегрузка, `mentor` отношения с наставником, `clarity` непонятные задачи, `motivation` мотивация и интерес, `team` команда, `growth` рост и обучение, `positive` хорошее.
 
@@ -110,7 +111,9 @@ def analyze(text: str, role: str, question_id: str) -> TextInsight
 Каждый сигнал содержит понятный HR текст на русском:
 - `title`: что произошло, коротко. Пример: «Стажёр оценивает стажировку всё ниже».
 - `explanation`: одно-два предложения с цифрами. Пример: «Оценка стажёра за три месяца: 4,6 → 3,8 → 3,0».
-- `action`: что сделать HR. Пример: «Поговорить со стажёром один на один: что изменилось с третьего месяца».
+- `action`: что сделать HR. Пример: «Поговорить со стажёром один на один: что изменилось с 3-го месяца».
+
+Месяц в текстах пишется цифрой, как в таблице дашборда: «в 5-м месяце», «с 3-го месяца». Число между стажёром и наставником везде называется «разрыв».
 
 ## API
 
@@ -166,7 +169,7 @@ interface PairDetail extends PairSummary {
 | Метод и путь | Что делает |
 |---|---|
 | `GET /api/health` | `{ok, pairs, responses, analyzer}` |
-| `GET /api/survey` | содержимое `survey.json` |
+| `GET /api/survey` | содержимое `survey.json` и `thresholds`: пороги из `signals.json` вместе со значениями по умолчанию. Фронт берёт из них окно активных сигналов и порог высокой важности разрыва |
 | `GET /api/people` | `{interns: [{id, mentor_id, pair_id, next_month}], mentors: [...]}` для выбора в форме; `next_month` — первый месяц без анкеты |
 | `GET /api/overview` | `Overview` |
 | `GET /api/pairs/{pair_id}` | `PairDetail`, 404 если нет |
@@ -175,7 +178,7 @@ interface PairDetail extends PairSummary {
 | `POST /api/ingest` | приём анкеты, см. ниже |
 | `POST /api/ingest/yandex` | вебхук Яндекс Форм, см. ниже |
 | `POST /api/sync/gsheet` | забрать новые строки из опубликованных CSV Google Таблиц (`GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`) |
-| `POST /api/import/excel` | multipart: `interns`, `mentors` (любой из двух), `replace=true\|false`; ответ — отчёт импорта |
+| `POST /api/import/excel` | multipart: `interns`, `mentors` (любой из двух), `replace=true\|false`; ответ — отчёт импорта. Файл до 5 МБ, лист до 5000 строк и 200 колонок. `replace=true` с файлом без единой распознанной анкеты отвечает 422 и базу не трогает |
 | `POST /api/admin/reset` | очистить базу и загрузить `data/sample` |
 | `GET /api/events` | Server-Sent Events, см. ниже |
 
@@ -203,7 +206,7 @@ interface PairDetail extends PairSummary {
 
 - Бэкенд `:8000`, фронт в разработке `:5173` с прокси `/api` на бэкенд.
 - Docker: `web` на `:8080` (nginx отдаёт сборку фронта и проксирует `/api` в `api:8000`, включая SSE без буферизации), `api` внутри сети.
-- `make dev`, `make test`, `make data`, `make reset`, `make up`, `make tunnel` (cloudflared на `:8080`, чтобы форму можно было открыть с телефона).
+- `make dev`, `make test`, `make data`, `make reset`, `make up`, `make tunnel` (cloudflared на `:8081`, чтобы форму можно было открыть с телефона). На `:8081` nginx отдаёт только `/form`, `/assets/`, `GET /api/survey`, `GET /api/people` и `POST /api/ingest`, дашборд и `/api/admin/*` через туннель не видны.
 
 Переменные окружения (`.env.example`): `DB_PATH`, `SURVEY_DIR`, `SAMPLE_DIR`, `LLM_PROVIDER` (`rules`|`openai`), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`, `GSHEET_POLL_SECONDS` (0 — не опрашивать).
 

@@ -1,0 +1,29 @@
+/* ---------- Важность: три столбика и слово ---------- */
+.sev { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--text-1); white-space: nowrap; }
+.bars { width: 16px; height: 14px; flex: none; }
+.on { fill: var(--severity-on); }
+.off { fill: var(--severity-off); }
+
+/* ---------- Роли: круг стажёра, квадрат наставника ---------- */
+.mk { display: inline-block; flex: none; background: currentColor; }
+.mk-intern { border-radius: 50%; }
+.mk-mentor { border-radius: 1px; }
+.mk-8 { width: 8px; height: 8px; }
+.mk-12.mk-intern { width: 12px; height: 12px; }
+.mk-12.mk-mentor { width: 11px; height: 11px; border-radius: 1.5px; }
+
+.role { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+
+.people { display: inline-flex; gap: 10px; font-size: var(--fs-xs); color: var(--text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.people > span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ---------- Источник вывода ---------- */
+.tag {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 8px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-2);
+  font-size: var(--fs-xs); line-height: 1; color: var(--text-2); white-space: nowrap;
+}
+.tag-text { border-color: var(--text-2); color: var(--text-1); }
+
+.prov { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; font-size: var(--fs-xs); line-height: var(--lh-snug); color: var(--text-3); }
+.prov svg { width: 14px; height: 14px; margin-top: 1px; }

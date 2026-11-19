@@ -12,15 +12,19 @@ import type {
   Severity,
   Signal,
   SignalsQuery,
+  Thresholds,
 } from './types'
+import { DEFAULT_THRESHOLDS } from '../lib/rules'
 
 export const queryKeys = {
   overview: ['overview'] as const,
+  pairs: ['pair'] as const,
   pair: (pairId: string) => ['pair', pairId] as const,
   signals: ['signals'] as const,
   signalList: (query: SignalsQuery) => ['signals', query] as const,
   survey: ['survey'] as const,
   people: ['people'] as const,
+  health: ['health'] as const,
 }
 
 // Ключ сигнала по контракту: {type}:{pair_id}:{role}:{month}.
@@ -28,10 +32,12 @@ export function pairIdFromSignalKey(key: string): string | null {
   return key.split(':')[1] || null
 }
 
-// Новая анкета меняет обзор, пару, сигналы и следующий месяц в форме.
-export function invalidateAfterResponse(qc: QueryClient, pairId: string) {
+// Новая анкета меняет обзор, сигналы, следующий месяц в форме и карточки пар.
+// Карточки все: анкета одной пары закрывает месяц для остальных, и у них
+// появляются свои сигналы молчания.
+export function invalidateAfterResponse(qc: QueryClient) {
   void qc.invalidateQueries({ queryKey: queryKeys.overview })
-  void qc.invalidateQueries({ queryKey: queryKeys.pair(pairId) })
+  void qc.invalidateQueries({ queryKey: queryKeys.pairs })
   void qc.invalidateQueries({ queryKey: queryKeys.signals })
   void qc.invalidateQueries({ queryKey: queryKeys.people })
 }
@@ -72,8 +78,25 @@ export function useSurvey() {
   return useQuery({ queryKey: queryKeys.survey, queryFn: api.survey })
 }
 
+// Пороги сигналов из survey/signals.json. Пока анкета грузится, значения по умолчанию.
+export function useThresholds(): Thresholds {
+  return useSurvey().data?.thresholds ?? DEFAULT_THRESHOLDS
+}
+
 export function usePeople() {
   return useQuery({ queryKey: queryKeys.people, queryFn: api.people })
+}
+
+// Какой анализатор текста включён: от него зависят метка «ИИ по тексту» и
+// строка происхождения. Меняется только перезапуском бэкенда.
+export function useHealth() {
+  return useQuery({ queryKey: queryKeys.health, queryFn: api.health, staleTime: Infinity })
+}
+
+// openai: разбор текста делает модель; rules или пока неизвестно: словарь.
+export function useAnalyzer(): 'model' | 'rules' {
+  const { data } = useHealth()
+  return data?.analyzer === 'openai' ? 'model' : 'rules'
 }
 
 export interface ReviewVars {
@@ -113,6 +136,6 @@ export function useIngest() {
   const qc = useQueryClient()
   return useMutation<IngestResult, ApiError, IngestRequest>({
     mutationFn: api.ingest,
-    onSuccess: (res) => invalidateAfterResponse(qc, res.pair_id),
+    onSuccess: () => invalidateAfterResponse(qc),
   })
 }

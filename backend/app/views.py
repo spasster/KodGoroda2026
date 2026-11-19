@@ -48,7 +48,7 @@ def pair_summary(snap: Snapshot, pair_id: str) -> PairSummary:
             month=m,
             intern_index=r1(ds.index(pair_id, "intern", m)),
             mentor_index=r1(ds.index(pair_id, "mentor", m)),
-            gap=r1(ds.gap(pair_id, m)),
+            gap=ds.shown_gap(pair_id, m),
             status=status_of(counted),
             signal_keys=[s.key for s in month_signals],
             missing=Missing(intern=ds.response(pair_id, "intern", m) is None,

@@ -1,0 +1,16 @@
+/* Заголовок экрана: 32px/600 и пояснение 18px. */
+.top { padding: 32px 0 20px; }
+.top h1 { font-size: var(--fs-2xl); letter-spacing: -.02em; }
+.lead { margin-top: 6px; max-width: 72ch; font-size: var(--fs-m); line-height: var(--lh-body); color: var(--text-2); }
+
+/* Заголовок раздела: 20px/600, рядом пояснение 14px, справа легенда или ссылка. */
+.section { display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px 24px; margin-bottom: 12px; }
+.section h2 { font-size: var(--fs-l); line-height: var(--lh-snug); letter-spacing: -.01em; }
+.note { font-size: var(--fs-xs); color: var(--text-2); }
+.aside { margin-left: auto; }
+
+@media (max-width: 767px) {
+  .top { padding: 24px 0 16px; }
+  .top h1 { font-size: 28px; }
+  .lead { font-size: var(--fs-s); }
+}

@@ -1,0 +1,37 @@
+/* Знак статуса 12px: залитый квадрат, квадрат с обводкой, черта, кольцо. */
+.sign { display: inline-block; width: 12px; height: 12px; border-radius: var(--r-1); flex: none; }
+.risk { background: var(--ink); }
+.watch { box-shadow: inset 0 0 0 2px var(--ink); }
+.ok { height: 3px; border-radius: 0; background: var(--text-2); }
+.collect { width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--text-3); }
+
+.small.sign { width: 10px; height: 10px; }
+.small.ok { height: 3px; }
+
+/* Знак и слово. */
+.label { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; color: var(--text-1); }
+.label-s { font-size: 15px; font-weight: var(--fw-regular); gap: 7px; }
+.label-m { font-size: var(--fs-s); font-weight: var(--fw-bold); }
+.label-l { font-size: var(--fs-l); font-weight: var(--fw-bold); gap: 10px; }
+
+/* Плашка пары: высота 44px (40 на проекторе), ширина от 78px, радиус 6. */
+.chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; min-width: 78px; padding: 0 14px;
+  border-radius: var(--r-3);
+  font-size: var(--fs-m); font-weight: var(--fw-bold); line-height: 1;
+  font-variant-numeric: tabular-nums; text-decoration: none; white-space: nowrap;
+  transition: background var(--dur-1) linear, opacity var(--dur-1) linear;
+}
+.chip-risk { background: var(--status-risk-bg); color: var(--status-risk-fg); }
+.chip-watch { box-shadow: inset 0 0 0 2px var(--status-watch-border); color: var(--text-1); }
+.chip-ok { background: var(--status-ok-chip); color: var(--text-1); }
+a.chip-risk:hover { opacity: .9; }
+a.chip-watch:hover, a.chip-ok:hover { background: var(--hover); }
+
+/* Маленькая плашка: в уведомлении. */
+.chip-s { height: 28px; min-width: 52px; padding: 0 8px; font-size: 15px; }
+
+@media (min-width: 1100px) and (max-height: 800px) {
+  .chip:not(.chip-s) { height: 40px; }
+}

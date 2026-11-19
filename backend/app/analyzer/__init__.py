@@ -28,8 +28,9 @@ def _digest(*parts: str) -> str:
     return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
 
 
-RULES_TAG = "rules@" + _digest(*(repr((r.pattern.pattern, r.weight, r.topic, r.flip, r.flip_topic, r.roles))
-                                  for r in rules.RULES))[:10]
+RULES_TAG = "rules@" + _digest(f"v{rules.LOGIC_VERSION}",
+                               *(repr((r.pattern.pattern, r.weight, r.topic, r.flip, r.flip_topic, r.roles))
+                                 for r in rules.RULES))[:10]
 
 
 def _verified(insight: TextInsight, text: str, min_quote: int) -> TextInsight:

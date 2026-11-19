@@ -22,10 +22,6 @@ TYPE_RANK = {"decline": 0, "gap_intern_low": 1, "text_vs_score": 2, "gap_mentor_
 EPS = 1e-9
 MAX_QUOTES = 3
 
-GEN = {1: "первого", 2: "второго", 3: "третьего", 4: "четвёртого", 5: "пятого", 6: "шестого",
-       7: "седьмого", 8: "восьмого", 9: "девятого", 10: "десятого", 11: "одиннадцатого", 12: "двенадцатого"}
-PREP = {1: "первом", 2: "втором", 3: "третьем", 4: "четвёртом", 5: "пятом", 6: "шестом",
-        7: "седьмом", 8: "восьмом", 9: "девятом", 10: "десятом", 11: "одиннадцатом", 12: "двенадцатом"}
 WHO = {
     "intern": {"nom": "стажёр", "Nom": "Стажёр", "gen": "стажёра", "dat": "стажёру"},
     "mentor": {"nom": "наставник", "Nom": "Наставник", "gen": "наставника", "dat": "наставнику"},
@@ -43,16 +39,29 @@ def thresholds(raw: dict | None) -> dict:
     return out
 
 
+# Месяц везде цифрой, как в таблице дашборда: с проектора так читается быстрее.
 def since_month(m: int) -> str:
-    """«со второго месяца», «с третьего месяца»."""
-    word = GEN.get(m, f"{m}-го")
-    return f"{'со' if word == 'второго' else 'с'} {word} месяца"
+    """«с 3-го месяца»."""
+    return f"с {m}-го месяца"
 
 
 def in_month(m: int) -> str:
-    """«во втором месяце», «в третьем месяце»."""
-    word = PREP.get(m, f"{m}-м")
-    return f"{'во' if word == 'втором' else 'в'} {word} месяце"
+    """«в 5-м месяце»."""
+    return f"в {m}-м месяце"
+
+
+def plural(n: int, one: str, few: str, many: str) -> str:
+    """plural(22, 'знак', 'знака', 'знаков') → «знака»."""
+    n10, n100 = n % 10, n % 100
+    if n10 == 1 and n100 != 11:
+        return one
+    if 2 <= n10 <= 4 and not 12 <= n100 <= 14:
+        return few
+    return many
+
+
+def chars(n: int) -> str:
+    return f"{n} {plural(n, 'знак', 'знака', 'знаков')}"
 
 
 def num(v: float | None) -> str:
@@ -61,6 +70,12 @@ def num(v: float | None) -> str:
 
 def score_str(v: float) -> str:
     return str(int(v)) if float(v).is_integer() else num(v)
+
+
+def utf16(text: str, i: int) -> int:
+    """Позиция символа в кодовых единицах UTF-16, как считает String.prototype.slice в JS.
+    Эмодзи в Python один символ, а в JS два: без пересчёта подчёркивание съехало бы."""
+    return i + sum(1 for ch in text[:i] if ord(ch) > 0xFFFF)
 
 
 def chain(values: list[float]) -> str:
@@ -73,10 +88,6 @@ def consecutive(months: list[int]) -> bool:
 
 def months_list(months: list[int]) -> str:
     return ", ".join(str(m) for m in months[:-1]) + f" и {months[-1]}"
-
-
-def short(text: str, limit: int = 140) -> str:
-    return text if len(text) <= limit else text[:limit].rsplit(" ", 1)[0] + "…"
 
 
 @dataclass
@@ -138,7 +149,8 @@ class _Builder:
         for item in self.insights.get((pair_id, role, month), []):
             for c in item.insight.concerns:
                 found.append((0 if c.label in labels else 1, Quote(
-                    role=role, month=month, question_id=item.question_id, text=c.quote, start=c.start, end=c.end)))
+                    role=role, month=month, question_id=item.question_id, text=c.quote,
+                    start=utf16(item.text, c.start), end=utf16(item.text, c.end))))
         found.sort(key=lambda x: x[0])
         unique: list[Quote] = []
         for _, q in found:
@@ -159,7 +171,7 @@ class _Builder:
         if best is None:
             return ""
         q = self.ds.survey.question(role, best[1])
-        return f" Сильнее всего просел ответ на вопрос «{q.text if q else best[1]}»: {score_str(best[2])} → {score_str(best[3])}."
+        return f" Сильнее всего упала оценка по вопросу «{q.text if q else best[1]}»: {score_str(best[2])} → {score_str(best[3])}."
 
     # Типы сигналов.
 
@@ -212,6 +224,7 @@ class _Builder:
             rel = g / self.range
             i_val = self.ds.index(pair_id, "intern", m)
             m_val = self.ds.index(pair_id, "mentor", m)
+            shown = self.ds.shown_gap(pair_id, m)  # в тексте разница видимых оценок, пороги по точной
             if rel >= th["min_gap"] - EPS:
                 growing = (len(history) >= 2 and g > history[-1][1] + EPS and history[-1][1] > history[-2][1] + EPS)
                 high = rel >= th["high_gap"] - EPS or growing
@@ -219,11 +232,11 @@ class _Builder:
                 explanation = f"{in_month(m).capitalize()} стажёр ставит {num(i_val)}, наставник {num(m_val)}."
                 if growing:
                     # Ряды оценок понятнее ряда разниц: разница бывает отрицательной.
-                    explanation += (f" Разница {num(g)} балла и растёт второй месяц: "
+                    explanation += (f" Разрыв {num(shown)} балла и растёт второй месяц: "
                                     f"стажёр {chain([self.ds.index(pair_id, 'intern', k) for k in months])}, "
                                     f"наставник {chain([self.ds.index(pair_id, 'mentor', k) for k in months])}.")
                 else:
-                    explanation += f" Разница {num(g)} балла."
+                    explanation += f" Разрыв {num(shown)} балла."
                 values = [self.value(pair_id, r, mm) for mm in months for r in ("intern", "mentor")]
                 self.out.append(_Raw(
                     "gap_intern_low", pair_id, "both", m, "high" if high else "medium",
@@ -235,8 +248,8 @@ class _Builder:
                 high = -rel >= th["high_gap"] - EPS
                 self.out.append(_Raw(
                     "gap_mentor_low", pair_id, "both", m, "high" if high else "medium",
-                    "Наставник недоволен, а стажёр думает, что всё хорошо",
-                    f"{in_month(m).capitalize()} наставник ставит {num(m_val)}, стажёр {num(i_val)}. Разница {num(-g)} балла.",
+                    "Наставник недоволен, а стажёр ставит высокие оценки",
+                    f"{in_month(m).capitalize()} наставник ставит {num(m_val)}, стажёр {num(i_val)}. Разрыв {num(-shown)} балла.",
                     "Попросить наставника прямо сказать стажёру, что не так в его работе. Через месяц сравнить оценки снова.",
                     values=[self.value(pair_id, r, m) for r in ("intern", "mentor")],
                     quotes=self.quotes(pair_id, "mentor", m),
@@ -260,8 +273,8 @@ class _Builder:
         main = topics[0] if topics else None
         who = WHO[role]
         scale_max = score_str(self.ds.survey.scale_max)
-        explanation = (f"Средняя оценка {who['gen']} {in_month(month)} {num(idx)} из {scale_max}. "
-                       f"В комментарии: «{short(quotes[0].text)}».")
+        # Цитату показывает блок доказательств, в объяснении её не повторяем.
+        explanation = f"Средняя оценка {who['gen']} {in_month(month)} {num(idx)} из {scale_max}."
         if role == "intern":
             title = {
                 "mentor": "Стажёр ставит хорошие оценки, но жалуется на наставника",
@@ -302,7 +315,12 @@ class _Builder:
                 passed = bool(others) and all(ds.has_month(p, m) for p in others)
                 if not (other_has or passed):
                     continue
-                if other_has:
+                title = f"{who['Nom']} не заполнил анкету"
+                if other_has and not passed:
+                    # Месяц ещё собирается: вторая сторона не опоздала, она просто не успела.
+                    title = f"{who['Nom']} ещё не прислал анкету"
+                    explanation = f"{other['Nom']} анкету за {m}-й месяц прислал, {who['nom']} пока нет."
+                elif other_has:
                     explanation = f"{other['Nom']} анкету за {m}-й месяц заполнил, {who['nom']} нет."
                 else:
                     explanation = (f"Анкеты {who['gen']} за {m}-й месяц нет. {other['Nom']} тоже не заполнил, "
@@ -312,8 +330,7 @@ class _Builder:
                 else:
                     action = "Напомнить наставнику про анкету и спросить, хватает ли ему времени на стажёра."
                 values = [self.value(pair_id, role, k) for k in range(max(1, m - 2), m + 1)]
-                self.out.append(_Raw("silence", pair_id, role, m, "medium", f"{who['Nom']} не заполнил анкету",
-                                     explanation, action, values=values))
+                self.out.append(_Raw("silence", pair_id, role, m, "medium", title, explanation, action, values=values))
                 continue
 
             reasons: list[tuple[str, str, str]] = []  # (title, explanation, action)
@@ -326,16 +343,16 @@ class _Builder:
                 avg = sum(lengths) / len(lengths)
                 if not cur:
                     reasons.append((
-                        f"{who['Nom']} перестал писать комментарии",
-                        f"{in_month(m).capitalize()} комментарий пустой. Раньше {who['nom']} писал в среднем {round(avg)} знаков.",
+                        f"{who['Nom']} оставил комментарий пустым",
+                        f"{in_month(m).capitalize()} комментарий пустой. Раньше {who['nom']} писал в среднем {chars(round(avg))}.",
                         "Спросить стажёра при встрече, что сейчас мешает в стажировке." if role == "intern"
                         else "Спросить наставника устно, как справляется стажёр.",
                     ))
                     break
                 if avg >= th["min_prev_length"] - EPS and (avg - len(cur)) / avg >= th["length_drop"] - EPS:
                     reasons.append((
-                        f"{who['Nom']} пишет всё короче",
-                        f"Комментарий за {m}-й месяц: {len(cur)} знаков. Раньше в среднем {round(avg)}.",
+                        f"{who['Nom']} написал намного короче обычного",
+                        f"Комментарий за {m}-й месяц: {chars(len(cur))}. Раньше в среднем {round(avg)}.",
                         "Спросить стажёра при встрече, что сейчас мешает в стажировке." if role == "intern"
                         else "Спросить наставника устно, как справляется стажёр.",
                     ))

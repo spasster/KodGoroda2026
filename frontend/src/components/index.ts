@@ -1,0 +1,18 @@
+// Общие компоненты дизайн-системы «Сверка». Описание и примеры: README.md рядом.
+
+export { Button, LinkButton, buttonClass, type ButtonSize, type ButtonVariant } from './Button'
+export { Dumbbell, type DumbbellProps } from './Dumbbell'
+export { EmptyState, type EmptyStateProps } from './EmptyState'
+export { ErrorBanner, LoadError, loadErrorText, type ErrorBannerProps } from './ErrorBanner'
+export { GapChain, type GapChainProps } from './GapChain'
+export { Loading, Skeleton, useDelayed, type LoadingProps } from './Loading'
+export { PageHeader, SectionHead } from './PageHeader'
+export { MarkedText, Quote, type MarkRange, type QuoteProps } from './Quote'
+export { ReviewControl, type ReviewControlProps } from './ReviewControl'
+export { PairPeople, RoleLabel, RoleMark } from './Role'
+export { Segmented, type SegmentedProps, type SegmentOption } from './Segmented'
+export { SeverityBars, SeverityLabel } from './Severity'
+export { SignalBlock, type SignalBlockProps } from './SignalBlock'
+export { Provenance, provenanceText, SourceTag } from './Source'
+export { PairChip, pairChipClass, StatusLabel, StatusSign, type SignKind } from './Status'
+export { ThemeSwitch } from './ThemeSwitch'

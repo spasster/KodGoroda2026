@@ -129,3 +129,42 @@ def test_repo_import_map_matches_repo_survey():
     signals = json.loads((REPO_SURVEY / "signals.json").read_text(encoding="utf-8"))
     for key in ("active_months", "decline", "gap", "text_vs_score", "silence", "quote_min_length"):
         assert key in signals
+
+
+def _sheet_with_dimension(rows: int) -> bytes:
+    """xlsx на полтора килобайта: две ячейки, а размер листа в заголовке A1:XFD{rows}."""
+    import zipfile
+
+    ct = ('<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+          '<Default Extension="xml" ContentType="application/xml"/>'
+          '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+          '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>')
+    rels = ('<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')
+    wb = ('<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+          'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Ответы" sheetId="1" r:id="rId1"/></sheets></workbook>')
+    wb_rels = ('<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+               '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>')
+    sheet = (f'<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+             f'<dimension ref="A1:XFD{rows}"/><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>ID стажёра</t></is></c></row>'
+             f'<row r="{rows}"><c r="A{rows}" t="inlineStr"><is><t>S-01</t></is></c></row></sheetData></worksheet>')
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, data in (("[Content_Types].xml", ct), ("_rels/.rels", rels), ("xl/workbook.xml", wb),
+                           ("xl/_rels/workbook.xml.rels", wb_rels), ("xl/worksheets/sheet1.xml", sheet)):
+            zf.writestr(name, data)
+    return buf.getvalue()
+
+
+def test_xlsx_with_huge_dimension_is_bounded():
+    # Размер листа из заголовка не раздувает строки: две ячейки дают две короткие строки.
+    small = read_bytes(_sheet_with_dimension(3), "small.xlsx")
+    assert small.rows == [["ID стажёра"], [], ["S-01"]]
+    # Лист на миллион строк отклоняется, а не съедает память.
+    import pytest
+
+    from app.importer import ImportFileError
+
+    with pytest.raises(ImportFileError, match="больше 5000 строк"):
+        read_bytes(_sheet_with_dimension(1_048_576), "bomb.xlsx")

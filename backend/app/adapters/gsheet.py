@@ -32,7 +32,7 @@ def sync_gsheet(ctx: Context, client: httpx.Client | None = None) -> dict:
                 resp = client.get(url)
                 resp.raise_for_status()
             except httpx.HTTPError as exc:
-                raise IngestError(f"Не скачать таблицу {ROLE_NAMES[role]}: {exc}") from None
+                raise IngestError(f"Не удалось скачать таблицу {ROLE_NAMES[role]}: {exc}") from None
             try:
                 tables.append((read_bytes(resp.content, f"gsheet-{role}.csv"), role))
             except ImportFileError as exc:

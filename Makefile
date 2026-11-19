@@ -3,7 +3,7 @@
 SHELL := /bin/bash
 API ?= http://localhost:8000
 
-# Без таймаута uvicorn при остановке ждёт, пока браузер сам закроет поток /api/events.
+# Потоки /api/events бэкенд закрывает сам по Ctrl+C. Таймаут на случай, если что-то ещё держит соединение.
 UVICORN := uv run uvicorn app.main:app --reload --port 8000 --timeout-graceful-shutdown 2
 
 .PHONY: dev api web test data reset up down tunnel demo
@@ -33,9 +33,13 @@ data:
 	uv run data/generate.py --out data/sample-12 --pairs 12 --months 5 --seed 7
 	uv run data/expected.py data/sample-12
 
-# Очистить базу и загрузить data/sample.
+# Очистить базу и загрузить data/sample. Через API, чтобы открытые дашборды получили
+# reset и обновились. Для Docker: make reset API=http://localhost:8080. Если бэкенд
+# не запущен, сбрасывается локальная база backend/var/app.sqlite напрямую.
 reset:
-	cd backend && uv run python -m app.cli reset
+	@curl -fsS -X POST $(API)/api/admin/reset >/dev/null 2>&1 \
+	  && echo "База сброшена через $(API), открытые дашборды обновятся" \
+	  || (echo "$(API) не отвечает, сбрасываю локальную базу" && cd backend && uv run python -m app.cli reset)
 
 up:
 	docker compose up -d --build
@@ -44,9 +48,10 @@ up:
 down:
 	docker compose down
 
+# Наружу уходит порт 8081: на нём nginx отдаёт только форму и три её запроса к API.
 tunnel:
 	@echo "Ссылку https://….trycloudflare.com из вывода ниже откройте с телефона и допишите /form"
-	cloudflared tunnel --url http://localhost:8080
+	cloudflared tunnel --url http://localhost:8081
 
 # Анкета живого демо. Для Docker: make demo API=http://localhost:8080
 demo:

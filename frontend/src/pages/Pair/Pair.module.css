@@ -1,0 +1,154 @@
+/* Карточка пары: system.md, «Карточка пары», «Лента комментариев», «Тепловая карта ответов». */
+
+/* ---------- Путь и соседние пары ---------- */
+.crumbsRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 20px; font-size: var(--fs-xs); line-height: var(--lh-snug); }
+.crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--text-3); }
+.crumbs a { color: var(--brand-text); }
+.neigh { display: flex; align-items: center; gap: 4px; }
+.neigh a {
+  display: inline-flex; align-items: center; gap: 7px; height: 32px; margin: -9px 0; padding: 0 10px;
+  border-radius: var(--r-3); color: var(--brand-text); font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums; text-decoration: none; white-space: nowrap;
+  transition: background var(--dur-1) linear;
+}
+.neigh a:hover { background: var(--brand-wash); }
+.neigh a svg { width: 16px; height: 16px; }
+.neigh a i { color: var(--text-1); }
+
+.loadError { margin: 16px 0 8px; }
+
+/* ---------- Шапка ---------- */
+.top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: 16px 32px; padding: 12px 0 28px; border-bottom: 1px solid var(--line); }
+.id { font-size: var(--fs-4xl); line-height: .9; letter-spacing: -.045em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.people { display: grid; gap: 4px; padding-bottom: 2px; font-size: var(--fs-m); color: var(--text-2); }
+.people > span { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.people b { color: var(--text-1); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.status { text-align: right; padding-bottom: 2px; }
+.status p { margin-top: 2px; font-size: var(--fs-s); color: var(--text-2); }
+
+/* ---------- График и разрыв: 8 + 4 колонки ---------- */
+.grid { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 56px; padding: 36px 0 48px; }
+.chartCol { min-width: 0; }
+
+.gapbox { min-width: 0; }
+.gapnum { display: flex; align-items: baseline; gap: 10px; font-size: var(--fs-4xl); font-weight: var(--fw-bold); line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.gapnum small { font-size: var(--fs-l); font-weight: var(--fw-medium); letter-spacing: 0; color: var(--text-2); }
+.roll { display: inline-flex; overflow: hidden; padding-bottom: 6px; margin-bottom: -6px; transition: box-shadow var(--dur-3) var(--ease-out); }
+.rollValue { display: inline-block; }
+.changed { box-shadow: inset 0 -3px 0 var(--brand); }
+.gapLead { margin-top: 8px; max-width: 46ch; font-size: var(--fs-s); line-height: var(--lh-body); color: var(--text-2); text-wrap: pretty; }
+.gapChain { margin-top: 16px; }
+
+.changes { margin-top: 28px; }
+.changes h3 { margin-bottom: 4px; font-size: var(--fs-xs); font-weight: var(--fw-medium); line-height: var(--lh-snug); color: var(--text-3); }
+.changes ul { list-style: none; }
+.changes li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: var(--fs-s); line-height: var(--lh-snug); }
+.changes small { display: block; margin-top: 3px; font-size: var(--fs-xs); color: var(--text-3); }
+.changeValue { font-weight: var(--fw-bold); white-space: nowrap; }
+
+/* ---------- Разделы ниже ---------- */
+.block { padding: 40px 0; border-top: 1px solid var(--line); }
+.block.last { padding-bottom: 96px; }
+.calm { padding: 20px 0 4px; border-top: 1px solid var(--line); font-size: var(--fs-s); color: var(--text-2); }
+
+/* «Раньше» */
+.older { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding-top: 20px; border-top: 1px solid var(--line); font-size: var(--fs-s); color: var(--text-2); }
+.olderLabel { line-height: 36px; }
+.olderBody > p { line-height: 36px; }
+.olderList { list-style: none; display: grid; gap: 2px; margin-top: 2px; }
+.olderRow {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 36px; margin-left: -8px; padding: 4px 8px;
+  border: 0; border-radius: var(--r-3); background: transparent; color: var(--text-1);
+  font-size: var(--fs-s); line-height: var(--lh-snug); text-align: left;
+  transition: background var(--dur-1) linear;
+}
+.olderRow:hover { background: var(--hover); }
+.olderText { min-width: 0; }
+.olderMark { color: var(--text-3); }
+.chevron { width: 16px; height: 16px; color: var(--text-3); transition: transform var(--dur-2) var(--ease-out); }
+.chevronOpen { transform: rotate(180deg); }
+.olderPanel { overflow: hidden; }
+.olderSignal { margin-top: 8px; border-top: 0; padding-top: 12px; }
+
+/* ---------- Тепловая карта ---------- */
+.heatScroll { position: relative; overflow-x: auto; margin-top: 8px; padding-bottom: 4px; }
+.heat { border-collapse: separate; border-spacing: 3px; margin-left: -3px; }
+.heat thead th { padding: 0 0 4px; font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--text-3); text-align: center; }
+.heatGroup { padding: 16px 0 4px; font-size: var(--fs-xs); font-weight: var(--fw-regular); color: var(--text-2); text-align: left; }
+.heatQ { max-width: 360px; min-width: 220px; padding: 0 20px 0 0; font-size: var(--fs-s); font-weight: var(--fw-regular); line-height: var(--lh-snug); color: var(--text-1); text-align: left; }
+.heatCell { width: 56px; min-width: 56px; height: 40px; border-radius: var(--r-2); font-size: var(--fs-s); font-weight: var(--fw-bold); text-align: center; }
+.heatNone { box-shadow: inset 0 0 0 1px var(--line); color: var(--text-3); font-size: var(--fs-xs); font-weight: var(--fw-regular); }
+.h5 { background: var(--heat-5); color: var(--text-1); }
+.h4 { background: var(--heat-4); color: var(--text-1); }
+.h3 { background: var(--heat-3); color: var(--text-1); }
+.h2 { background: var(--heat-2); color: var(--heat-fg-strong); }
+.h1 { background: var(--heat-1); color: var(--heat-fg-strong); }
+.heatLegend { display: inline-flex; align-items: center; gap: 4px; }
+.heatLegend i { display: inline-grid; place-items: center; width: 24px; height: 22px; border-radius: 3px; font-size: var(--fs-xs); font-style: normal; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.heatLegend i:first-child { margin-left: 4px; }
+.heatLegend i:last-of-type { margin-right: 4px; }
+
+/* ---------- Комментарии ---------- */
+.cm { width: 100%; margin-top: 8px; border-collapse: collapse; table-layout: fixed; }
+.cmMonthCol { width: 150px; }
+.cm thead th { padding: 0 16px 10px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--text-3); text-align: left; }
+.cm td, .cm tbody th { padding: 18px 24px 18px 0; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; font-weight: var(--fw-regular); font-size: var(--fs-s); line-height: var(--lh-body); }
+.cmMonth { display: table-cell; }
+.cmMonthName { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: var(--fs-m); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+.cmScores { display: flex; gap: 12px; margin-top: 4px; font-size: var(--fs-s); }
+.cmScores > span { display: inline-flex; align-items: center; gap: 6px; }
+.gapPill { display: inline-flex; align-items: center; height: 24px; margin-top: 8px; padding: 0 8px; border-radius: var(--r-2); background: var(--sunken); font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap; }
+.gapPillHigh { background: var(--ink); color: var(--ink-fg); }
+.cmWho { display: none; }
+.cmEmpty { font-size: var(--fs-xs); color: var(--text-3); }
+.cmItem + .cmItem { margin-top: 12px; }
+.cmItem p { overflow-wrap: anywhere; }
+.cmQuestion { display: block; margin-bottom: 2px; font-size: var(--fs-xs); color: var(--text-3); }
+.topics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.topic { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border: 1px solid var(--line-strong); border-radius: var(--r-2); font-size: var(--fs-xs); line-height: 1; color: var(--text-2); white-space: nowrap; }
+.newTag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: var(--r-pill); background: var(--brand); color: var(--brand-fg); font-size: var(--fs-xs); font-weight: var(--fw-bold); line-height: 1; }
+
+/* ---------- Пары нет ---------- */
+.noPair { padding-top: 40px; }
+.noPairList { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); }
+.noPairList p { margin-bottom: 12px; font-size: var(--fs-xs); color: var(--text-3); }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ---------- Загрузка ---------- */
+.skeleton { padding-top: 20px; }
+.skelTop { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: 16px 32px; padding: 12px 0 28px; border-bottom: 1px solid var(--line); }
+.skelPeople, .skelStatus, .skelCol { display: grid; gap: 10px; }
+.skelStatus { justify-items: end; }
+.skeleton .grid { padding-bottom: 12px; }
+
+/* ---------- Брейкпоинты ---------- */
+@media (max-width: 1359px) {
+  .older { grid-template-columns: 170px minmax(0, 1fr); }
+}
+@media (max-width: 1099px) {
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .gapLead { max-width: 68ch; }
+}
+@media (max-width: 767px) {
+  .crumbsRow { padding-top: 16px; }
+  .neigh a { padding: 0 8px; }
+  .top { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-bottom: 24px; }
+  .id { font-size: 56px; }
+  .status { text-align: left; }
+  .grid { padding: 28px 0 40px; }
+  .block { padding: 32px 0; }
+  .older { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .heatQ { min-width: 150px; max-width: 150px; font-size: var(--fs-xs); padding-right: 12px; }
+  /* Вопрос стоит на месте, месяцы прокручиваются под ним. Тень у края: дальше есть ещё. */
+  .heatQ, .heat thead td { position: sticky; left: 0; z-index: 1; background: var(--bg); }
+  .heatQ { box-shadow: 8px 0 8px -8px rgb(0 0 0 / .25); }
+  .heatGroup > * { position: sticky; left: 0; display: inline-flex; }
+  .cm thead { display: none; }
+  .cm, .cm tbody, .cm tr, .cm td, .cm tbody th { display: block; width: 100%; }
+  .cm tr { padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .cm td, .cm tbody th { padding: 6px 0; border: 0; }
+  .cm td + td { margin-top: 6px; }
+  .cmWho { display: block; margin-bottom: 4px; font-size: var(--fs-xs); color: var(--text-2); }
+  .skelTop { grid-template-columns: minmax(0, 1fr); }
+  .skelStatus { justify-items: start; }
+}

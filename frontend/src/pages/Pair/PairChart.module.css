@@ -1,0 +1,42 @@
+/* График карточки пары: system.md, «Две линии в карточке пары». */
+.box { position: relative; }
+.svg { display: block; overflow: visible; font-family: var(--font); }
+
+.grid { stroke: var(--chart-grid); stroke-width: 1; shape-rendering: crispEdges; }
+.axis { stroke: var(--chart-axis); stroke-width: 1; shape-rendering: crispEdges; }
+.ax { fill: var(--text-3); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+
+.collect { fill: var(--status-collect-bg); }
+.collectText { fill: var(--text-3); font-size: var(--fs-xs); }
+
+.band { fill: var(--series-gap); }
+.lineIntern { fill: none; stroke: var(--series-intern); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.lineMentor { fill: none; stroke: var(--series-mentor); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.dotIntern { fill: var(--series-intern); stroke: var(--bg); stroke-width: 2.5; }
+.dotMentor { fill: var(--series-mentor); stroke: var(--bg); stroke-width: 2.5; }
+
+.endLabel { font-size: var(--fs-s); fill: var(--text-1); font-variant-numeric: tabular-nums; }
+.endValue { font-weight: var(--fw-bold); }
+.endWord { fill: var(--text-2); font-weight: var(--fw-regular); }
+
+/* Зона месяца: мышь и клавиатура показывают одну подсказку. */
+.zone { fill: transparent; cursor: crosshair; }
+.zone:focus { outline: none; }
+.zone:focus-visible { outline: none; stroke: var(--focus); stroke-width: 2; }
+.cross { stroke: var(--text-3); stroke-width: 1; pointer-events: none; transition: opacity var(--dur-1) linear; }
+
+.tip {
+  position: absolute; top: 24px; z-index: 5; padding: 10px 12px;
+  border-radius: var(--r-4); background: var(--surface); box-shadow: var(--shadow-pop);
+  font-size: var(--fs-xs); line-height: var(--lh-snug); pointer-events: none;
+}
+.tip b { display: block; margin-bottom: 6px; font-weight: var(--fw-bold); }
+.tipRow { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.tipRow + .tipRow { margin-top: 3px; }
+.tipRow span { display: inline-flex; align-items: center; gap: 7px; color: var(--text-2); }
+.tipRow strong { font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Легенда: «● стажёр ■ наставник ▭ разрыв». */
+.legend { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: var(--fs-xs); color: var(--text-2); }
+.legend > span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.legendGap { display: inline-block; width: 16px; height: 10px; border-radius: var(--r-1); background: var(--series-gap); }

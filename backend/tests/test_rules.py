@@ -173,3 +173,12 @@ def test_role_specific_rules():
     assert labels("Переделываю за ним третий раз.", "intern") == set()
     # «Сам» у наставника значит самостоятельность стажёра.
     assert analyze("Сам собрал стенд.", "mentor", "comment").sentiment > analyze("Сам собрал стенд.", "intern", "comment").sentiment
+
+
+def test_complaint_never_tagged_positive():
+    # Вежливое «стараюсь» внутри жалобы не делает её хорошей.
+    text = ("Всё так же. Сообщения висят непрочитанными по два-три дня, ревью моих тест-кейсов никто не делал с июля. "
+            "Стараюсь лишний раз не дёргать, но без обратной связи непонятно, расту я или нет.")
+    insight = analyze(text, "intern", "comment")
+    assert insight.sentiment < 0
+    assert "positive" not in insight.topics

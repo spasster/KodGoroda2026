@@ -52,7 +52,8 @@
   --series-gap: rgb(20 23 28 / .08);
   --chart-grid: var(--line);
   --chart-axis: var(--line-strong);
-  --dumbbell-track: var(--line-strong);
+  /* Дорожка шкалы 1–5 в гантели: от 3:1 к фону и подложкам, иначе на проекторе пропадает. */
+  --dumbbell-track: #858C96;
 
   /* Тепловая карта ответов: 5 светлая, 1 тёмная */
   --heat-5: #F3F4F5;
@@ -149,6 +150,7 @@
     --text-3: #9198A3;
     --line: #2A2E35;
     --line-strong: #444A53;
+    --dumbbell-track: #666D77;
     --ink: #EEF0F3;
     --ink-fg: #131519;
     --ink-soft: rgb(238 240 243 / .12);
@@ -184,6 +186,7 @@
   --text-3: #9198A3;
   --line: #2A2E35;
   --line-strong: #444A53;
+  --dumbbell-track: #666D77;
   --ink: #EEF0F3;
   --ink-fg: #131519;
   --ink-soft: rgb(238 240 243 / .12);

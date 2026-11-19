@@ -23,6 +23,8 @@ from ..schemas import IngestResult
 from .deps import get_ctx
 
 router = APIRouter()
+# Выгрузка анкет весит десятки килобайт. Больше 5 МБ не читаем.
+MAX_UPLOAD = 5 * 1024 * 1024
 
 
 @router.post("/ingest", response_model=IngestResult)
@@ -59,7 +61,9 @@ async def import_excel(request: Request, interns: UploadFile | None = File(None)
     for upload, role in ((interns, "intern"), (mentors, "mentor")):
         if upload is None or not upload.filename:
             continue
-        data = await upload.read()
+        data = await upload.read(MAX_UPLOAD + 1)
+        if len(data) > MAX_UPLOAD:
+            raise HTTPException(422, f"Файл {upload.filename} больше 5 МБ, это не похоже на выгрузку анкет")
         if data:
             tables.append((read_bytes(data, upload.filename), role))
     if not tables:

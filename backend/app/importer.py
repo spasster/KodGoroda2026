@@ -93,8 +93,28 @@ def read_file(path: Path, sheet: str | None = None) -> Table:
     try:
         data = path.read_bytes()
     except OSError as exc:
-        raise ImportFileError(f"Не открыть файл {path}: {exc.strerror or exc}") from None
+        raise ImportFileError(f"Не удалось открыть файл {path}: {exc.strerror or exc}") from None
     return read_bytes(data, path.name, sheet)
+
+
+# Выгрузка анкет: строка на анкету, колонка на вопрос. Больше этого не бывает, а без
+# предела файл в пару килобайт с размером листа XFD1048576 съест всю память.
+MAX_ROWS = 5000
+MAX_COLS = 200
+
+
+def _trim(rows: list[list], filename: str) -> list[list]:
+    if len(rows) > MAX_ROWS:
+        raise ImportFileError(f"Файл {filename}: больше {MAX_ROWS} строк, это не похоже на выгрузку анкет")
+    out = []
+    for row in rows:
+        row = list(row[:MAX_COLS])
+        while row and (row[-1] is None or row[-1] == ""):
+            row.pop()
+        out.append(row)
+    while out and not out[-1]:
+        out.pop()
+    return out
 
 
 def _read_xlsx(data: bytes, filename: str, sheet: str | None) -> Table:
@@ -108,7 +128,15 @@ def _read_xlsx(data: bytes, filename: str, sheet: str | None) -> Table:
         names = wb.sheetnames
         wanted = [s for s in (sheet, "Ответы") if s]
         name = next((n for w in wanted for n in names if normalize_header(n) == normalize_header(w)), names[0])
-        rows = [list(r) for r in wb[name].iter_rows(values_only=True)]
+        ws = wb[name]
+        # Размер листа из файла не верим: read_only добивает строки пустыми ячейками до него.
+        ws.reset_dimensions()
+        rows = []
+        for r in ws.iter_rows(values_only=True, max_col=MAX_COLS):
+            rows.append(r)
+            if len(rows) > MAX_ROWS:
+                break
+        rows = _trim(rows, filename)
     finally:
         wb.close()
     return Table(filename, name, rows)
@@ -122,13 +150,18 @@ def _read_csv(data: bytes, filename: str) -> Table:
         except UnicodeDecodeError:
             continue
     else:
-        raise ImportFileError(f"Файл {filename}: не понять кодировку, сохраните его в UTF-8")
+        raise ImportFileError(f"Файл {filename}: не удалось определить кодировку, сохраните его в UTF-8")
     sample = text[:4096]
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
     except csv.Error:
         dialect = csv.excel
-    rows = [row for row in csv.reader(io.StringIO(text), dialect)]
+    rows = []
+    for row in csv.reader(io.StringIO(text), dialect):
+        rows.append(row)
+        if len(rows) > MAX_ROWS:
+            break
+    rows = _trim(rows, filename)
     return Table(filename, None, rows)
 
 
@@ -317,7 +350,7 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
         if "submitted_at" in fields:
             report.warnings.append("Нет колонки с месяцем. Месяц посчитан по дате заполнения: первый месяц в файле = 1")
         else:
-            report.error(h + 1, "Нет колонки «Месяц стажировки» и нет даты заполнения, месяц не определить")
+            report.error(h + 1, "Нет колонки «Месяц стажировки» и даты заполнения, месяц не определён")
             return [], report
 
     def cell(row: list[Any], name: str) -> Any:
@@ -337,7 +370,7 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
         dt = parse_datetime(cell(row, "submitted_at"))
         month = parse_month(cell(row, "month")) if "month" in fields else None
         if "month" in fields and month is None:
-            report.error(offset, f"не понять месяц «{cell(row, 'month')}», строка пропущена")
+            report.error(offset, f"не удалось разобрать месяц «{cell(row, 'month')}», строка пропущена")
             continue
         answers: dict[str, tuple[float | None, str | None]] = {}
         for qid, q in questions.items():
@@ -368,7 +401,7 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
         kept = []
         for rec, d in zip(records, dates):
             if d is None or base is None:
-                report.error(rec.row, "нет даты заполнения, месяц не определить")
+                report.error(rec.row, "нет даты заполнения, месяц не определён")
                 continue
             rec.month = d.year * 12 + d.month - base + 1
             kept.append(rec)

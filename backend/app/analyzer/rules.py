@@ -13,6 +13,9 @@
 Словарь сверен с ручной разметкой data/scenarios.py, см. tests/test_dataset.py.
 """
 
+# Меняется вместе с логикой analyze(): от неё зависит ключ кэша разбора.
+LOGIC_VERSION = 2
+
 import re
 from dataclasses import dataclass
 
@@ -369,5 +372,9 @@ def analyze(text: str, role: str, question_id: str) -> TextInsight:
                 concerns.append(Concern(label=topic, quote=text[qa:qb], start=qa, end=qb))
 
     sentiment = round((pos - neg) / (pos + neg + 1), 2)
+    # «Хорошее» только у комментария, который в целом хороший. Жалоба с вежливым
+    # «стараюсь» внутри метку «хорошее» не получает: в ручной разметке так не бывает.
+    if sentiment <= 0:
+        topics.discard("positive")
     concerns.sort(key=lambda c: c.start)
     return TextInsight(sentiment=sentiment, topics=sorted(topics), concerns=concerns, summary=None)

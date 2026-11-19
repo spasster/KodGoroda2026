@@ -1,0 +1,39 @@
+/* Каркас страницы обзора: нижний ярус, ошибки, пустая база, загрузка. */
+
+.lower {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  gap: 56px;
+  padding: 56px 0 32px;
+}
+
+.banner { margin-top: 20px; }
+.errorOnly { padding-top: 32px; max-width: 720px; }
+
+.empty { padding-top: 48px; }
+.emptyError { margin-top: 20px; max-width: 720px; }
+.upload { cursor: pointer; }
+.upload:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Загрузка: серые блоки по форме экрана. */
+.skeleton { padding-top: 28px; }
+.skelSummary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px 56px; align-items: end; padding-bottom: 24px; }
+.skelChips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.skelStats { display: grid; gap: 12px; justify-items: end; }
+.skelTable {
+  display: grid;
+  grid-template-columns: 252px repeat(6, minmax(0, 1fr)) 214px;
+  gap: 9px 6px;
+  margin-top: 12px;
+}
+
+@media (min-width: 1100px) and (max-height: 800px) {
+  .skeleton { padding-top: 18px; }
+  .skelSummary { padding-bottom: 16px; }
+}
+@media (max-width: 1099px) {
+  .lower { grid-template-columns: 1fr; gap: 40px; }
+  .skelSummary { grid-template-columns: 1fr; }
+  .skelStats { justify-items: start; }
+  .skelTable { grid-template-columns: 120px repeat(3, minmax(0, 1fr)); }
+}

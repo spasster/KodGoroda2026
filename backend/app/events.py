@@ -3,7 +3,8 @@
 import asyncio
 import json
 import logging
-import weakref
+import signal
+import threading
 from collections.abc import AsyncIterator
 
 PING_SECONDS = 15.0
@@ -62,6 +63,14 @@ class EventBus:
         """Закрывает все потоки: иначе uvicorn ждёт открытые SSE при остановке."""
         self._send(None)
 
+    def close_all_from_signal(self) -> None:
+        """То же из обработчика сигнала. Он прерывает цикл событий где угодно,
+        поэтому очереди трогаем только через call_soon_threadsafe: он ещё и будит цикл."""
+        loop = self._loop
+        if loop is None or loop.is_closed():
+            return
+        loop.call_soon_threadsafe(self._fanout, None)
+
     async def stream(self, q: asyncio.Queue, ping: float = PING_SECONDS) -> AsyncIterator[str]:
         try:
             yield "retry: 3000\n\n"
@@ -78,30 +87,28 @@ class EventBus:
             self.unsubscribe(q)
 
 
-_buses: "weakref.WeakSet[EventBus]" = weakref.WeakSet()
-_hook_installed = False
+SHUTDOWN_SIGNALS = (signal.SIGINT, signal.SIGTERM)
 
 
 def install_shutdown_hook(bus: EventBus) -> None:
-    """Ctrl+C и --reload не ждут, пока закроются вкладки с открытым SSE.
+    """Ctrl+C, docker stop и --reload не ждут, пока закроются вкладки с открытым SSE.
 
-    uvicorn ждёт завершения всех ответов, а поток SSE бесконечный. Поэтому по
-    сигналу остановки закрываем потоки сами. Так же делает sse-starlette.
+    uvicorn по сигналу остановки ждёт завершения всех ответов, а поток SSE
+    бесконечный. Свои обработчики SIGINT и SIGTERM uvicorn ставит до старта
+    приложения и запоминает в них метод объекта Server, поэтому подмена
+    Server.handle_exit на классе уже не срабатывает. Здесь мы оборачиваем
+    обработчик, который стоит сейчас: сначала закрываем потоки, потом отдаём
+    сигнал uvicorn. Вызывать из lifespan, когда uvicorn уже поставил свои.
     """
-    global _hook_installed
-    _buses.add(bus)
-    if _hook_installed:
-        return
-    try:
-        from uvicorn.server import Server
-    except ImportError:
-        return
-    original = Server.handle_exit
+    if threading.current_thread() is not threading.main_thread():
+        return  # signal.signal работает только в главном потоке; TestClient запускает приложение в другом
+    for sig in SHUTDOWN_SIGNALS:
+        previous = signal.getsignal(sig)
+        if not callable(previous):
+            continue  # SIG_DFL или SIG_IGN: процесс и так завершится или сигнал не нужен
 
-    def handle_exit(self, sig, frame):  # type: ignore[no-untyped-def]
-        for b in list(_buses):
-            b.close_all()
-        return original(self, sig, frame)
+        def handler(signum, frame, previous=previous):  # type: ignore[no-untyped-def]
+            bus.close_all_from_signal()
+            previous(signum, frame)
 
-    Server.handle_exit = handle_exit  # type: ignore[method-assign]
-    _hook_installed = True
+        signal.signal(sig, handler)

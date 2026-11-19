@@ -23,6 +23,8 @@ services:
     build: ./frontend
     ports:
       - "8080:80"
+      # Только форма, для make tunnel (frontend/nginx.conf, второй server).
+      - "127.0.0.1:8081:81"
     depends_on:
       api:
         condition: service_healthy

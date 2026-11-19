@@ -1,0 +1,26 @@
+/* ---------- Пустое состояние ---------- */
+.empty { padding: 28px 0 8px; }
+.empty h3 { font-size: var(--fs-xl); line-height: var(--lh-snug); letter-spacing: -.015em; }
+.empty p { margin-top: 6px; max-width: 56ch; color: var(--text-2); }
+.empty h3 + p { margin-top: 6px; }
+.empty p:first-child { margin-top: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+/* ---------- Ошибка ---------- */
+/* Одна ширина на всех экранах: на широкой карточке строка с кнопкой не теряется в рамке. */
+.banner { display: flex; align-items: flex-start; gap: 14px; max-width: 720px; padding: 16px 18px; border: 1px solid var(--line-strong); border-radius: var(--r-4); }
+.banner > svg { width: 20px; height: 20px; margin-top: 2px; color: var(--text-1); }
+.banner-title { display: block; font-weight: var(--fw-bold); }
+.banner-text { margin-top: 2px; font-size: 15px; color: var(--text-2); }
+.banner-btn { margin-top: 12px; }
+
+/* ---------- Загрузка ---------- */
+.loading { display: grid; gap: 10px; }
+.skel { background: var(--sunken); border-radius: var(--r-3); }
+.loading-note { font-size: var(--fs-xs); color: var(--text-3); }
+.grid-table { display: grid; grid-template-columns: 236px repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 18px; }
+.grid-pair { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: 56px; margin-top: 24px; }
+@media (max-width: 1099px) {
+  .grid-table { grid-template-columns: 120px repeat(3, minmax(0, 1fr)); }
+  .grid-pair { grid-template-columns: 1fr; gap: 16px; }
+}

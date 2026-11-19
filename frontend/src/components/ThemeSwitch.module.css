@@ -1,0 +1,17 @@
+.theme { display: inline-flex; flex: none; padding: 3px; border: 1px solid var(--line-strong); border-radius: var(--r-pill); }
+.theme button {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px; border: 0; border-radius: var(--r-pill);
+  background: transparent; color: var(--text-2);
+  font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap;
+  transition: background var(--dur-1) linear, color var(--dur-1) linear;
+}
+.theme button:hover { color: var(--text-1); }
+.theme button[aria-pressed="true"] { background: var(--sunken); color: var(--text-1); }
+.theme svg { width: 15px; height: 15px; }
+
+/* На планшете и телефоне только значки, подпись остаётся в aria-label. */
+@media (max-width: 1099px) {
+  .theme button { padding: 0 9px; }
+  .theme button span { display: none; }
+}

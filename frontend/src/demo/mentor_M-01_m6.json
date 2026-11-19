@@ -1,0 +1,13 @@
+{
+  "role": "mentor",
+  "person_id": "M-01",
+  "month": 6,
+  "answers": {
+    "overall": 5,
+    "speed": 5,
+    "independence": 4,
+    "engagement": 5,
+    "comment": "Работает ровно, замечаний нет. Витрину по GPON поддерживает сам."
+  },
+  "source": "form"
+}

@@ -18,7 +18,8 @@ def health(ctx: Context = Depends(get_ctx)) -> Health:
 
 @router.get("/survey")
 def survey(ctx: Context = Depends(get_ctx)) -> dict:
-    return ctx.files.survey_raw
+    # Пороги из signals.json тоже здесь: фронт по ним пишет окно активных сигналов и порог разрыва.
+    return {**ctx.files.survey_raw, "thresholds": ctx.thresholds}
 
 
 @router.get("/people", response_model=People)

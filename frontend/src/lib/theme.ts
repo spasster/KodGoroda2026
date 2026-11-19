@@ -1,15 +1,17 @@
 // Тема: светлая, тёмная или как в системе. Выбор лежит в localStorage под ключом
 // theme. Для явного выбора на <html> ставится data-theme, для системной атрибута
-// нет и работает prefers-color-scheme (так устроен docs/design/tokens.css).
+// нет и работает prefers-color-scheme (так устроен src/styles/tokens.css).
 // Тот же выбор до загрузки React применяет скрипт в index.html.
 
 import { useCallback, useSyncExternalStore } from 'react'
+import { flushSync } from 'react-dom'
 
 export type ThemePref = 'light' | 'dark' | 'system'
 export type Theme = 'light' | 'dark'
 
 const STORAGE_KEY = 'theme'
 const DARK_QUERY = '(prefers-color-scheme: dark)'
+const REDUCE_QUERY = '(prefers-reduced-motion: reduce)'
 
 function readStored(): ThemePref {
   try {
@@ -27,6 +29,7 @@ export function getThemePref(): ThemePref {
   return current
 }
 
+// Мгновенно, без перехода.
 export function setThemePref(pref: ThemePref) {
   current = pref
   const root = document.documentElement
@@ -39,6 +42,18 @@ export function setThemePref(pref: ThemePref) {
     // Приватный режим: тема работает до перезагрузки.
   }
   listeners.forEach((fn) => fn())
+}
+
+// Смена темы перекрёстным затуханием View Transitions, если браузер умеет и
+// человек не просил убрать движение. Иначе мгновенно.
+export function changeThemePref(pref: ThemePref) {
+  const reduce = window.matchMedia(REDUCE_QUERY).matches
+  if (reduce || typeof document.startViewTransition !== 'function') {
+    setThemePref(pref)
+    return
+  }
+  // flushSync, чтобы в снимок «после» попала и разметка React (aria-pressed).
+  document.startViewTransition(() => flushSync(() => setThemePref(pref)))
 }
 
 function systemDark(): boolean {
@@ -56,10 +71,11 @@ function subscribe(fn: () => void) {
 }
 
 // pref: что выбрал человек. resolved: что на экране сейчас, например для цветов графика.
+// setPref и toggle меняют тему с переходом, см. changeThemePref.
 export function useTheme() {
   const pref = useSyncExternalStore(subscribe, getThemePref)
   const dark = useSyncExternalStore(subscribe, systemDark)
   const resolved: Theme = pref === 'system' ? (dark ? 'dark' : 'light') : pref
-  const toggle = useCallback(() => setThemePref(resolved === 'dark' ? 'light' : 'dark'), [resolved])
-  return { pref, resolved, setPref: setThemePref, toggle }
+  const toggle = useCallback(() => changeThemePref(resolved === 'dark' ? 'light' : 'dark'), [resolved])
+  return { pref, resolved, setPref: changeThemePref, toggle }
 }

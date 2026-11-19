@@ -92,9 +92,17 @@ class Dataset:
         return self.norm(self.index(pair_id, role, month))
 
     def gap(self, pair_id: str, month: int) -> float | None:
+        """Точный разрыв: по нему считаются пороги сигналов."""
         i = self.index(pair_id, "intern", month)
         m = self.index(pair_id, "mentor", month)
         return None if i is None or m is None else m - i
+
+    def shown_gap(self, pair_id: str, month: int) -> float | None:
+        """Разрыв для показа: разница округлённых оценок. Оценки 4,75 и 4,4 видны как 4,8 и 4,4,
+        поэтому и разрыв должен быть 0,4, а не 0,3 из точной разницы 0,35."""
+        i = r1(self.index(pair_id, "intern", month))
+        m = r1(self.index(pair_id, "mentor", month))
+        return None if i is None or m is None else r1(m - i)
 
     def series(self, pair_id: str, role: str) -> list[tuple[int, float]]:
         """Месяцы с индексом роли по порядку, пропуски выброшены."""

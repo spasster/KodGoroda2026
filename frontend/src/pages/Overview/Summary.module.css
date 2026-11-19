@@ -1,0 +1,116 @@
+/* Итоги обзора: слева фраза и плашки, справа два числа. system.md, «Итоги». */
+
+.summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px 56px;
+  align-items: end;
+  padding: 28px 0 24px;
+}
+.main { min-width: 0; }
+
+.headline {
+  font-size: var(--fs-3xl);
+  line-height: var(--lh-tight);
+  letter-spacing: -.025em;
+  margin-bottom: 18px;
+  font-variant-numeric: tabular-nums;
+  text-wrap: balance;
+}
+
+/* Группы переносятся целиком: между группами 32px, между плашками 8px. */
+.chips { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 32px; }
+.group { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+.label, .none {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-s);
+  white-space: nowrap;
+}
+.label { margin-right: 4px; color: var(--text-2); }
+.none { color: var(--text-1); }
+
+.chipBox { position: relative; display: inline-flex; }
+
+/* «начать с неё» под первой плашкой: стоит абсолютно и ширину ряда не меняет. */
+.capped { margin-bottom: 22px; }
+.cap {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+  color: var(--text-1);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.cap::before {
+  content: "";
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 6px solid var(--text-1);
+}
+
+/* Числа справа: колонка чисел по правому краю, подписи рядом. */
+.stats {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-auto-flow: dense;
+  gap: 10px 14px;
+  align-items: baseline;
+  margin: 0;
+}
+.stat { display: contents; }
+.stat dt {
+  grid-column: 2;
+  font-size: var(--fs-s);
+  line-height: var(--lh-snug);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.stat dt small { display: block; font-size: var(--fs-xs); color: var(--text-3); }
+.value {
+  grid-column: 1;
+  justify-self: end;
+  margin: 0;
+  display: inline-block;
+  overflow: hidden;
+  font-size: 28px;
+  font-weight: var(--fw-bold);
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: box-shadow var(--dur-2) linear;
+}
+.roll { display: inline-block; }
+/* Число изменилось после анкеты: 2,4 с под ним черта 3px бренда. */
+.changed { box-shadow: inset 0 -3px 0 var(--brand); }
+
+/* Проектор 1280×720: всё до таблицы включительно на первом экране. */
+@media (min-width: 1100px) and (max-height: 800px) {
+  .summary { padding: 18px 0 16px; gap: 12px 40px; }
+  .headline { font-size: var(--fs-2xl); margin-bottom: 12px; }
+  .label, .none { height: 40px; }
+  .value { font-size: 26px; }
+}
+
+@media (max-width: 1099px) {
+  .summary { grid-template-columns: 1fr; }
+  .stats { justify-content: start; }
+}
+
+@media (max-width: 767px) {
+  .summary { padding: 20px 0 20px; }
+  .headline { font-size: 28px; margin-bottom: 14px; }
+  .chips { gap: 10px 20px; }
+  /* Каждое число рядом со своей подписью: общая колонка здесь только разносит их. */
+  .stats { grid-template-columns: 1fr; }
+  .stat { display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: baseline; gap: 12px; }
+  .stat dt { white-space: normal; }
+}

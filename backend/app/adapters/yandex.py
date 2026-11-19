@@ -46,7 +46,7 @@ def flatten_yandex(survey: Survey, import_map: dict, payload: Any) -> dict:
         hits = {r: sum(1 for q in survey.questions(r) if q.id in flat or normalize_header(q.text) in keys) for r in ROLES}
         role = max(ROLES, key=lambda r: hits[r]) if any(hits.values()) else None
     if role is None:
-        raise IngestError("Не понять, чья это анкета. Добавьте в тело поле role: intern или mentor")
+        raise IngestError("Непонятно, чья это анкета. Добавьте в тело поле role: intern или mentor")
 
     other = "mentor" if role == "intern" else "intern"
     labels = {normalize_header(survey.person_label(role)): "person_id",

@@ -1,0 +1,93 @@
+/* Экран «С кем поговорить». Размеры из system.md и эталона reference.html (.filters, .s-group). */
+
+.page { padding-bottom: var(--s-9); }
+
+/* ---------- Полоса фильтров: липнет под шапкой, линии сверху и снизу ---------- */
+.filters {
+  position: sticky; top: var(--header-h); z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.seg { max-width: 100%; }
+.check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 15px; color: var(--text-1); cursor: pointer; white-space: nowrap; }
+.check input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+
+.banner { margin-top: 24px; }
+.empty { padding-top: 32px; }
+.collapse { overflow: hidden; }
+
+/* ---------- Группа пары ---------- */
+.group { padding: 32px 0 8px; }
+.head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding-bottom: 4px; }
+.head .people { font-size: var(--fs-s); }
+.open { margin-left: auto; font-size: var(--fs-s); white-space: nowrap; }
+
+/* Сигнал, пришедший с новой анкетой: черта бренда сверху и метка «новое» на кромке
+   над заголовком. Держится, пока HR не откроет пару, как метка в таблице обзора.
+   Слева на кромке она задевала плашку пары, поэтому стоит над колонкой текста:
+   200px боковой колонки сигнала и 24px промежутка (170px до 1360). */
+.item { position: relative; }
+.fresh > article { border-top: 2px solid var(--brand); }
+.newTag {
+  position: absolute; z-index: 1; top: -9px; left: 224px;
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
+  border-radius: var(--r-pill); background: var(--brand); color: var(--brand-fg);
+  font-size: var(--fs-xs); font-weight: var(--fw-bold); line-height: 1;
+}
+
+/* ---------- Отмена отметки: правый нижний угол ---------- */
+.undoDock {
+  position: fixed; z-index: 30; right: var(--gutter); bottom: 16px;
+  display: flex; justify-content: flex-end;
+  width: min(640px, calc(100vw - 2 * var(--gutter)));
+  pointer-events: none;
+}
+.undo {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 12px;
+  max-width: 100%; padding: 10px 8px 10px 16px;
+  border-radius: var(--r-6); background: var(--surface); box-shadow: var(--shadow-pop);
+}
+.undoIcon { width: 18px; height: 18px; flex: none; }
+.undoText { min-width: 0; font-size: var(--fs-s); line-height: var(--lh-snug); }
+.undoText b { font-weight: var(--fw-bold); }
+.undoClose {
+  display: grid; place-items: center; flex: none; width: 32px; height: 32px;
+  border: 0; border-radius: var(--r-3); background: transparent; color: var(--text-3);
+  transition: background var(--dur-1) linear, color var(--dur-1) linear;
+}
+.undoClose:hover { background: var(--hover); color: var(--text-1); }
+.undoClose svg { width: 16px; height: 16px; }
+
+/* ---------- Загрузка ---------- */
+.skelFilters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.skelHead { display: flex; align-items: center; gap: 18px; padding-top: 22px; }
+.skelSignal { display: grid; grid-template-columns: 200px minmax(0, 780px); gap: 24px; padding: 28px 0 8px; border-top: 1px solid var(--line); margin-top: 4px; }
+.skelSide { display: grid; gap: 10px; align-content: start; }
+.skelBody { display: grid; gap: 12px; }
+.skelButtons { display: flex; gap: 12px; }
+
+/* ---------- Ноутбук и проектор: полоса фильтров в одну строку ---------- */
+/* На 1280 сегменты с обычными полями не помещаются в 1216px, флажок уезжал на
+   вторую строку и липкая полоса съедала 125px из 720. Ужимаем поля кнопок. */
+@media (max-width: 1359px) {
+  .filters { gap: 12px; }
+  .newTag { left: 194px; }
+  .seg button { padding: 0 9px; gap: 6px; }
+  .skelSignal { grid-template-columns: 170px minmax(0, 780px); }
+}
+
+/* ---------- Телефон: фильтры не липнут, сегменты листаются вбок ---------- */
+@media (max-width: 767px) {
+  .filters { position: static; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .seg { overflow-x: auto; scrollbar-width: none; }
+  .seg::-webkit-scrollbar { display: none; }
+  .group { padding-top: 24px; }
+  .open { margin-left: 0; }
+  .newTag { left: auto; right: 0; }
+  .skelSignal { grid-template-columns: 1fr; }
+  .skelFilters > * { max-width: 100%; }
+  .undoDock { left: var(--gutter); right: var(--gutter); width: auto; }
+}

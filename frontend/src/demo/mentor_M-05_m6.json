@@ -1,0 +1,13 @@
+{
+  "role": "mentor",
+  "person_id": "M-05",
+  "month": 6,
+  "answers": {
+    "overall": 2,
+    "speed": 1,
+    "independence": 2,
+    "engagement": 1,
+    "comment": "Последнюю задачу снова переделывал сам. В штат в таком виде не рекомендую."
+  },
+  "source": "form"
+}

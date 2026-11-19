@@ -39,6 +39,7 @@ def test_health_and_empty_overview(client):
 def test_survey_endpoint(client):
     s = client.get("/api/survey").json()
     assert s["roles"]["intern"]["questions"][0]["id"] == "overall"
+    assert s["thresholds"]["active_months"] == 2 and s["thresholds"]["gap"]["high_gap"] == 0.4
 
 
 def test_overview_and_pair_shapes(client, post):
@@ -100,8 +101,8 @@ def test_ingest_validation_errors_in_russian(client, post):
     post("intern", "S-01", 1, 4.0)
     cases = [
         ({"role": "boss", "person_id": "S-01", "month": 1, "answers": {}}, "Поле role должно быть intern или mentor"),
-        ({"role": "intern", "person_id": "S-01", "month": 7, "answers": {"overall": 4}}, "Месяц 7 вне программы"),
-        ({"role": "intern", "person_id": "S-01", "month": 1, "answers": {"overall": 6}}, "вне шкалы 1–5"),
+        ({"role": "intern", "person_id": "S-01", "month": 7, "answers": {"overall": 4}}, "Месяца 7 в программе нет: она длится 6 месяцев"),
+        ({"role": "intern", "person_id": "S-01", "month": 1, "answers": {"overall": 6}}, "вне шкалы от 1 до 5: пришло 6"),
         ({"role": "intern", "person_id": "S-01", "month": 1, "answers": {"overall": "хорошо"}}, "должна быть числом"),
         ({"role": "intern", "person_id": "S-05", "month": 1, "answers": {"overall": 4}}, "Стажёр S-05 не найден"),
         ({"role": "intern", "person_id": "", "month": 1, "answers": {"overall": 4}}, "Укажите person_id"),
@@ -232,6 +233,12 @@ def test_import_excel_endpoint(client, tmp_path):
     assert r.status_code == 422 and "interns" in r.json()["detail"]
     r = client.post("/api/import/excel", files={"interns": ("x.pdf", b"%PDF-1.4 garbage")})
     assert r.status_code == 422
+    # Полная замена файлом без единой анкеты базу не стирает.
+    before = client.get("/api/health").json()
+    bad = "Имя,Оценка\nИван,5\n".encode("utf-8")
+    r = client.post("/api/import/excel", files={"interns": ("bad.csv", bad)}, data={"replace": "true"})
+    assert r.status_code == 422 and "база не тронута" in r.json()["detail"]
+    assert client.get("/api/health").json() == before
 
 
 def test_startup_loads_sample_and_reset(settings_factory, tmp_path):

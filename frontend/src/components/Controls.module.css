@@ -1,0 +1,41 @@
+/* ---------- Кнопки ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 16px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-4);
+  background: var(--surface); color: var(--text-1);
+  font-size: var(--fs-s); font-weight: var(--fw-medium); line-height: 1;
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: background var(--dur-1) linear, border-color var(--dur-1) linear;
+}
+.btn:hover { background: var(--hover); border-color: var(--text-3); }
+.btn svg { width: 16px; height: 16px; }
+.btn[aria-busy="true"] { cursor: progress; }
+.btn:disabled { opacity: .55; }
+
+.brand { background: var(--brand); border-color: var(--brand); color: var(--brand-fg); }
+.brand:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+
+.quiet { border-color: transparent; background: transparent; color: var(--brand-text); padding: 0 8px; }
+.quiet:hover { background: var(--brand-wash); border-color: transparent; }
+
+.s { height: 36px; padding: 0 14px; font-size: 15px; }
+.s.quiet { padding: 0 8px; }
+
+/* ---------- Сегменты ---------- */
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--r-4); background: var(--sunken); }
+.seg-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 34px; padding: 0 12px; border: 0; border-radius: var(--r-3);
+  background: transparent; color: var(--text-2);
+  font-size: 15px; font-weight: var(--fw-medium); white-space: nowrap;
+  transition: background var(--dur-1) linear, color var(--dur-1) linear;
+}
+.seg-btn:hover { color: var(--text-1); }
+.seg-btn[aria-pressed="true"] { background: var(--surface); color: var(--text-1); box-shadow: 0 0 0 1px var(--line-strong); }
+.seg-count { font-variant-numeric: tabular-nums; color: var(--text-3); }
+.seg-btn[aria-pressed="true"] .seg-count { color: var(--text-1); }
+
+/* Крупные сегменты формы: «Я стажёр», «Я наставник», 48px на всю ширину. */
+.seg-l { display: flex; }
+.seg-l .seg-btn { flex: 1; height: 48px; font-size: 17px; border-radius: var(--r-4); }

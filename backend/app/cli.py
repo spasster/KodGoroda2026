@@ -4,6 +4,11 @@
     uv run python -m app.cli import a.xlsx b.xlsx   добавить анкеты (--replace: сначала очистить базу)
     uv run python -m app.cli inspect file.xlsx      показать, как распознались колонки, ничего не записывая
     uv run python -m app.cli signals                список сигналов
+
+Команды пишут в базу напрямую, отдельным процессом: открытые дашборды о них не
+узнают и покажут новое только после перезагрузки. Чтобы обновились сразу, сброс
+делайте через make reset (он идёт через API), а Excel грузите с пустого обзора
+или в POST /api/import/excel.
 """
 
 import argparse

@@ -23,10 +23,16 @@ from .importer import (
     read_file,
 )
 from .schemas import IngestResult
+from .signals import plural
 from .survey import ROLES, Survey
 
 log = logging.getLogger(__name__)
 ROLE_NAMES = {"intern": "стажёра", "mentor": "наставника"}
+
+
+def months_word(n: int) -> str:
+    """«6 месяцев», «3 месяца», «1 месяц»."""
+    return f"{n} {plural(n, 'месяц', 'месяца', 'месяцев')}"
 
 
 class IngestError(Exception):
@@ -70,7 +76,6 @@ def resolve_pair(conn: sqlite3.Connection, role: str, person_id: str,
 
 def _clean_answers(survey: Survey, role: str, answers: dict[str, Any]) -> dict[str, tuple[float | None, str | None]]:
     lo, hi = survey.scale_min, survey.scale_max
-    scale = f"{lo:g}–{hi:g}"
     out: dict[str, tuple[float | None, str | None]] = {}
     for q in survey.questions(role):
         if q.id not in answers:
@@ -84,9 +89,9 @@ def _clean_answers(survey: Survey, role: str, answers: dict[str, Any]) -> dict[s
                 continue
             score = parse_number(raw)
             if score is None:
-                raise IngestError(f"Оценка «{q.id}» должна быть числом от {scale}, пришло «{raw}»")
+                raise IngestError(f"Оценка «{q.id}» должна быть числом от {lo:g} до {hi:g}, пришло «{raw}»")
             if not lo <= score <= hi:
-                raise IngestError(f"Оценка «{q.id}» = {score:g} вне шкалы {scale}")
+                raise IngestError(f"Оценка «{q.id}» вне шкалы от {lo:g} до {hi:g}: пришло {score:g}")
             out[q.id] = (score, None)
         else:
             out[q.id] = (None, parse_text(raw))
@@ -106,7 +111,7 @@ def validate(survey: Survey, payload: Any) -> dict:
     if month is None:
         raise IngestError("Укажите month: номер месяца стажировки")
     if not 1 <= month <= survey.months:
-        raise IngestError(f"Месяц {month} вне программы: в ней {survey.months} мес.")
+        raise IngestError(f"Месяца {month} в программе нет: она длится {months_word(survey.months)}")
     answers = payload.get("answers")
     if not isinstance(answers, dict):
         raise IngestError("Поле answers должно быть объектом: id вопроса → ответ")
@@ -150,7 +155,7 @@ def store_records(conn: sqlite3.Connection, survey: Survey, records: list[Record
     changed = []
     for rec in records:
         if rec.month is None or not 1 <= rec.month <= survey.months:
-            report.error(rec.row, f"месяц {rec.month} вне программы: в ней {survey.months} мес.")
+            report.error(rec.row, f"месяца {rec.month} в программе нет: она длится {months_word(survey.months)}")
             continue
         try:
             pair_id, warn = resolve_pair(conn, rec.role, rec.person_id, rec.intern_id, rec.mentor_id)
@@ -182,6 +187,10 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
         role = role or detect_role(table, survey, import_map)
         parsed.append((role, *parse_table(table, role, survey, import_map)))
     parsed.sort(key=lambda x: ROLES.index(x[0]))  # стажёры раньше: их строки создают пары
+    # Полная замена стирает базу. Если в файлах ни одной анкеты, стирать нечем заменять.
+    if replace and not any(records for _, records, _ in parsed):
+        raise ImportFileError("Ни одной строки с анкетой не распознано, база не тронута. "
+                              "Проверьте заголовки колонок и survey/import_map.json")
 
     changed: list[dict] = []
     with ctx.write_lock:
@@ -197,7 +206,7 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
     if replace:
         ctx.warm()
 
-    if notify and changed:
+    if notify and (changed or replace):
         if replace or len(changed) > 3:
             ctx.bus.publish("reset", {})
         else:

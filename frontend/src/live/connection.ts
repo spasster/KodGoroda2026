@@ -5,7 +5,8 @@
 import { EVENTS_URL } from '../api/client'
 import type { ResponseEvent, ReviewEvent } from '../api/types'
 
-export type LiveStatus = 'connected' | 'reconnecting' | 'offline'
+// connecting: первая попытка после загрузки страницы, связи ещё не было.
+export type LiveStatus = 'connecting' | 'connected' | 'reconnecting' | 'offline'
 
 export interface LiveHandlers {
   onStatus: (status: LiveStatus) => void
@@ -71,7 +72,7 @@ export function connectLive(handlers: LiveHandlers, url: string = EVENTS_URL): (
     es.addEventListener('reset', () => handlers.onReset())
   }
 
-  handlers.onStatus('reconnecting')
+  handlers.onStatus('connecting')
   open()
 
   return () => {

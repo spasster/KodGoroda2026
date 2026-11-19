@@ -52,12 +52,18 @@ export interface Health { ok: boolean; pairs: number; responses: number; analyze
 // GET /api/survey: содержимое survey/survey.json.
 export interface Question { id: string; type: 'scale' | 'text'; text: string }
 export interface SurveyRole { title: string; person_label: string; questions: Question[] }
+// Пороги из survey/signals.json, которые нужны фронту. Бэкенд отдаёт их целиком.
+export interface Thresholds {
+  active_months: number
+  gap: { min_gap: number; high_gap: number }
+}
 export interface Survey {
   title: string
   months: number
   scale: { min: number; max: number; min_label: string; max_label: string }
   roles: Record<Role, SurveyRole>
   paired_questions: { intern: string; mentor: string; label: string }[]
+  thresholds: Thresholds
 }
 
 // GET /api/people. next_month: первый месяц без анкеты, null, если заполнены все.
