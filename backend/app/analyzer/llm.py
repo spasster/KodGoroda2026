@@ -8,12 +8,15 @@ TODO(ML): промпт и схема ответа черновые. Их дор�
 """
 
 import json
+import logging
 import re
 
 import httpx
 
 from .models import TOPICS, Concern, TextInsight
 from .quotes import verify_quote
+
+log = logging.getLogger(__name__)
 
 ROLE_NAMES = {"intern": "стажёр о своей стажировке", "mentor": "наставник о работе стажёра"}
 
@@ -95,7 +98,9 @@ class LLMAnalyzer:
         resp = self.client.post(f"{self.base_url}/chat/completions", json=body, headers=headers)
         resp.raise_for_status()
         content = resp.json()["choices"][0]["message"]["content"]
-        return self.parse(content, text, min_quote)
+        insight = self.parse(content, text, min_quote)
+        log.info("Модель %s обработала комментарий", self.model)
+        return insight
 
     @staticmethod
     def parse(content: str, text: str, min_quote: int = 12) -> TextInsight:

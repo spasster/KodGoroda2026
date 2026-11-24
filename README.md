@@ -89,15 +89,31 @@ Excel с историей ──► импорт ──┐
 
 ## Запуск
 
-Нужны uv, Node 24 с pnpm (`corepack enable`) и Docker (на маке подойдёт colima). Для ссылки на телефон ещё cloudflared.
+Для запуска в Docker на Ubuntu нужны [Docker Engine и плагин Compose](https://docs.docker.com/engine/install/ubuntu/), Git, Make и curl. Для `make dev` нужны uv, Node 24 и pnpm (`corepack enable`). Для ссылки на телефон нужен cloudflared.
 
 ```sh
 make up       # всё в Docker: дашборд http://localhost:8080, форма http://localhost:8080/form
 make down     # остановить Docker
+make up-ai    # запустить дашборд с локальной моделью Qwen через Ollama
+make down-ai  # остановить стек с Ollama
 make dev      # без Docker: бэкенд :8000, дашборд http://localhost:5173, Ctrl+C гасит оба
 make tunnel   # публичная ссылка только на форму (:8081), на телефоне открыть её с /form
 make demo     # отправить анкету S-01 за 6-й месяц; для Docker make demo API=http://localhost:8080
 ```
+
+### Локальный анализ комментариев с Qwen
+
+`make up-ai` запускает Ollama, автоматически скачивает `qwen2.5:7b-instruct` и проверяет, что модель отвечает, прежде чем запустить бэкенд. Модель работает на CPU и анализирует комментарии к анкетам. Дашборд открывается на [localhost:8080](http://localhost:8080/). Порт Ollama доступен внутри сети Compose.
+
+Для первого запуска нужны интернет и свободное место под образы и веса модели (около 4,7 ГБ только для Qwen). Команда ждёт первого расчёта аналитики, пока модель разбирает демоданные. База, результаты анализа и веса сохраняются в Docker-томах после `make down-ai`. Чтобы переключиться на словарь по умолчанию, выполните `make down-ai`, затем `make up`.
+
+Чтобы проверить модель, отправьте в тестовую базу анкету с новым комментарием. В логах API появится сообщение «Модель qwen2.5:7b-instruct обработала комментарий». При ошибке запроса бэкенд разбирает комментарий словарём и пишет предупреждение в лог.
+
+```sh
+docker compose -f docker-compose.yml -f compose.ai.yml logs --tail=50 ollama-init api
+```
+
+### Тесты и демо
 
 `cd frontend && pnpm e2e` проходит демо в браузере на http://localhost:8080 после `make up`: обзор, демо-анкета, отметка сигнала, форма с телефона, QR-код. Другой адрес задаёт `BASE_URL`. Сценарий сбрасывает базу к `data/sample`. Браузер для него ставится один раз: `pnpm exec playwright install chromium`.
 

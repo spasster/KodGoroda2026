@@ -194,8 +194,9 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
 
     changed: list[dict] = []
     with ctx.write_lock:
+        # При загрузке демоданных сигналы считаются фоновым прогревом после старта.
         # После полной замены «новыми» были бы все сигналы, поэтому их не считаем.
-        before = None if replace else {s.key for s in ctx.snapshot().signals}
+        before = {s.key for s in ctx.snapshot().signals} if notify and not replace else None
         with ctx.connect() as conn:
             if replace:
                 db.clear(conn)

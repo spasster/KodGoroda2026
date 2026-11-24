@@ -6,7 +6,9 @@ API ?= http://localhost:8000
 # Потоки /api/events бэкенд закрывает сам по Ctrl+C. Таймаут на случай, если что-то ещё держит соединение.
 UVICORN := uv run uvicorn app.main:app --reload --port 8000 --timeout-graceful-shutdown 2
 
-.PHONY: dev api web test data reset up down tunnel demo fonts
+AI_COMPOSE := docker compose -f docker-compose.yml -f compose.ai.yml
+
+.PHONY: dev api web test data reset up down up-ai down-ai tunnel demo fonts
 
 # Бэкенд и фронт вместе. Ctrl+C гасит оба.
 dev: frontend/node_modules fonts
@@ -47,6 +49,15 @@ up: fonts
 
 down:
 	docker compose down
+
+up-ai: fonts
+	$(AI_COMPOSE) up -d --build --wait
+	@echo "Жду первого расчёта аналитики с Qwen"
+	@$(AI_COMPOSE) exec -T api python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/overview', timeout=1800).close()"
+	@echo "Дашборд с Qwen http://localhost:8080, форма http://localhost:8080/form"
+
+down-ai:
+	$(AI_COMPOSE) down
 
 # Наружу уходит порт 8081: на нём nginx отдаёт только форму и три её запроса к API.
 tunnel:

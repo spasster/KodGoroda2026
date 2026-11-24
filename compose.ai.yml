@@ -1,0 +1,43 @@
+services:
+  ollama:
+    image: ollama/ollama:0.40.17
+    environment:
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  ollama-init:
+    image: ollama/ollama:0.40.17
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      LLM_MODEL: qwen2.5:7b-instruct
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        if ! ollama show "$$LLM_MODEL" >/dev/null; then
+          ollama pull "$$LLM_MODEL"
+        fi
+        echo "Проверяю запуск $$LLM_MODEL"
+        ollama run "$$LLM_MODEL" --format json 'Верни JSON-объект с одним полем ok и значением true.'
+
+  api:
+    environment:
+      LLM_PROVIDER: openai
+      LLM_BASE_URL: http://ollama:11434/v1
+      LLM_MODEL: qwen2.5:7b-instruct
+      LLM_API_KEY: ""
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+
+volumes:
+  ollama-data:
