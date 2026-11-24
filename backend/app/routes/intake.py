@@ -4,6 +4,7 @@ from urllib.parse import parse_qsl
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Body,
     Depends,
     File,
@@ -33,7 +34,8 @@ def ingest(payload: Any = Body(...), ctx: Context = Depends(get_ctx)) -> IngestR
 
 
 @router.post("/ingest/yandex", response_model=IngestResult)
-async def ingest_from_yandex(request: Request, ctx: Context = Depends(get_ctx)) -> IngestResult:
+async def ingest_from_yandex(request: Request, background: BackgroundTasks,
+                             ctx: Context = Depends(get_ctx)) -> IngestResult:
     raw = (await request.body()).decode("utf-8", errors="replace").strip()
     try:
         payload = json.loads(raw)
@@ -42,7 +44,8 @@ async def ingest_from_yandex(request: Request, ctx: Context = Depends(get_ctx)) 
         payload = dict(parse_qsl(raw)) if "=" in raw else None
         if not payload:
             raise HTTPException(422, "Тело запроса не JSON. Проверьте шаблон тела в интеграции формы") from None
-    return await run_in_threadpool(ingest_yandex, ctx, payload)
+    defer = background.add_task if ctx.analyzer.llm else None
+    return await run_in_threadpool(ingest_yandex, ctx, payload, defer=defer)
 
 
 @router.post("/sync/gsheet")

@@ -2,6 +2,7 @@
 
 import logging
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -129,21 +130,30 @@ def validate(survey: Survey, payload: Any) -> dict:
     }
 
 
-def ingest_one(ctx: Context, payload: Any) -> IngestResult:
+def ingest_one(ctx: Context, payload: Any, *,
+               defer: Callable[[Callable[[], None]], None] | None = None) -> IngestResult:
     data = validate(ctx.survey, payload)
     with ctx.write_lock:
-        before = {s.key for s in ctx.snapshot().signals}
+        before = {s.key for s in ctx.snapshot().signals} if defer is None else None
         with ctx.connect() as conn:
             pair_id, _ = resolve_pair(conn, data["role"], data["person_id"], data["intern_id"], data["mentor_id"])
             response_id, replaced, _ = db.upsert_response(
                 conn, pair_id=pair_id, role=data["role"], person_id=data["person_id"], month=data["month"],
                 source=data["source"], submitted_at=data["submitted_at"], answers=data["answers"],
             )
-        new_signals = [s for s in ctx.snapshot().signals if s.key not in before]
-    ctx.bus.publish("response", {
+        new_signals = [s for s in ctx.snapshot().signals if s.key not in before] if before is not None else []
+    event = {
         "pair_id": pair_id, "role": data["role"], "person_id": data["person_id"], "month": data["month"],
         "source": data["source"], "new_signal_keys": [s.key for s in new_signals],
-    })
+    }
+    if defer is None:
+        ctx.bus.publish("response", event)
+    else:
+        def refresh() -> None:
+            ctx.snapshot()
+            ctx.bus.publish("response", event)
+
+        defer(refresh)
     return IngestResult(response_id=response_id, pair_id=pair_id, replaced=replaced, new_signals=new_signals)
 
 

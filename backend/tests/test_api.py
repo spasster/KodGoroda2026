@@ -7,6 +7,7 @@ import httpx
 from fastapi.testclient import TestClient
 
 from app.adapters.gsheet import sync_gsheet
+from app.adapters.yandex import ingest_yandex
 from app.main import create_app
 
 from .conftest import INTERN_HEADERS, MENTOR_HEADERS, write_xlsx
@@ -174,6 +175,35 @@ def test_yandex_webhook_mentor_with_ids(client, post):
     assert r.status_code == 200, r.text
     r = client.post("/api/ingest/yandex", json={"person_id": "S-04", "month": 2})
     assert r.status_code == 422 and "role" in r.json()["detail"]
+
+
+def test_yandex_defers_analysis_after_saving(ctx, post, monkeypatch):
+    post.pair("03", 1, 4.0, 4.2)
+    callbacks = []
+    calls = []
+    snapshot = ctx.snapshot
+
+    def refresh():
+        calls.append("snapshot")
+        return snapshot()
+
+    monkeypatch.setattr(ctx, "snapshot", refresh)
+    monkeypatch.setattr(ctx.bus, "publish", lambda kind, event: calls.append((kind, event["pair_id"])))
+
+    result = ingest_yandex(
+        ctx, {"role": "intern", "person_id": "S-03", "month": 2, "overall": 5,
+              "comment": "Третью неделю сижу без задач."}, defer=callbacks.append,
+    )
+
+    assert result.pair_id == "P-03"
+    assert result.new_signals == []
+    with ctx.connect() as conn:
+        saved = conn.execute("SELECT month, source FROM responses WHERE id = ?", (result.response_id,)).fetchone()
+    assert tuple(saved) == (2, "yandex")
+    assert calls == []
+    assert len(callbacks) == 1
+    callbacks[0]()
+    assert calls == ["snapshot", ("response", "P-03")]
 
 
 def test_review_flow_and_filters(client, post):

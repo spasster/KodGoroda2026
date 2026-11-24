@@ -5,6 +5,7 @@
 Значения могут быть строками («4», «4 — скорее да»). Пример тела: docs/integrations.md.
 """
 
+from collections.abc import Callable
 from typing import Any
 
 from ..context import Context
@@ -89,5 +90,6 @@ def flatten_yandex(survey: Survey, import_map: dict, payload: Any) -> dict:
     return result
 
 
-def ingest_yandex(ctx: Context, payload: Any) -> IngestResult:
-    return ingest_one(ctx, flatten_yandex(ctx.survey, ctx.files.import_map, payload))
+def ingest_yandex(ctx: Context, payload: Any, *,
+                  defer: Callable[[Callable[[], None]], None] | None = None) -> IngestResult:
+    return ingest_one(ctx, flatten_yandex(ctx.survey, ctx.files.import_map, payload), defer=defer)
