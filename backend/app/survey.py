@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any
 
 ROLES = ("intern", "mentor")
+# Ответ на «Что за этим стоит?» к оценочному вопросу лежит под ключом «{вопрос}__why».
+FOLLOWUP_SUFFIX = "__why"
 
 
 def normalize_header(value: Any) -> str:
@@ -53,6 +55,9 @@ class Survey:
 
     def text_ids(self, role: str) -> list[str]:
         return [q.id for q in self.questions(role) if q.type == "text"]
+
+    def followup_ids(self, role: str) -> list[str]:
+        return [q + FOLLOWUP_SUFFIX for q in self.scale_ids(role)]
 
     def question(self, role: str, question_id: str) -> Question | None:
         return next((q for q in self.questions(role) if q.id == question_id), None)

@@ -199,8 +199,8 @@ def test_people_next_month(client, post):
     people = client.get("/api/people").json()
     intern, = people["interns"]
     mentor, = people["mentors"]
-    assert intern | {"name": None} == {"id": "S-01", "name": None, "mentor_id": "M-01", "pair_id": "P-01", "next_month": 3}
-    assert mentor | {"name": None} == {"id": "M-01", "name": None, "intern_id": "S-01", "pair_id": "P-01", "next_month": 2}
+    assert {k: v for k, v in intern.items() if k != "token"} | {"name": None} == {"id": "S-01", "name": None, "mentor_id": "M-01", "pair_id": "P-01", "next_month": 3}
+    assert {k: v for k, v in mentor.items() if k != "token"} | {"name": None} == {"id": "M-01", "name": None, "intern_id": "S-01", "pair_id": "P-01", "next_month": 2}
 
 
 def _sample_files(folder):
@@ -375,3 +375,51 @@ def test_pair_ids_do_not_collide_and_are_url_safe(client, post):
     assert ids["A-1"] == "P-1" and ids["B-1"] == "P-B-1"
     assert len(set(ids.values())) == 3 and not any(c in v for v in ids.values() for c in "/: ")
     assert client.get(f"/api/pairs/{ids['X/1:2 3']}").status_code == 200
+
+
+def test_people_tokens_and_ingest_token(client, post):
+    post.pair("01", 1, 4.0, 4.0)
+    people = client.get("/api/people").json()
+    token = people["interns"][0]["token"]
+    assert len(token) == 16 and token != people["mentors"][0]["token"]
+    assert client.get("/api/people").json()["interns"][0]["token"] == token  # стабильный между запросами
+    body = {"role": "intern", "person_id": "S-01", "month": 2, "answers": answers("intern", 4.0)}
+    # Чужой или битый токен: 403 по-русски, анкета не записана.
+    bad = client.post("/api/ingest", json={**body, "token": people["mentors"][0]["token"]})
+    assert bad.status_code == 403 and "недействительна" in bad.json()["detail"]
+    assert client.get("/api/people").json()["interns"][0]["next_month"] == 2
+    assert client.post("/api/ingest", json={**body, "token": token}).status_code == 200
+    assert client.get("/api/people").json()["interns"][0]["next_month"] == 3
+    # Без токена форма открытая.
+    assert client.post("/api/ingest", json={**body, "month": 3}).status_code == 200
+
+
+def test_form_secret_persists_between_starts(settings_factory):
+    from app.tokens import load_secret
+    s = settings_factory()
+    first = load_secret("", s.db_path.parent)
+    assert first and load_secret("", s.db_path.parent) == first
+    assert (s.db_path.parent / "form_secret").stat().st_mode & 0o777 == 0o600
+    assert load_secret("fixed", s.db_path.parent) == "fixed"
+
+
+def test_followup_text_is_stored_and_analyzed(client, post):
+    post.pair("01", 1, 4.0, 4.0)
+    ans = answers("intern", 4.0, "Всё нормально.") | {"load": 2, "load__why": "Каждый день сижу до девяти, не успеваю доделать задачи.",
+                                                      "comment__why": "К текстовому вопросу не берём"}
+    assert client.post("/api/ingest", json={"role": "intern", "person_id": "S-01", "month": 2, "answers": ans}).status_code == 200
+    comments = client.get("/api/pairs/P-01").json()["comments"]
+    why = [c for c in comments if c["question_id"] == "load__why"]
+    assert len(why) == 1 and why[0]["month"] == 2
+    assert why[0]["question_text"] == "Почему 2 за «Насколько вам комфортна текущая нагрузка?»"
+    assert why[0]["text"].startswith("Каждый день")
+    # К текстовому вопросу «why» не бывает.
+    assert not [c for c in comments if c["question_id"] == "comment__why"]
+
+
+def test_people_hides_tokens_for_public_form(client):
+    # Туннель анкеты (nginx :81) ставит X-Public-Form: 1: токены личных ссылок наружу не уходят.
+    hr = client.get("/api/people").json()
+    public = client.get("/api/people", headers={"X-Public-Form": "1"}).json()
+    assert all(p["token"] for p in hr["interns"])
+    assert all(p.get("token") is None for p in public["interns"] + public["mentors"])

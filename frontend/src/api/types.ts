@@ -78,8 +78,8 @@ export interface Survey {
 
 // GET /api/people. next_month: первый месяц без анкеты, null, если заполнены все.
 export interface People {
-  interns: { id: string; name?: string | null; mentor_id: string; pair_id: string; next_month: number | null }[]
-  mentors: { id: string; name?: string | null; intern_id: string; pair_id: string; next_month: number | null }[]
+  interns: { id: string; name?: string | null; mentor_id: string; pair_id: string; next_month: number | null; token?: string }[]
+  mentors: { id: string; name?: string | null; intern_id: string; pair_id: string; next_month: number | null; token?: string }[]
 }
 
 // GET /api/signals
@@ -98,6 +98,8 @@ export interface IngestRequest {
   intern_id?: string
   mentor_id?: string
   submitted_at?: string
+  // Подпись личной ссылки (people[].token). Нет токена: открытая форма.
+  token?: string
 }
 export interface IngestResult { response_id: number; pair_id: string; replaced: boolean; new_signals: Signal[] }
 

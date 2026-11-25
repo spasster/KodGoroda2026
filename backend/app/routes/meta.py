@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 
 from .. import db
 from ..context import Context
@@ -24,8 +24,10 @@ def survey(ctx: Context = Depends(get_ctx)) -> dict:
 
 
 @router.get("/people", response_model=People)
-def list_people(ctx: Context = Depends(get_ctx)) -> People:
-    return people(ctx.snapshot())
+def list_people(ctx: Context = Depends(get_ctx), x_public_form: str | None = Header(default=None)) -> People:
+    # Через туннель анкеты (nginx, порт 81) приходит X-Public-Form: 1. Там токены
+    # личных ссылок не отдаём, иначе любой, кто открыл форму, заполнит анкету за другого.
+    return people(ctx.snapshot(), None if x_public_form == "1" else ctx.form_secret)
 
 
 @router.get("/method")

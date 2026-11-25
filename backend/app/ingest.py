@@ -26,7 +26,8 @@ from .importer import (
 )
 from .schemas import IngestResult, Signal
 from .signals import plural
-from .survey import ROLES, Survey
+from .survey import FOLLOWUP_SUFFIX, ROLES, Survey
+from .tokens import valid_token
 
 log = logging.getLogger(__name__)
 ROLE_NAMES = {"intern": "стажёра", "mentor": "наставника"}
@@ -48,6 +49,10 @@ def fresh(before: dict[str, set[int]], signals: list[Signal]) -> list[Signal]:
 
 class IngestError(Exception):
     """Анкету не принять. Текст ошибки показывается человеку."""
+
+
+class TokenError(Exception):
+    """Подпись личной ссылки не подошла. API отвечает 403."""
 
 
 # Пара по ID.
@@ -106,6 +111,13 @@ def _clean_answers(survey: Survey, role: str, answers: dict[str, Any]) -> dict[s
             out[q.id] = (score, None)
         else:
             out[q.id] = (None, parse_text(raw))
+    # «Что за этим стоит?» к низкой оценке: текст под ключом {вопрос}__why, только к оценочным вопросам.
+    for q in survey.questions(role):
+        key = q.id + FOLLOWUP_SUFFIX
+        if q.type != "scale" or not isinstance(answers.get(key), str):
+            continue
+        if text := parse_text(answers[key]):
+            out[key] = (None, text)
     return out
 
 
@@ -136,12 +148,16 @@ def validate(survey: Survey, payload: Any) -> dict:
     return {
         "role": role, "person_id": person_id, "month": month, "answers": clean, "source": source,
         "intern_id": parse_id(payload.get("intern_id")), "mentor_id": parse_id(payload.get("mentor_id")),
+        "token": str(payload["token"]) if payload.get("token") is not None else None,
         "submitted_at": submitted_iso or db.now_iso(),
     }
 
 
 def ingest_one(ctx: Context, payload: Any) -> IngestResult:
     data = validate(ctx.survey, payload)
+    # Без токена анкета открытая (QR на демо). С токеном он должен подходить к этому человеку.
+    if data["token"] is not None and not valid_token(ctx.form_secret, data["role"], data["person_id"], data["token"]):
+        raise TokenError("Ссылка на анкету недействительна. Откройте её заново из сообщения или попросите HR прислать новую")
     with ctx.write_lock:
         before = months_by_key(ctx.snapshot().signals)
         with ctx.connect() as conn:

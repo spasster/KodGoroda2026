@@ -189,6 +189,8 @@ class PersonIntern(BaseModel):
     mentor_id: str
     pair_id: str
     next_month: int | None
+    # Токен личной ссылки на анкету. None, если /api/people пришёл через туннель формы.
+    token: str | None = None
 
 
 class PersonMentor(BaseModel):
@@ -197,6 +199,8 @@ class PersonMentor(BaseModel):
     intern_id: str
     pair_id: str
     next_month: int | None
+    # Токен личной ссылки на анкету. None, если /api/people пришёл через туннель формы.
+    token: str | None = None
 
 
 class People(BaseModel):

@@ -8,7 +8,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
-from .survey import ROLES, Survey
+from .survey import FOLLOWUP_SUFFIX, ROLES, Survey
 
 
 @dataclass
@@ -118,7 +118,20 @@ class Dataset:
         resp = self.response(pair_id, role, month)
         if resp is None:
             return []
-        return [(qid, t) for qid in self.survey.text_ids(role) if (t := (resp.texts.get(qid) or "").strip())]
+        ids = self.survey.text_ids(role) + self.survey.followup_ids(role)
+        return [(qid, t) for qid in ids if (t := (resp.texts.get(qid) or "").strip())]
+
+    def question_text(self, role: str, month_resp: "Response", qid: str) -> str:
+        """Текст вопроса. Для «{вопрос}__why» это «Почему 2 за «Вопрос»»."""
+        q = self.survey.question(role, qid)
+        if q is not None:
+            return q.text
+        base = self.survey.question(role, qid.removesuffix(FOLLOWUP_SUFFIX)) if qid.endswith(FOLLOWUP_SUFFIX) else None
+        if base is None:
+            return ""
+        score = month_resp.scores.get(base.id)
+        what = f"{score:g} " if score is not None else ""
+        return f"Почему {what}за «{base.text}»"
 
     def has_any(self, role: str | None = None) -> bool:
         return any(role is None or r.role == role for r in self.responses.values())

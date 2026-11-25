@@ -112,8 +112,7 @@ def analyze_texts(ds: Dataset, analyzer: TextAnalyzer, min_quote: int) -> Insigh
     for (pair_id, role, month) in ds.responses:
         items = []
         for qid, text in ds.texts(pair_id, role, month):
-            q = ds.survey.question(role, qid)
-            insight = analyzer.analyze(text, role, qid, q.text if q else "", min_quote)
+            insight = analyzer.analyze(text, role, qid, ds.question_text(role, ds.responses[(pair_id, role, month)], qid), min_quote)
             items.append(TextItem(qid, text, insight))
         if items:
             out[(pair_id, role, month)] = items

@@ -12,6 +12,7 @@ from .indices import Dataset
 from .schemas import Signal
 from .signals import Insights, Monthly, analyze_texts, compute_signals, thresholds
 from .survey import Survey, SurveyFiles
+from .tokens import load_secret
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class Context:
         self.files = SurveyFiles(settings.survey_dir)
         self.analyzer = analyzer or build_analyzer(settings, settings.db_path)
         self.bus = EventBus()
+        self.form_secret = load_secret(settings.form_secret, settings.db_path.parent)
         # Запись и пересчёт «до и после» под одним замком, чтобы new_signals не путались.
         self.write_lock = threading.RLock()
 

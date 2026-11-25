@@ -20,6 +20,7 @@ from .schemas import (
     Totals,
 )
 from .signals import cell_status_of, sort_signals, status_of
+from .tokens import make_token
 
 
 def _last_value(snap: Snapshot, pair_id: str, role: str) -> float | None:
@@ -117,7 +118,7 @@ def pair_detail(snap: Snapshot, pair_id: str) -> PairDetail | None:
     for m in ds.months:
         for role in ("intern", "mentor"):
             for item in snap.insights.get((pair_id, role, m), []):
-                q = ds.survey.question(role, item.question_id)
+                resp = ds.response(pair_id, role, m)
                 highlights = []
                 for s in signals:
                     for quote in s.quotes:
@@ -125,7 +126,7 @@ def pair_detail(snap: Snapshot, pair_id: str) -> PairDetail | None:
                             highlights.append(Highlight(start=quote.start, end=quote.end, signal_key=s.key))
                 highlights.sort(key=lambda h: (h.start, h.end))
                 comments.append(CommentItem(
-                    role=role, month=m, question_id=item.question_id, question_text=q.text if q else item.question_id,
+                    role=role, month=m, question_id=item.question_id, question_text=ds.question_text(role, resp, item.question_id) or item.question_id,
                     text=item.text, sentiment=item.insight.sentiment, topics=item.insight.topics, highlights=highlights,
                 ))
     return PairDetail(**summary.model_dump(), series=series, comments=comments, signals=sort_signals(signals))
@@ -140,7 +141,8 @@ def filter_signals(snap: Snapshot, status: str = "all", active: bool | None = No
     return out
 
 
-def people(snap: Snapshot) -> People:
+def people(snap: Snapshot, secret: str | None) -> People:
+    """secret=None: без токенов личных ссылок (форма через туннель)."""
     ds = snap.ds
     months = ds.survey.months
 
@@ -150,8 +152,8 @@ def people(snap: Snapshot) -> People:
     pairs = sorted(ds.pairs.values(), key=lambda p: p.intern_id)
     return People(
         interns=[PersonIntern(id=p.intern_id, name=snap.names.get(p.intern_id), mentor_id=p.mentor_id, pair_id=p.pair_id,
-                              next_month=next_month(p.pair_id, "intern")) for p in pairs],
+                              next_month=next_month(p.pair_id, "intern"), token=make_token(secret, "intern", p.intern_id) if secret else None) for p in pairs],
         mentors=[PersonMentor(id=p.mentor_id, name=snap.names.get(p.mentor_id), intern_id=p.intern_id, pair_id=p.pair_id,
-                              next_month=next_month(p.pair_id, "mentor"))
+                              next_month=next_month(p.pair_id, "mentor"), token=make_token(secret, "mentor", p.mentor_id) if secret else None)
                  for p in sorted(pairs, key=lambda p: (p.mentor_id, p.intern_id))],
     )

@@ -18,7 +18,7 @@ from ..adapters.gsheet import sync_gsheet
 from ..adapters.yandex import ingest_yandex
 from ..context import Context
 from ..importer import read_tables
-from ..ingest import import_tables, ingest_one, load_sample
+from ..ingest import TokenError, import_tables, ingest_one, load_sample
 from ..schemas import IngestResult
 from .deps import get_ctx
 
@@ -29,7 +29,10 @@ MAX_UPLOAD = 5 * 1024 * 1024
 
 @router.post("/ingest", response_model=IngestResult)
 def ingest(payload: Any = Body(...), ctx: Context = Depends(get_ctx)) -> IngestResult:
-    return ingest_one(ctx, payload)
+    try:
+        return ingest_one(ctx, payload)
+    except TokenError as exc:
+        raise HTTPException(403, str(exc)) from None
 
 
 @router.post("/ingest/yandex", response_model=IngestResult)

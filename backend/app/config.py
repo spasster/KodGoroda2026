@@ -41,6 +41,8 @@ class Settings:
     gsheet_csv_url_intern: str
     gsheet_csv_url_mentor: str
     gsheet_poll_seconds: int
+    # Подпись личных ссылок на анкету. Пусто: ключ создаётся в папке с базой.
+    form_secret: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -56,4 +58,5 @@ class Settings:
             gsheet_csv_url_intern=os.environ.get("GSHEET_CSV_URL_INTERN") or "",
             gsheet_csv_url_mentor=os.environ.get("GSHEET_CSV_URL_MENTOR") or "",
             gsheet_poll_seconds=int(os.environ.get("GSHEET_POLL_SECONDS") or 0),
+            form_secret=(os.environ.get("FORM_SECRET") or "").strip(),
         )

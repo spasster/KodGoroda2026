@@ -231,7 +231,7 @@ interface PairDetail extends PairSummary {
 |---|---|
 | `GET /api/health` | `{ok, pairs, responses, analyzer}` |
 | `GET /api/survey` | содержимое `survey.json` и `thresholds`: пороги из `signals.json` вместе со значениями по умолчанию. Фронт берёт из них окно активных сигналов и порог высокой важности разрыва |
-| `GET /api/people` | `{interns: [{id, mentor_id, pair_id, next_month}], mentors: [...]}` для выбора в форме; `next_month` — первый месяц без анкеты |
+| `GET /api/people` | `{interns: [{id, name, mentor_id, pair_id, next_month, token}], mentors: [...]}` для выбора в форме и «Сбора анкет» у HR; `next_month` — первый месяц без анкеты; `token` — подпись личной ссылки, см. «Личная ссылка» |
 | `GET /api/overview` | `Overview` |
 | `GET /api/pairs/{pair_id}` | `PairDetail`, 404 если нет |
 | `GET /api/signals?status=open\|confirmed\|rejected\|all&active=true` | `Signal[]` (ситуации), сначала `high`, потом по свежести `month` |
@@ -255,7 +255,11 @@ interface PairDetail extends PairSummary {
 - Пара находится по `person_id`. Для нового стажёра можно передать `intern_id` и `mentor_id`, тогда пара создаётся.
 - Оценки проверяются по шкале, лишние ключи игнорируются, неизвестный вопрос в ответе не ошибка.
 - Ответ: `{ response_id, pair_id, replaced: bool, new_signals: Signal[] }`, где `new_signals` — ситуации, которых не было до этой анкеты, и ситуации, у которых после неё появился новый месяц в `months`.
-- Ошибки: 422 с `{detail}` на русском.
+- Необязательное поле `token`: подпись личной ссылки. Нет токена, анкета принимается как раньше (открытая форма по QR). Токен есть и не подходит к `role` + `person_id`: 403 с `{detail}` на русском, анкета не пишется.
+- К оценочному вопросу можно приложить пояснение: ключ `{question_id}__why`, значение строка («Что за этим стоит?», форма просит его при оценке 1 или 2). Хранится как текстовый ответ, попадает в разбор комментариев как вопрос «Почему {оценка} за «{текст вопроса}»» и в `comments[]` карточки пары. К текстовым вопросам и неизвестным ключам игнорируется.
+- Ошибки: 422 с `{detail}` на русском, 403 при неверном `token`.
+
+Личная ссылка: `token = base64url(HMAC-SHA256(секрет, "{role}:{person_id}"))[:16]`, ссылка `/form?t={role}.{person_id}.{token}`. Секрет из `FORM_SECRET`, иначе случайный ключ в `backend/var/form_secret` (создаётся при первом запуске, права 600, в логи не пишется). Сменили секрет, старые ссылки перестают работать. `token` в `GET /api/people` нужен только HR. На туннеле `:8081` nginx добавляет к этому запросу `X-Public-Form: 1`, и бэкенд отдаёт `token: null`: по открытой форме чужую личную ссылку не собрать.
 
 Вебхук Яндекс Форм `POST /api/ingest/yandex` принимает плоский JSON: `role`, `person_id`, `month` и ответы, где ключ — `id` вопроса или его текст. Значения могут быть строками. В Яндекс Формах в разделе «Интеграции» настраивается HTTP POST на `<адрес>/api/ingest/yandex` с телом-шаблоном из переменных ответов. Пример тела лежит в `docs/integrations.md`.
 
@@ -270,7 +274,7 @@ interface PairDetail extends PairSummary {
 - Docker: `web` на `:8080` (nginx отдаёт сборку фронта и проксирует `/api` в `api:8000`, включая SSE без буферизации), `api` внутри сети.
 - `make dev`, `make test`, `make data`, `make reset`, `make up`, `make tunnel` (cloudflared на `:8081`, чтобы форму можно было открыть с телефона). На `:8081` nginx отдаёт только `/form`, `/assets/`, `GET /api/survey`, `GET /api/people` и `POST /api/ingest`, дашборд и `/api/admin/*` через туннель не видны.
 
-Переменные окружения (`.env.example`): `DB_PATH`, `SURVEY_DIR`, `SAMPLE_DIR`, `LLM_PROVIDER` (`rules`|`openai`), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`, `GSHEET_POLL_SECONDS` (0 — не опрашивать).
+Переменные окружения (`.env.example`): `DB_PATH`, `SURVEY_DIR`, `SAMPLE_DIR`, `LLM_PROVIDER` (`rules`|`openai`), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`, `GSHEET_POLL_SECONDS` (0 — не опрашивать), `FORM_SECRET` (подпись личных ссылок на анкету).
 
 ## Экраны фронта
 
