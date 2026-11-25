@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 
 import type { PairStatus } from '../../api/types'
 import { Avatar } from '../../components'
-import { ROLE_LABEL, formatCount, personName } from '../../lib/format'
+import { formatCount, personName } from '../../lib/format'
 import { layoutSpring } from '../../lib/motion'
 import type { Story } from './model'
 import s from './Stories.module.css'
@@ -55,7 +55,7 @@ export function Stories({ stories, months, scale, isFresh }: Props) {
 }
 
 function StoryCard({ story, months, scale, fresh }: { story: Story; months: number[]; scale: Props['scale']; fresh: boolean }) {
-  const { pair, status, title, quote, signals } = story
+  const { pair, status, title, signals } = story
   const compact = status === 'ok'
   return (
     <motion.div layout="position" layoutId={pair.pair_id} transition={layoutSpring} className={s.cardWrap}>
@@ -70,11 +70,6 @@ function StoryCard({ story, months, scale, fresh }: { story: Story; months: numb
         </header>
         {!compact && <p className={s.verdict}>{title ?? 'Всё ровно'}</p>}
         <StoryChart cells={pair.cells} months={months} scale={scale} status={status} compact={compact} />
-        {!compact && quote && (
-          <blockquote className={s.quote}>
-            «{/^[а-яё]/.test(quote.text) ? '…' : ''}{quote.text}»<cite>{ROLE_LABEL[quote.role]}, {quote.month}-й месяц</cite>
-          </blockquote>
-        )}
       </Link>
     </motion.div>
   )
