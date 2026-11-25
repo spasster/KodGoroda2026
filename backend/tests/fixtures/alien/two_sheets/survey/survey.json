@@ -1,0 +1,86 @@
+{
+  "title": "Ежемесячная анкета стажировки",
+  "months": 6,
+  "scale": {
+    "min": 1,
+    "max": 10,
+    "min_label": "очень плохо",
+    "max_label": "отлично"
+  },
+  "roles": {
+    "intern": {
+      "title": "Анкета стажёра",
+      "person_label": "ID стажёра",
+      "questions": [
+        {
+          "id": "overall",
+          "type": "scale",
+          "text": "Оцените, как проходит ваша стажировка в целом"
+        },
+        {
+          "id": "tasks_interest",
+          "type": "scale",
+          "text": "Насколько интересны ваши текущие задачи"
+        },
+        {
+          "id": "tasks_clarity",
+          "type": "scale",
+          "text": "Насколько вам понятны цели и ожидания по задачам"
+        },
+        {
+          "id": "mentor_support",
+          "type": "scale",
+          "text": "Достаточно ли поддержки вы получаете от наставника"
+        },
+        {
+          "id": "load",
+          "type": "scale",
+          "text": "Комфортна ли для вас нагрузка"
+        },
+        {
+          "id": "comment",
+          "type": "text",
+          "text": "Расскажите, что помогает или мешает вам в работе"
+        }
+      ]
+    },
+    "mentor": {
+      "title": "Анкета наставника",
+      "person_label": "ID наставника",
+      "questions": [
+        {
+          "id": "overall",
+          "type": "scale",
+          "text": "Оцените работу стажёра в целом"
+        },
+        {
+          "id": "speed",
+          "type": "scale",
+          "text": "Как быстро стажёр справляется с задачами"
+        },
+        {
+          "id": "independence",
+          "type": "scale",
+          "text": "Насколько самостоятельно работает стажёр"
+        },
+        {
+          "id": "engagement",
+          "type": "scale",
+          "text": "Насколько стажёр включён в жизнь команды"
+        },
+        {
+          "id": "comment",
+          "type": "text",
+          "text": "Ваши комментарии по стажёру за период"
+        }
+      ]
+    }
+  },
+  "paired_questions": [
+    {
+      "intern": "overall",
+      "mentor": "overall",
+      "label": "Общая оценка"
+    }
+  ]
+}

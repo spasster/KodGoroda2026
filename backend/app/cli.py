@@ -19,7 +19,7 @@ from pathlib import Path
 from . import db
 from .config import Settings
 from .context import Context
-from .importer import ImportFileError, detect_role, parse_table, read_file
+from .importer import ImportFileError, detect_role, parse_pairs, parse_table, read_tables_file
 from .ingest import import_tables, load_sample
 from .signals import SEVERITY_RANK
 
@@ -57,7 +57,7 @@ def cmd_reset(_: argparse.Namespace) -> int:
 def cmd_import(args: argparse.Namespace) -> int:
     ctx = _ctx()
     try:
-        tables = [(read_file(Path(p)), args.role) for p in args.files]
+        tables = [(t, r if r == "pairs" else args.role or r) for p in args.files for t, r in read_tables_file(Path(p))]
     except ImportFileError as exc:
         print(exc, file=sys.stderr)
         return 1
@@ -68,12 +68,21 @@ def cmd_import(args: argparse.Namespace) -> int:
 def cmd_inspect(args: argparse.Namespace) -> int:
     ctx = Context(Settings.from_env())
     try:
-        table = read_file(Path(args.file))
+        tables = read_tables_file(Path(args.file))
     except ImportFileError as exc:
         print(exc, file=sys.stderr)
         return 1
+    for table, sheet_role in tables:
+        _inspect(ctx, table, "pairs" if sheet_role == "pairs" else args.role or sheet_role)
+    return 0
+
+
+def _inspect(ctx: Context, table, role: str | None) -> None:
     survey, import_map = ctx.survey, ctx.files.import_map
-    role = args.role or detect_role(table, survey, import_map)
+    if role == "pairs":
+        print(f"{table.name}: лист {table.sheet}, пары: {parse_pairs(table)}\n")
+        return
+    role = role or detect_role(table, survey, import_map)
     records, report = parse_table(table, role, survey, import_map)
     print(f"{table.name}: лист {table.sheet or '-'}, роль {role}, строк с данными {report.rows}, годных записей {len(records)}")
     print("\nКолонки:")
@@ -93,7 +102,7 @@ def cmd_inspect(args: argparse.Namespace) -> int:
                                               "month": r.month, "submitted_at": r.submitted_at,
                                               "answers": {k: v[0] if v[1] is None else v[1] for k, v in r.answers.items()}},
                                              ensure_ascii=False))
-    return 0
+    print()
 
 
 def cmd_signals(args: argparse.Namespace) -> int:

@@ -1,5 +1,6 @@
 """SQLite из стандартной библиотеки. Одно соединение на операцию."""
 
+import re
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -84,10 +85,9 @@ def clear(conn: sqlite3.Connection) -> None:
 
 
 def pair_id_for(intern_id: str) -> str:
-    """S-03 → P-03. Другие форматы ID получают префикс P-."""
-    if intern_id[:2].upper() == "S-":
-        return "P-" + intern_id[2:]
-    return "P-" + intern_id
+    """S-03 → P-03, «СТАЖЁР 3» → P-3. Остальные ID получают префикс P-."""
+    m = re.fullmatch(r"[^\d]*?[\s-](\d+)", intern_id)
+    return "P-" + (m[1] if m else intern_id)
 
 
 def get_pair_by_intern(conn: sqlite3.Connection, intern_id: str) -> sqlite3.Row | None:

@@ -1,6 +1,7 @@
 """Приём анкет: одна анкета из формы или вебхука, пачка строк из Excel или CSV."""
 
 import logging
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,7 @@ from .importer import (
     parse_month,
     parse_number,
     parse_table,
+    parse_pairs,
     parse_text,
     read_file,
 )
@@ -160,7 +162,8 @@ def store_records(conn: sqlite3.Connection, survey: Survey, records: list[Record
         try:
             pair_id, warn = resolve_pair(conn, rec.role, rec.person_id, rec.intern_id, rec.mentor_id)
         except IngestError as exc:
-            report.error(rec.row, str(exc))
+            hint = ". Для Excel: колонка с ID наставника, лист «Пары» или ключ pairs в survey/import_map.json" if rec.role == "intern" else ""
+            report.error(rec.row, str(exc) + hint)
             continue
         if warn:
             report.warnings.append(f"Строка {rec.row}: {warn}")
@@ -178,14 +181,44 @@ def store_records(conn: sqlite3.Connection, survey: Survey, records: list[Record
     return changed
 
 
+def _number(person_id: str) -> int | None:
+    m = re.search(r"(\d+)$", person_id)
+    return int(m[1]) if m else None
+
+
+def link_pairs(parsed: list[tuple[str, list[Record], FileReport]], pair_map: dict[str, str]) -> None:
+    """Стажёрам без ID наставника подставляет его: по листу «Пары» или ключу pairs из import_map.json,
+    иначе по одинаковому номеру в конце ID («Стажёр 3» и «Наставник 3»)."""
+    mentors = {n: r.person_id for role, recs, _ in parsed if role == "mentor" for r in recs if (n := _number(r.person_id)) is not None}
+    for role, records, report in parsed:
+        if role != "intern":
+            continue
+        used: dict[str, str] = {}
+        for rec in records:
+            if rec.mentor_id:
+                continue
+            n = _number(rec.person_id)
+            rec.mentor_id = pair_map.get(rec.person_id) or (mentors.get(n) if n is not None else None)
+            if rec.mentor_id:
+                used[rec.person_id] = rec.mentor_id
+        if used and not pair_map:
+            report.warnings.append("Нет ID наставника, пары собраны по номеру в ID: "
+                                   + ", ".join(f"{i} и {m}" for i, m in used.items()) + ". Если это не так, добавьте лист «Пары» или ключ pairs в import_map.json")
+
+
 def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, replace: bool = False,
                   source: str = "excel", skip_unchanged: bool = False, notify: bool = True) -> dict:
     """Импорт таблиц. Роль берётся из пары (таблица, роль) или определяется по файлу."""
     survey, import_map = ctx.survey, ctx.files.import_map
     parsed = []
+    pair_map = {parse_id(k): parse_id(v) for k, v in (import_map.get("pairs") or {}).items() if parse_id(k) and parse_id(v)}
     for table, role in tables:
+        if role == "pairs":
+            pair_map.update(parse_pairs(table))
+            continue
         role = role or detect_role(table, survey, import_map)
         parsed.append((role, *parse_table(table, role, survey, import_map)))
+    link_pairs(parsed, pair_map)
     parsed.sort(key=lambda x: ROLES.index(x[0]))  # стажёры раньше: их строки создают пары
     # Полная замена стирает базу. Если в файлах ни одной анкеты, стирать нечем заменять.
     if replace and not any(records for _, records, _ in parsed):

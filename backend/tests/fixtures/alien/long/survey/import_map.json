@@ -1,0 +1,18 @@
+{
+  "intern": {
+    "Дата": "submitted_at",
+    "Месяц": "month",
+    "Вопрос": "question",
+    "Ответ": "answer",
+    "ID стажёра": "intern_id",
+    "ID наставника": "mentor_id"
+  },
+  "mentor": {
+    "Дата": "submitted_at",
+    "Месяц": "month",
+    "Вопрос": "question",
+    "Ответ": "answer",
+    "ID наставника": "mentor_id",
+    "ID стажёра": "intern_id"
+  }
+}

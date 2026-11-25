@@ -147,7 +147,7 @@ def cabinet(snap: Snapshot, role: str, person_id: str) -> dict | None:
     if pair is None:
         return None
     partner = pair.mentor_id if role == "intern" else pair.intern_id
-    text_ids = survey_text_ids = ds.survey.text_ids(role)
+    survey_text_ids, scale_ids = ds.survey.text_ids(role), ds.survey.scale_ids(role)
     history = []
     for m in range(1, ds.survey.months + 1):
         resp = ds.response(pair.pair_id, role, m)
@@ -156,7 +156,7 @@ def cabinet(snap: Snapshot, role: str, person_id: str) -> dict | None:
             continue
         comment = next((resp.texts.get(q) for q in survey_text_ids if resp.texts.get(q)), None)
         history.append({"month": m, "filled": True, "index": r1(ds.index(pair.pair_id, role, m)),
-                        "answers": {q: r1(v) for q, v in resp.scores.items() if q not in text_ids}, "comment": comment})
+                        "answers": {q: r1(v) for q, v in resp.scores.items() if q in scale_ids}, "comment": comment})
     next_month = next((h["month"] for h in history if not h["filled"]), None)
     # Месяц открыт для заполнения, если по нему уже есть хоть одна анкета в программе или это следующий за последним.
     open_month = min(ds.survey.months, (max(ds.months) if ds.months else 0) + 1)
@@ -166,6 +166,6 @@ def cabinet(snap: Snapshot, role: str, person_id: str) -> dict | None:
         "months": ds.survey.months, "open_month": open_month,
         "next_month": next_month if next_month is not None and next_month <= open_month else None,
         "scale": {"min": ds.survey.scale_min, "max": ds.survey.scale_max},
-        "questions": [{"id": q.id, "text": q.text} for q in ds.survey.questions(role) if q.id not in text_ids],
+        "questions": [{"id": q.id, "text": q.text} for q in ds.survey.questions(role) if q.type == "scale"],
         "history": history,
     }
