@@ -7,6 +7,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAnalytics, useMethod, useOverview, usePeople, useSurvey } from '../../api/queries'
 import type { Analytics, Overview, Role } from '../../api/types'
 import { LoadError, Loading, PageHeader, QuestionTable, Skeleton, type Tone } from '../../components'
+import { formLink } from '../../lib/formLink'
 import { ROLE_LABEL, formatNumber, monthIn, personName, plural } from '../../lib/format'
 import { collectMonth } from '../../lib/rules'
 import { StoryChart } from '../Overview/StoryChart'
@@ -189,7 +190,7 @@ function Collect({ overview, months, fallback }: { overview: Overview | undefine
 
 function CopyLink({ role, id }: { role: Role; id: string }) {
   const [done, setDone] = useState(false)
-  const url = `${location.origin}/form?role=${role}&id=${encodeURIComponent(id)}`
+  const url = formLink(role, id)
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url)
