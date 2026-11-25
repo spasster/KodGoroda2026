@@ -10,17 +10,8 @@ import { useReview, useThresholds } from '../../api/queries'
 import type { PairDetail, ReviewStatus, Severity, Signal } from '../../api/types'
 import { useReduced, variants } from '../../lib/motion'
 import { Marked } from './Marked'
-import {
-  doneSignals,
-  explanationLine,
-  groupMonths,
-  inWindow,
-  marksWorthShowing,
-  openGroups,
-  signalQuote,
-  type QuoteView,
-  type SignalGroup,
-} from './model'
+import { afterReview, situationMonths } from '../../lib/rules'
+import { doneSignals, explanationLine, inWindow, marksWorthShowing, openSignals, signalQuote, type QuoteView } from './model'
 import s from './Pair.module.css'
 
 const SEVERITY_WORD: Record<Severity, string> = {
@@ -40,22 +31,20 @@ export function SignalList({ pair, className }: { pair: PairDetail; className?: 
   const review = useReview()
   const reduce = useReduced()
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const groups = openGroups(pair.signals)
+  const open = openSignals(pair.signals)
   const done = doneSignals(pair.signals)
   // Одна и та же цитата на экране один раз: у второго сигнала без неё.
   const seen = new Set<string>()
-  const quotes = groups.map((g) => {
-    const q = signalQuote(g.head, pair.comments)
+  const quotes = open.map((sig) => {
+    const q = signalQuote(sig, pair.comments)
     if (!q || seen.has(q.text)) return null
     seen.add(q.text)
     return q
   })
 
-  const mark = (id: string, keys: string[], status: ReviewStatus) => {
-    setErrors(({ [id]: _, ...rest }) => rest)
-    Promise.all(keys.map((key) => review.mutateAsync({ key, status }))).catch(() =>
-      setErrors((e) => ({ ...e, [id]: SAVE_ERROR })),
-    )
+  const mark = (key: string, status: ReviewStatus) => {
+    setErrors(({ [key]: _, ...rest }) => rest)
+    review.mutateAsync({ key, status }).catch(() => setErrors((e) => ({ ...e, [key]: SAVE_ERROR })))
   }
 
   return (
@@ -63,11 +52,11 @@ export function SignalList({ pair, className }: { pair: PairDetail; className?: 
       <h2 id="pair-signals" className={s.cardTitle}>
         Сигналы
       </h2>
-      {groups.length === 0 && <p className={s.none}>Открытых сигналов нет</p>}
+      {open.length === 0 && <p className={s.none}>Открытых сигналов нет</p>}
       <AnimatePresence initial={false}>
-        {groups.map((g, i) => (
+        {open.map((sig, i) => (
           <motion.div
-            key={g.id}
+            key={sig.key}
             className={s.signalWrap}
             variants={variants.collapse}
             initial={reduce ? false : 'hidden'}
@@ -75,10 +64,10 @@ export function SignalList({ pair, className }: { pair: PairDetail; className?: 
             exit={reduce ? undefined : 'gone'}
           >
             <SignalCard
-              group={g}
+              signal={sig}
               quote={quotes[i]}
-              error={errors[g.id]}
-              onMark={(status) => mark(g.id, g.signals.map((x) => x.key), status)}
+              error={errors[sig.key]}
+              onMark={(status) => mark(sig.key, status)}
             />
           </motion.div>
         ))}
@@ -87,7 +76,7 @@ export function SignalList({ pair, className }: { pair: PairDetail; className?: 
         <Done
           signals={done}
           lastMonth={pair.last_month}
-          onReopen={(sig) => mark(sig.key, [sig.key], 'open')}
+          onReopen={(sig) => mark(sig.key, 'open')}
           errors={errors}
         />
       )}
@@ -104,28 +93,27 @@ function Dot({ severity }: { severity: Severity }) {
 }
 
 function SignalCard({
-  group,
+  signal,
   quote,
   error,
   onMark,
 }: {
-  group: SignalGroup
+  signal: Signal
   quote: QuoteView | null
   error?: string
   onMark: (status: ReviewStatus) => void
 }) {
-  const { head } = group
   return (
     <article className={s.signal}>
       <h3 className={s.signalTitle}>
-        <Dot severity={group.severity} />
+        <Dot severity={signal.severity} />
         <span>
-          {head.title}
-          <span className={s.signalMonth}> · {groupMonths(group)}</span>
+          {signal.title}
+          <span className={s.signalMonth}> · {situationMonths(signal)}</span>
         </span>
       </h3>
       <div className={s.signalBody}>
-        <p>{explanationLine(head)}</p>
+        <p>{explanationLine(signal)}</p>
         {quote && (
           <figure className={s.quote}>
             <blockquote>
@@ -135,8 +123,11 @@ function SignalCard({
           </figure>
         )}
         <p>
-          <span className={s.todoLabel}>Что сделать:</span> {head.action}
+          <span className={s.todoLabel}>Что сделать:</span> {signal.action}
         </p>
+        {afterReview(signal).map((line) => (
+          <p key={line}>{line}</p>
+        ))}
         <div className={s.actions}>
           <button type="button" className={s.btn} onClick={() => onMark('confirmed')}>
             Подтвердилось
@@ -200,8 +191,13 @@ function Done({
                   <span className={s.doneText}>
                     {sig.title}
                     <span className={s.doneMeta}>
-                      {sig.month}-й месяц{word ? ` · ${word}` : ''}
+                      {situationMonths(sig)}{word ? ` · ${word}` : ''}
                     </span>
+                    {afterReview(sig).map((line) => (
+                      <span key={line} className={s.doneMeta}>
+                        {line}
+                      </span>
+                    ))}
                     {errors[sig.key] && (
                       <span role="alert" className={s.error}>
                         {errors[sig.key]}

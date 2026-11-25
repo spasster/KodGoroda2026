@@ -24,7 +24,7 @@ from .importer import (
     parse_text,
     read_file,
 )
-from .schemas import IngestResult
+from .schemas import IngestResult, Signal
 from .signals import plural
 from .survey import ROLES, Survey
 
@@ -35,6 +35,15 @@ ROLE_NAMES = {"intern": "стажёра", "mentor": "наставника"}
 def months_word(n: int) -> str:
     """«6 месяцев», «3 месяца», «1 месяц»."""
     return f"{n} {plural(n, 'месяц', 'месяца', 'месяцев')}"
+
+
+def months_by_key(signals: list[Signal]) -> dict[str, set[int]]:
+    return {s.key: set(s.months) for s in signals}
+
+
+def fresh(before: dict[str, set[int]], signals: list[Signal]) -> list[Signal]:
+    """Ситуации, которых не было до анкеты, и те, у которых появился новый месяц."""
+    return [s for s in signals if set(s.months) - before.get(s.key, set())]
 
 
 class IngestError(Exception):
@@ -134,14 +143,14 @@ def validate(survey: Survey, payload: Any) -> dict:
 def ingest_one(ctx: Context, payload: Any) -> IngestResult:
     data = validate(ctx.survey, payload)
     with ctx.write_lock:
-        before = {s.key for s in ctx.snapshot().signals}
+        before = months_by_key(ctx.snapshot().signals)
         with ctx.connect() as conn:
             pair_id, _ = resolve_pair(conn, data["role"], data["person_id"], data["intern_id"], data["mentor_id"])
             response_id, replaced, _ = db.upsert_response(
                 conn, pair_id=pair_id, role=data["role"], person_id=data["person_id"], month=data["month"],
                 source=data["source"], submitted_at=data["submitted_at"], answers=data["answers"],
             )
-        new_signals = [s for s in ctx.snapshot().signals if s.key not in before]
+        new_signals = fresh(before, ctx.snapshot().signals)
     ctx.bus.publish("response", {
         "pair_id": pair_id, "role": data["role"], "person_id": data["person_id"], "month": data["month"],
         "source": data["source"], "new_signal_keys": [s.key for s in new_signals],
@@ -228,14 +237,14 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
     changed: list[dict] = []
     with ctx.write_lock:
         # После полной замены «новыми» были бы все сигналы, поэтому их не считаем.
-        before = None if replace else {s.key for s in ctx.snapshot().signals}
+        before = None if replace else months_by_key(ctx.snapshot().signals)
         with ctx.connect() as conn:
             if replace:
                 db.clear(conn)
             for _role, records, report in parsed:
                 changed += store_records(conn, survey, records, report, source, skip_unchanged)
             pairs, responses = db.count(conn, "pairs"), db.count(conn, "responses")
-        new_keys = [s.key for s in ctx.snapshot().signals if s.key not in before] if before is not None and changed else []
+        new_keys = [s.key for s in fresh(before, ctx.snapshot().signals)] if before is not None and changed else []
     if replace:
         ctx.warm()
 

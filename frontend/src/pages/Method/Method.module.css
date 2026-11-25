@@ -1,0 +1,17 @@
+.page { display: flex; flex-direction: column; gap: 20px; max-width: 980px; padding-top: 28px; padding-bottom: var(--s-8); }
+.stack { display: flex; flex-direction: column; gap: 20px; }
+.error { margin-top: 24px; }
+.card { padding: 28px 32px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low); min-width: 0; }
+.h2 { margin-bottom: 14px; font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+.h3 { margin: 20px 0 6px; font-size: var(--fs-m); font-weight: var(--fw-bold); }
+.text, .list, .sets, .principles { font-size: var(--fs-l); line-height: var(--lh-body); }
+.list, .sets, .principles { display: flex; flex-direction: column; gap: 8px; padding-left: 1.4em; }
+.principles { padding-left: 1.4em; }
+.sets { margin-bottom: 12px; }
+.counts { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: var(--fs-l); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+.baseline { padding: 4px 4px 0; font-size: var(--fs-l); line-height: var(--lh-body); }
+
+@media (max-width: 767px) {
+  .card { padding: 20px 18px; }
+  .text, .list, .sets, .principles, .counts, .baseline { font-size: var(--fs-m); }
+}

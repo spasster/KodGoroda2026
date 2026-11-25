@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 Role = Literal["intern", "mentor"]
-SignalType = Literal["decline", "gap_intern_low", "gap_mentor_low", "text_vs_score", "silence"]
+SignalType = Literal["decline", "gap_intern_low", "gap_mentor_low", "low_question", "text_vs_score", "silence"]
 Severity = Literal["high", "medium", "low"]
 PairStatus = Literal["risk", "watch", "ok"]
 ReviewStatus = Literal["open", "confirmed", "rejected"]
@@ -26,10 +26,24 @@ class SignalValue(BaseModel):
     value: float | None
 
 
+class PreviousReview(BaseModel):
+    status: ReviewStatus
+    month: int
+
+
 class Review(BaseModel):
     status: ReviewStatus = "open"
     note: str | None = None
     updated_at: str | None = None
+    month: int | None = None
+    previous: PreviousReview | None = None
+
+
+class Outcome(BaseModel):
+    review_month: int
+    last_month: int
+    repeated: bool
+    text: str
 
 
 class Signal(BaseModel):
@@ -38,6 +52,8 @@ class Signal(BaseModel):
     pair_id: str
     role: Role | Literal["both"]
     month: int
+    months: list[int]
+    since_month: int
     severity: Severity
     title: str
     explanation: str
@@ -46,6 +62,7 @@ class Signal(BaseModel):
     quotes: list[Quote]
     active: bool
     review: Review
+    outcome: Outcome | None = None
 
 
 class Missing(BaseModel):

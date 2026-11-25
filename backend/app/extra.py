@@ -1,4 +1,4 @@
-"""Аналитика программы, подготовка к разговору и кабинеты стажёра и наставника."""
+"""Аналитика программы и подготовка к разговору."""
 
 from .analyzer.models import TOPICS
 from .context import Snapshot
@@ -18,6 +18,8 @@ _QUESTIONS: dict[str, list[tuple[str, str]]] = {
     ],
     "decline:intern": [("intern", "Что изменилось за последние два месяца: задачи, команда, нагрузка?")],
     "decline:mentor": [("mentor", "С какого момента результаты стажёра стали хуже и что на это повлияло?")],
+    "low_question:intern": [("intern", "По одному из вопросов анкеты вы поставили низкую оценку. Что за ней стоит?")],
+    "low_question:mentor": [("mentor", "Что именно не получается у стажёра по вопросу, где вы поставили низкую оценку?")],
     "text_vs_score:intern": [("intern", "Оценки у вас хорошие, а в комментарии есть проблема. Расскажите о ней подробнее.")],
     "text_vs_score:mentor": [("mentor", "В комментарии вы недовольны стажёром, а оценки высокие. Что на самом деле происходит?")],
     "silence": [("intern", "Удобно ли вам заполнять анкету? Что мешает писать подробнее?")],
@@ -111,10 +113,13 @@ def analytics(snap: Snapshot) -> dict:
                 row[role] += 1
     topic_rows = sorted(topics.values(), key=lambda t: -(t["intern"] + t["mentor"]))
 
-    # Раннее предупреждение: месяц первого сигнала и месяц, когда пара стала «Пора поговорить».
+    # Раннее предупреждение: месяц первой ситуации и месяц, когда пара стала «Пора поговорить».
+    # Базовый способ: HR смотрит среднюю за месяц и реагирует, когда она ниже порога.
+    below = snap.th["baseline"]["index_below"]
     early = []
     for pid in pairs:
-        own = [s for s in snap.pair_signals(pid) if s.review.status != "rejected"]
+        kept = {s.key for s in snap.pair_signals(pid) if s.review.status != "rejected"}
+        own = [s for s in snap.monthly if s.pair_id == pid and s.situation_key in kept]
         if not own:
             continue
         first = min(s.month for s in own)
@@ -124,9 +129,22 @@ def analytics(snap: Snapshot) -> dict:
             if any(s.severity == "high" for s in window) or len(window) >= 2:
                 risk_month = m
                 break
+        baseline_month = next((m for m in months for role in ("intern", "mentor")
+                               if (n := ds.norm_index(pid, role, m)) is not None and n < below - 1e-9), None)
         pair = ds.pairs[pid]
         early.append({"pair_id": pid, "intern_id": pair.intern_id, "intern_name": snap.names.get(pair.intern_id),
-                      "first_signal_month": first, "risk_month": risk_month})
+                      "first_signal_month": first, "risk_month": risk_month, "baseline_month": baseline_month,
+                      "lead_months": None if baseline_month is None else baseline_month - first})
+
+    leads = [e["lead_months"] for e in early if e["lead_months"] is not None]
+    effect = {
+        "pairs_with_signals": len(early),
+        "earlier": sum(1 for v in leads if v > 0),
+        "same_or_later": sum(1 for v in leads if v <= 0),
+        "invisible": len(early) - len(leads),
+        "avg_lead": mean(leads),
+        "baseline_score": r1(survey.scale_min + below * survey.scale_range),
+    }
 
     return {
         "months": months,
@@ -136,36 +154,5 @@ def analytics(snap: Snapshot) -> dict:
         "questions": questions,
         "topics": topic_rows,
         "early": early,
-    }
-
-
-def cabinet(snap: Snapshot, role: str, person_id: str) -> dict | None:
-    """Личный кабинет: человек видит только свои ответы. Ответы второй стороны пары сюда не попадают."""
-    ds = snap.ds
-    key = "intern_id" if role == "intern" else "mentor_id"
-    pair = next((p for p in ds.pairs.values() if getattr(p, key) == person_id), None)
-    if pair is None:
-        return None
-    partner = pair.mentor_id if role == "intern" else pair.intern_id
-    survey_text_ids, scale_ids = ds.survey.text_ids(role), ds.survey.scale_ids(role)
-    history = []
-    for m in range(1, ds.survey.months + 1):
-        resp = ds.response(pair.pair_id, role, m)
-        if resp is None:
-            history.append({"month": m, "filled": False, "index": None, "answers": {}, "comment": None})
-            continue
-        comment = next((resp.texts.get(q) for q in survey_text_ids if resp.texts.get(q)), None)
-        history.append({"month": m, "filled": True, "index": r1(ds.index(pair.pair_id, role, m)),
-                        "answers": {q: r1(v) for q, v in resp.scores.items() if q in scale_ids}, "comment": comment})
-    next_month = next((h["month"] for h in history if not h["filled"]), None)
-    # Месяц открыт для заполнения, если по нему уже есть хоть одна анкета в программе или это следующий за последним.
-    open_month = min(ds.survey.months, (max(ds.months) if ds.months else 0) + 1)
-    return {
-        "role": role, "id": person_id, "name": snap.names.get(person_id),
-        "partner_id": partner, "partner_name": snap.names.get(partner),
-        "months": ds.survey.months, "open_month": open_month,
-        "next_month": next_month if next_month is not None and next_month <= open_month else None,
-        "scale": {"min": ds.survey.scale_min, "max": ds.survey.scale_max},
-        "questions": [{"id": q.id, "text": q.text} for q in ds.survey.questions(role) if q.type == "scale"],
-        "history": history,
+        "effect": effect,
     }

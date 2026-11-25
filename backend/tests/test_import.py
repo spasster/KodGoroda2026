@@ -127,7 +127,7 @@ def test_repo_import_map_matches_repo_survey():
         targets = {v for k, v in imap.get(role, {}).items() if not k.startswith("_") and v}
         assert targets <= allowed, f"{role}: в import_map есть поля, которых нет в анкете: {targets - allowed}"
     signals = json.loads((REPO_SURVEY / "signals.json").read_text(encoding="utf-8"))
-    for key in ("active_months", "decline", "gap", "text_vs_score", "silence", "quote_min_length"):
+    for key in ("active_months", "decline", "gap", "low_question", "text_vs_score", "silence", "baseline", "quote_min_length"):
         assert key in signals
 
 

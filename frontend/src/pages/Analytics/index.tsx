@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom'
 
 import { useAnalytics, useOverview, usePeople, useSurvey } from '../../api/queries'
 import type { Analytics, People, Role } from '../../api/types'
-import { Avatar, Hero, LoadError, Loading, Skeleton } from '../../components'
-import { ROLE_LABEL, formatNumber, personName, plural } from '../../lib/format'
+import { Avatar, Hero, LoadError, Loading, QuestionTable, Skeleton, type Tone } from '../../components'
+import { ROLE_LABEL, formatNumber, monthIn, personName, plural } from '../../lib/format'
 import { collectMonth } from '../../lib/rules'
 import { StoryChart } from '../Overview/StoryChart'
 import s from './Analytics.module.css'
@@ -128,49 +128,15 @@ function Topics({ topics }: { topics: Analytics['topics'] }) {
   )
 }
 
-// Таблица «вопрос × месяц»: средняя оценка по всем парам, просевшие клетки залиты.
+// Средняя оценка по всем парам, просевшие клетки залиты.
 function Heat({ analytics: a }: { analytics: Analytics }) {
-  const tone = (v: number | null) => (v == null ? s.none : v < 3.5 ? s.low : v < 4.2 ? s.mid : s.fine)
+  const tone = (v: number | null): Tone => (v == null ? 'none' : v < 3.5 ? 'low' : v < 4.2 ? 'mid' : 'fine')
   const roles: Role[] = ['intern', 'mentor']
-  return (
-    <div className={s.scroll}>
-      <table className={s.heat}>
-        <thead>
-          <tr>
-            <th />
-            {a.months.map((m) => (
-              <th key={m}>{m}</th>
-            ))}
-            <th>Изменение</th>
-          </tr>
-        </thead>
-        {roles.map((role) => (
-          <tbody key={role}>
-            <tr>
-              <th colSpan={a.months.length + 2} className={s.heatRole}>
-                Отвечает {ROLE_LABEL[role]}
-              </th>
-            </tr>
-            {a.questions
-              .filter((q) => q.role === role)
-              .map((q) => (
-                <tr key={q.question_id}>
-                  <th scope="row">{q.text}</th>
-                  {q.values.map((v, i) => (
-                    <td key={i}>
-                      <span className={clsx(s.cell, tone(v))}>{v == null ? '—' : formatNumber(v)}</span>
-                    </td>
-                  ))}
-                  <td className={clsx(s.delta, q.delta != null && q.delta <= -0.5 && s.deltaBad)}>
-                    {q.delta == null ? '—' : `${q.delta > 0 ? '+' : q.delta < 0 ? '−' : ''}${formatNumber(Math.abs(q.delta))}`}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        ))}
-      </table>
-    </div>
-  )
+  const groups = roles.map((role) => ({
+    role,
+    rows: a.questions.filter((q) => q.role === role).map((q) => ({ id: q.question_id, text: q.text, values: q.values, delta: q.delta })),
+  }))
+  return <QuestionTable months={a.months} groups={groups} tone={tone} />
 }
 
 // Сколько анкет пришло по месяцам и кто ещё не заполнил текущий.
@@ -247,15 +213,12 @@ function Effect({ analytics: a }: { analytics: Analytics }) {
   return (
     <div className={s.effect}>
       <div>
-        <p className={s.sub}>Когда появился первый сигнал</p>
+        <p className={s.lead}>{leadSummary(a.effect)}</p>
         <ul className={s.early}>
           {a.early.map((e) => (
             <li key={e.pair_id}>
               <Link to={`/pairs/${e.pair_id}`}>{personName(e.intern_name, e.intern_id)}</Link>
-              <span>
-                первый сигнал в {e.first_signal_month}-м месяце
-                {e.risk_month != null && `, «Пора поговорить» с ${e.risk_month}-го`}
-              </span>
+              <span>{leadLine(e)}</span>
             </li>
           ))}
           {a.early.length === 0 && <li className={s.muted}>Сигналов пока не было</li>}
@@ -281,6 +244,24 @@ function Effect({ analytics: a }: { analytics: Analytics }) {
       </div>
     </div>
   )
+}
+
+// Сколько стажёров получили сигнал раньше, чем средняя оценка упала ниже порога.
+function leadSummary(e: Analytics['effect']): string {
+  const score = formatNumber(e.baseline_score)
+  const parts = [`У ${e.earlier} из ${e.pairs_with_signals} стажёров сигнал появился раньше, чем средняя оценка упала ниже ${score}.`]
+  if (e.avg_lead != null) parts.push(`В среднем на ${formatNumber(e.avg_lead)} мес.`)
+  if (e.invisible > 0) parts.push(`У ${e.invisible} ${plural(e.invisible, ['стажёра', 'стажёров', 'стажёров'])} по средней оценке проблему не видно совсем.`)
+  return parts.join(' ')
+}
+
+function leadLine(e: Analytics['early'][number]): string {
+  const signal = `сигнал ${monthIn(e.first_signal_month)}`
+  if (e.baseline_month == null || e.lead_months == null) return `${signal}, по средней оценке не видно`
+  if (e.lead_months === 0) return `${signal}, одновременно со средней оценкой`
+  const n = Math.abs(e.lead_months)
+  const by = `на ${n} ${plural(n, ['месяц', 'месяца', 'месяцев'])} ${e.lead_months > 0 ? 'раньше' : 'позже'}`
+  return `${signal}, по средней оценке видно с ${e.baseline_month}-го: ${by}`
 }
 
 function capitalize(word: string): string {

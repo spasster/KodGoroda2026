@@ -1,11 +1,9 @@
-from typing import Literal
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from .. import db
 from ..context import Context
-from ..extra import analytics, brief, cabinet
+from ..extra import analytics, brief
 from .deps import get_ctx
 
 router = APIRouter()
@@ -44,10 +42,3 @@ def add_note(pair_id: str, body: NoteIn, ctx: Context = Depends(get_ctx)) -> dic
         notes = db.get_notes(conn, pair_id)
     return brief(ctx.snapshot(), pair_id, notes)
 
-
-@router.get("/cabinet/{role}/{person_id}")
-def get_cabinet(role: Literal["intern", "mentor"], person_id: str, ctx: Context = Depends(get_ctx)) -> dict:
-    out = cabinet(ctx.snapshot(), role, person_id.strip().upper())
-    if out is None:
-        raise HTTPException(404, f"{person_id} не найден")
-    return out

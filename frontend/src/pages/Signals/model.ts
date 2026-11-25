@@ -23,11 +23,12 @@ export function segmentRows(all: readonly Signal[], seg: Segment): Signal[] {
 
 // ---------- Фильтры ----------
 
-export type Kind = 'gap' | 'decline' | 'text' | 'silence'
+export type Kind = 'gap' | 'decline' | 'low_question' | 'text' | 'silence'
 
 export const KIND_LABEL: Record<Kind, string> = {
   gap: 'Расхождение',
   decline: 'Спад оценок',
+  low_question: 'Низкая оценка по вопросу',
   text: 'Слова против оценок',
   silence: 'Молчание',
 }

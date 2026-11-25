@@ -6,19 +6,21 @@ from dataclasses import dataclass, field
 
 from .analyzer import TextAnalyzer, TextInsight
 from .indices import Dataset, r1
-from .schemas import Quote, Review, Signal, SignalValue
+from .schemas import Outcome, PreviousReview, Quote, Review, Signal, SignalValue
 
 DEFAULTS = {
     "active_months": 2,
     "decline": {"two_month_drop": 0.12, "single_drop": 0.25},
     "gap": {"min_gap": 0.25, "high_gap": 0.4},
     "text_vs_score": {"min_index": 0.65, "max_sentiment": -0.2},
+    "low_question": {"max_score": 0.25},
     "silence": {"length_drop": 0.6, "min_prev_length": 40},
+    "baseline": {"index_below": 0.625},
     "quote_min_length": 12,
 }
 TRIGGER_TOPICS = ("mentor", "tasks_shortage", "overload")  # в порядке важности для заголовка
 SEVERITY_RANK = {"high": 0, "medium": 1, "low": 2}
-TYPE_RANK = {"decline": 0, "gap_intern_low": 1, "text_vs_score": 2, "gap_mentor_low": 3, "silence": 4}
+TYPE_RANK = {"decline": 0, "gap_intern_low": 1, "gap_mentor_low": 2, "low_question": 3, "text_vs_score": 4, "silence": 5}
 EPS = 1e-9
 MAX_QUOTES = 3
 
@@ -114,7 +116,8 @@ def analyze_texts(ds: Dataset, analyzer: TextAnalyzer, min_quote: int) -> Insigh
 
 
 @dataclass
-class _Raw:
+class Monthly:
+    """Срабатывание за один месяц. Наружу не отдаётся: из них склеиваются ситуации."""
     type: str
     pair_id: str
     role: str
@@ -130,6 +133,10 @@ class _Raw:
     def key(self) -> str:
         return f"{self.type}:{self.pair_id}:{self.role}:{self.month}"
 
+    @property
+    def situation_key(self) -> str:
+        return f"{self.type}:{self.pair_id}:{self.role}"
+
 
 class _Builder:
     def __init__(self, ds: Dataset, insights: Insights, th: dict):
@@ -137,7 +144,7 @@ class _Builder:
         self.insights = insights
         self.th = th
         self.range = ds.survey.scale_range or 1.0
-        self.out: list[_Raw] = []
+        self.out: list[Monthly] = []
 
     # Общие куски.
 
@@ -208,7 +215,7 @@ class _Builder:
                 title = "Наставник резко снизил оценку стажёра" if sharp else "Наставник оценивает стажёра всё ниже"
                 action = (f"Созвониться с наставником: что случилось {in_month(m)}. Потом поговорить со стажёром." if sharp
                           else f"Спросить наставника, что не так в работе стажёра {since_month(since)}. Решить, нужен ли разговор втроём.")
-            self.out.append(_Raw(
+            self.out.append(Monthly(
                 "decline", pair_id, role, m, "high" if sharp else "medium", title, explanation, action,
                 values=[SignalValue(role=role, month=pm_, value=r1(pv_)) for pm_, pv_ in points],
                 quotes=self.quotes(pair_id, role, m),
@@ -238,7 +245,7 @@ class _Builder:
                 else:
                     explanation += f" Разрыв {num(shown)} балла."
                 values = [self.value(pair_id, r, mm) for mm in months for r in ("intern", "mentor")]
-                self.out.append(_Raw(
+                self.out.append(Monthly(
                     "gap_intern_low", pair_id, "both", m, "high" if high else "medium",
                     "Стажёру хуже, чем видит наставник", explanation,
                     "Поговорить со стажёром без наставника. Потом обсудить с наставником, что стажёр видит иначе.",
@@ -246,7 +253,7 @@ class _Builder:
                 ))
             elif -rel >= th["min_gap"] - EPS:
                 high = -rel >= th["high_gap"] - EPS
-                self.out.append(_Raw(
+                self.out.append(Monthly(
                     "gap_mentor_low", pair_id, "both", m, "high" if high else "medium",
                     "Наставник недоволен, а стажёр ставит высокие оценки",
                     f"{in_month(m).capitalize()} наставник ставит {num(m_val)}, стажёр {num(i_val)}. Разрыв {num(-shown)} балла.",
@@ -255,6 +262,33 @@ class _Builder:
                     quotes=self.quotes(pair_id, "mentor", m),
                 ))
             history.append((m, g))
+
+    def low_question(self, pair_id: str, role: str) -> None:
+        max_score = self.th["low_question"]["max_score"]
+        lo = self.ds.survey.scale_min
+        who = WHO[role]
+        for m in self.ds.months:
+            resp = self.ds.response(pair_id, role, m)
+            if resp is None:
+                continue
+            low = []
+            for qid in self.ds.survey.scale_ids(role):
+                score = resp.scores.get(qid)
+                if score is not None and (score - lo) / self.range <= max_score + EPS:
+                    q = self.ds.survey.question(role, qid)
+                    low.append((q.text if q else qid, score))
+            if not low:
+                continue
+            high = len(low) >= 2 or any(score <= lo for _, score in low)
+            title = (f"{who['Nom']} ставит {score_str(low[0][1])} за «{low[0][0]}»" if len(low) == 1
+                     else f"{who['Nom']} ставит низкие оценки по {len(low)} вопросам")
+            listed = "; ".join(f"«{text}» — {score_str(score)}" for text, score in low)
+            explanation = f"{in_month(m).capitalize()}: {listed}. Средняя по анкете {num(self.ds.index(pair_id, role, m))}."
+            action = ("Спросить стажёра, что стоит за этой оценкой." if role == "intern"
+                      else "Спросить наставника, что именно не получается у стажёра и знает ли об этом стажёр.")
+            values = [SignalValue(role=role, month=k, value=r1(v)) for k, v in self.ds.series(pair_id, role) if k <= m][-3:]
+            self.out.append(Monthly("low_question", pair_id, role, m, "high" if high else "medium",
+                                    title, explanation, action, values=values))
 
     def text_vs_score(self, pair_id: str, role: str, month: int) -> None:
         th = self.th["text_vs_score"]
@@ -297,7 +331,7 @@ class _Builder:
                 "tasks_shortage": "Попросить наставника спланировать задачи стажёра на следующий месяц.",
                 "overload": "Обсудить с наставником, как снизить нагрузку стажёра.",
             }.get(main, "Спросить наставника, что стоит за этим комментарием. По оценкам проблемы не видно.")
-        self.out.append(_Raw(
+        self.out.append(Monthly(
             "text_vs_score", pair_id, role, month, "high" if main == "mentor" else "medium",
             title, explanation, action, values=[self.value(pair_id, role, month)], quotes=quotes,
         ))
@@ -330,7 +364,7 @@ class _Builder:
                 else:
                     action = "Напомнить наставнику про анкету и спросить, хватает ли ему времени на стажёра."
                 values = [self.value(pair_id, role, k) for k in range(max(1, m - 2), m + 1)]
-                self.out.append(_Raw("silence", pair_id, role, m, "medium", title, explanation, action, values=values))
+                self.out.append(Monthly("silence", pair_id, role, m, "medium", title, explanation, action, values=values))
                 continue
 
             reasons: list[tuple[str, str, str]] = []  # (title, explanation, action)
@@ -376,43 +410,103 @@ class _Builder:
             if not reasons:
                 continue
             values = [self.value(pair_id, role, k) for k in range(max(1, m - 2), m + 1)]
-            self.out.append(_Raw(
+            self.out.append(Monthly(
                 "silence", pair_id, role, m, "low", reasons[0][0],
                 " ".join(r[1] for r in reasons[:2]), reasons[0][2], values=values,
             ))
 
-    def build(self) -> list[_Raw]:
+    def build(self) -> list[Monthly]:
         for pair_id in self.ds.pairs:
             for role in ("intern", "mentor"):
                 self.decline(pair_id, role)
             self.gaps(pair_id)
             for role in ("intern", "mentor"):
+                self.low_question(pair_id, role)
                 for m in self.ds.months:
                     self.text_vs_score(pair_id, role, m)
                 self.silence(pair_id, role)
         return self.out
 
 
-def compute_signals(ds: Dataset, insights: Insights, th: dict, reviews: dict) -> list[Signal]:
+def _review(row, month: int) -> Review:
+    """Отметка HR. Ложная тревога, после которой ситуация сработала снова, возвращается в open."""
+    if row is None:
+        return Review()
+    review = Review(status=row["status"], note=row["note"], updated_at=row["updated_at"], month=row["month"])
+    if review.status == "rejected" and review.month is not None and month > review.month:
+        review.previous = PreviousReview(status="rejected", month=review.month)
+        review.status = "open"
+    return review
+
+
+def _outcome(ds: Dataset, kind: str, pair_id: str, role: str, month: int, review: Review) -> Outcome | None:
+    """Что изменилось после отметки. Нужна отметка «подтвердилось» (или повтор после ложной тревоги) и новая анкета."""
+    if review.month is None or not (review.status == "confirmed" or review.previous):
+        return None
+    last = ds.pair_last_month(pair_id)
+    rm = review.month
+    if last <= rm:
+        return None
+    repeated = month > rm
+    head = f"После отметки {in_month(rm)}"
+    text = None
+    if kind in ("gap_intern_low", "gap_mentor_low"):
+        before = ds.shown_gap(pair_id, rm)
+        after = [ds.shown_gap(pair_id, m) for m in range(rm + 1, last + 1) if ds.shown_gap(pair_id, m) is not None]
+        if before is not None and after:
+            text = f"{head} разрыв: {num(abs(before))} → {num(abs(after[-1]))}"
+    elif kind in ("decline", "low_question"):
+        before = r1(ds.index(pair_id, role, rm))
+        after = [v for m, v in ds.series(pair_id, role) if m > rm]
+        if before is not None and after:
+            text = f"{head} оценка {WHO[role]['gen']}: {num(before)} → {num(after[-1])}"
+    if text is None:
+        text = f"{head} повторилось в {month}-м" if repeated else f"{head} не повторялось"
+    return Outcome(review_month=rm, last_month=last, repeated=repeated, text=text)
+
+
+def compute_signals(ds: Dataset, insights: Insights, th: dict, reviews: dict) -> tuple[list[Monthly], list[Signal]]:
+    """Месячные срабатывания и ситуации: все срабатывания одного типа у одной пары и роли."""
     active_months = int(th["active_months"])
-    signals = []
-    for raw in _Builder(ds, insights, th).build():
-        rv = reviews.get(raw.key)
-        review = Review(status=rv["status"], note=rv["note"], updated_at=rv["updated_at"]) if rv else Review()
-        in_window = raw.month > ds.pair_last_month(raw.pair_id) - active_months
-        signals.append(Signal(
-            key=raw.key, type=raw.type, pair_id=raw.pair_id, role=raw.role, month=raw.month,
-            severity=raw.severity, title=raw.title, explanation=raw.explanation, action=raw.action,
-            values=raw.values, quotes=raw.quotes, active=in_window and review.status != "rejected", review=review,
+    monthly = sorted(_Builder(ds, insights, th).build(), key=lambda x: x.month)
+    groups: dict[str, list[Monthly]] = {}
+    for mo in monthly:
+        groups.setdefault(mo.situation_key, []).append(mo)
+    situations = []
+    for key, items in groups.items():
+        last = items[-1]
+        months = [x.month for x in items]
+        since = last.month
+        for a, b in zip(reversed(months[:-1]), reversed(months[1:])):
+            if b - a != 1:
+                break
+            since = a
+        review = _review(reviews.get(key), last.month)
+        edge = ds.pair_last_month(last.pair_id) - active_months
+        active = last.month > edge and review.status != "rejected"
+        severity = (min((x.severity for x in items if x.month > edge), key=SEVERITY_RANK.get) if active
+                    else last.severity)
+        run = last.month - since + 1
+        explanation = last.explanation
+        if run > 1:
+            explanation += f" Повторяется {since_month(since)}, {run} мес. подряд."
+        quotes: list[Quote] = []
+        for x in reversed(items):
+            quotes += [q for q in x.quotes if q not in quotes]
+        situations.append(Signal(
+            key=key, type=last.type, pair_id=last.pair_id, role=last.role, month=last.month, months=months,
+            since_month=since, severity=severity, title=last.title, explanation=explanation, action=last.action,
+            values=last.values, quotes=quotes[:MAX_QUOTES], active=active, review=review,
+            outcome=_outcome(ds, last.type, last.pair_id, last.role, last.month, review),
         ))
-    return sort_signals(signals)
+    return monthly, sort_signals(situations)
 
 
 def sort_signals(signals: list[Signal]) -> list[Signal]:
     return sorted(signals, key=lambda s: (SEVERITY_RANK[s.severity], -s.month, s.pair_id, TYPE_RANK[s.type], s.role))
 
 
-def status_of(signals: list[Signal]) -> str:
+def status_of(signals: list) -> str:
     """risk: активный high или два и больше активных; watch: один; иначе ok."""
     if any(s.severity == "high" for s in signals) or len(signals) >= 2:
         return "risk"

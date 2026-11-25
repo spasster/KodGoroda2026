@@ -35,7 +35,8 @@ def make_client(tmp_path: Path, name: str) -> TestClient:
 
 
 def severities(c: TestClient) -> dict[str, str]:
-    return {s["key"]: s["severity"] for s in c.get("/api/signals").json()}
+    """Месячные сигналы бэкенда. Наружу API отдаёт ситуации, эталон считает по месяцам."""
+    return {m.key: m.severity for m in c.app.state.ctx.snapshot().monthly}
 
 
 def statuses(c: TestClient) -> dict[str, str]:
@@ -75,6 +76,17 @@ def test_low_signals_and_statuses_match_truth(tmp_path, name):
 
 
 @pytest.mark.parametrize("name", DATASETS)
+def test_situations_match_truth(tmp_path, name):
+    truth = load_truth(name)
+    want = {s["key"]: {k: s[k] for k in ("type", "role", "month", "months", "since_month", "severity", "active")}
+            for p in truth["pairs"] for s in p["situations"]}
+    with make_client(tmp_path, name) as c:
+        got = {s["key"]: {k: s[k] for k in ("type", "role", "month", "months", "since_month", "severity", "active")}
+               for s in c.get("/api/signals").json()}
+    assert got == want
+
+
+@pytest.mark.parametrize("name", DATASETS)
 def test_demo_steps_match_truth(tmp_path, name):
     truth = load_truth(name)
     if "demo" not in truth:
@@ -82,9 +94,13 @@ def test_demo_steps_match_truth(tmp_path, name):
     with make_client(tmp_path, name) as c:
         for step in truth["demo"]["steps"]:
             body = json.loads((DATA / name / "demo" / step["file"]).read_text(encoding="utf-8"))
+            before = severities(c)
             r = c.post("/api/ingest", json=body)
             assert r.status_code == 200, r.text
-            new = {s["key"]: s["severity"] for s in r.json()["new_signals"]}
+            now_monthly = severities(c)
+            new = {k: sev for k, sev in now_monthly.items() if k not in before}
+            # Ситуации, которые API назвал новыми, это ровно те, у которых появился новый месяц.
+            assert {s["key"] for s in r.json()["new_signals"]} == {k.rsplit(":", 1)[0] for k in new}, step["file"]
             need = {s["key"]: s["severity"] for s in step["new_signals"] if s.get("required", True)}
             allowed = {s["key"] for s in step["new_signals"]} | set(step.get("may_appear_by_reading", []))
             assert {k: new.get(k) for k in need} == need, step["file"]

@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import type { CommentItem, PairDetail, Quote, ReviewStatus, Signal } from '../../api/types'
 import { ROLE_LABEL, SEVERITY_LABEL } from '../../lib/format'
 import { dur, ease } from '../../lib/motion'
+import { afterReview, situationMonths } from '../../lib/rules'
 import s from './Signals.module.css'
 
 export type Mark = Exclude<ReviewStatus, 'open'>
@@ -52,7 +53,7 @@ export function SignalRow({ signal: head, kind, detail, open, fresh, reduce, onT
             fresh && <span className={s.fresh}>новое</span>
           )}
           <span className={s.kind}>{kind}</span>
-          <span className={s.month}>{head.month}-й месяц</span>
+          <span className={s.month}>{situationMonths(head)}</span>
         </span>
         <ChevronRight className={s.chevron} aria-hidden="true" size={20} strokeWidth={1.8} />
       </button>
@@ -72,6 +73,11 @@ export function SignalRow({ signal: head, kind, detail, open, fresh, reduce, onT
               <p className={s.explain}>{head.explanation}</p>
               <Quotes quotes={head.quotes} comments={detail?.comments} />
               <p className={s.todo}>Что сделать: {head.action}</p>
+              {afterReview(head).map((line) => (
+                <p key={line} className={s.explain}>
+                  {line}
+                </p>
+              ))}
               <div className={s.actions}>
                 {status === 'open' ? (
                   <>

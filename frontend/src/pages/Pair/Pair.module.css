@@ -135,6 +135,8 @@
   margin-bottom: var(--s-4);
 }
 
+.grades { margin-top: var(--s-5); }
+
 .chart {
   position: relative;
   width: 100%;

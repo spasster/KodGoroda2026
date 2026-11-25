@@ -36,21 +36,28 @@ def _trend(snap: Snapshot, pair_id: str) -> str:
     return "up" if b > a else "down" if b < a else "flat"
 
 
+def _dismissed(situation: Signal, month: int) -> bool:
+    """Месяц ситуации снят отметкой «ложная тревога», в том числе до её повтора."""
+    review = situation.review
+    return review.status == "rejected" or (review.previous is not None and month <= review.previous.month)
+
+
 def pair_summary(snap: Snapshot, pair_id: str) -> PairSummary:
     ds = snap.ds
     pair = ds.pairs[pair_id]
     signals = snap.pair_signals(pair_id)
+    by_key = {s.key: s for s in signals}
     cells = []
     for m in ds.months:
-        month_signals = [s for s in signals if s.month == m]
-        counted = [s for s in month_signals if s.review.status != "rejected"]
+        month_signals = [s for s in snap.monthly if s.pair_id == pair_id and s.month == m]
+        counted = [s for s in month_signals if not _dismissed(by_key[s.situation_key], m)]
         cells.append(Cell(
             month=m,
             intern_index=r1(ds.index(pair_id, "intern", m)),
             mentor_index=r1(ds.index(pair_id, "mentor", m)),
             gap=ds.shown_gap(pair_id, m),
             status=status_of(counted),
-            signal_keys=[s.key for s in month_signals],
+            signal_keys=list(dict.fromkeys(s.situation_key for s in month_signals)),
             missing=Missing(intern=ds.response(pair_id, "intern", m) is None,
                             mentor=ds.response(pair_id, "mentor", m) is None),
         ))

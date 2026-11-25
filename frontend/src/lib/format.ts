@@ -46,6 +46,11 @@ export function formatCount(n: number, forms: Forms): string {
   return `${n} ${plural(n, forms)}`
 }
 
+// «в 4-м месяце», «во 2-м месяце».
+export function monthIn(month: number): string {
+  return `${month === 2 ? 'во' : 'в'} ${month}-м месяце`
+}
+
 // Несколько месяцев, слово «месяц» во множественном числе: «3-й месяц»,
 // «2–3-й месяцы», «2-й и 4-й месяцы», «1-й, 3-й и 4-й месяцы».
 export function monthsPhrase(months: readonly number[]): string {

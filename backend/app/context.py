@@ -10,7 +10,7 @@ from .config import Settings
 from .events import EventBus
 from .indices import Dataset
 from .schemas import Signal
-from .signals import Insights, analyze_texts, compute_signals, thresholds
+from .signals import Insights, Monthly, analyze_texts, compute_signals, thresholds
 from .survey import Survey, SurveyFiles
 
 log = logging.getLogger(__name__)
@@ -20,11 +20,13 @@ log = logging.getLogger(__name__)
 class Snapshot:
     ds: Dataset
     insights: Insights
-    signals: list[Signal]
+    signals: list[Signal]  # ситуации
+    monthly: list[Monthly]
     recent: list[dict]
     responses: int
     updated_at: str
     names: dict[str, str]
+    th: dict
 
     def pair_signals(self, pair_id: str) -> list[Signal]:
         return [s for s in self.signals if s.pair_id == pair_id]
@@ -66,8 +68,9 @@ class Context:
                 "SELECT MAX(t) FROM (SELECT MAX(created_at) AS t FROM responses"
                 " UNION ALL SELECT MAX(updated_at) FROM reviews)").fetchone()[0]
         insights = analyze_texts(ds, self.analyzer, int(th["quote_min_length"]))
-        signals = compute_signals(ds, insights, th, reviews)
-        return Snapshot(ds, insights, signals, recent, len(ds.responses), updated or db.now_iso(), self.files.names)
+        monthly, signals = compute_signals(ds, insights, th, reviews)
+        return Snapshot(ds, insights, signals, monthly, recent, len(ds.responses), updated or db.now_iso(),
+                        self.files.names, th)
 
     def warm(self) -> None:
         """С моделью первый разбор всех комментариев долгий: делаем его в фоне."""

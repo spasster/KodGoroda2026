@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Signal } from '../api/types'
-import { calendarMonthName, collectMonth, compareSignals, isOpen, sentenceAround } from './rules'
+import { afterReview, calendarMonthName, collectMonth, compareSignals, isOpen, sentenceAround, situationMonths } from './rules'
 
 function sig(key: string, severity: Signal['severity'], extra: Partial<Signal> = {}): Signal {
   const [type, pair_id, role, month] = key.split(':')
@@ -11,6 +11,8 @@ function sig(key: string, severity: Signal['severity'], extra: Partial<Signal> =
     pair_id,
     role: role as Signal['role'],
     month: Number(month),
+    months: [Number(month)],
+    since_month: Number(month),
     severity,
     title: key,
     explanation: '',
@@ -18,7 +20,8 @@ function sig(key: string, severity: Signal['severity'], extra: Partial<Signal> =
     values: [],
     quotes: [],
     active: true,
-    review: { status: 'open', note: null, updated_at: null },
+    review: { status: 'open', note: null, updated_at: null, month: null, previous: null },
+    outcome: null,
     ...extra,
   }
 }
@@ -54,7 +57,7 @@ describe('isOpen', () => {
   it('активный и без отметки HR', () => {
     expect(isOpen(sig('decline:P-01:intern:5', 'high'))).toBe(true)
     expect(isOpen(sig('decline:P-01:intern:5', 'high', { active: false }))).toBe(false)
-    const confirmed = sig('decline:P-01:intern:5', 'high', { review: { status: 'confirmed', note: null, updated_at: null } })
+    const confirmed = sig('decline:P-01:intern:5', 'high', { review: { status: 'confirmed', note: null, updated_at: null, month: 4, previous: null } })
     expect(isOpen(confirmed)).toBe(false)
   })
 })
@@ -99,5 +102,29 @@ describe('sentenceAround', () => {
 
   it('цитата в первом и в последнем предложении без точки', () => {
     expect(sentenceAround('Задач нет совсем', 0, 9).text).toBe('Задач нет совсем')
+  })
+})
+
+describe('situationMonths', () => {
+  it('один месяц и серия', () => {
+    expect(situationMonths(sig('decline:P-01:intern:4', 'high'))).toBe('4-й месяц')
+    const run = sig('decline:P-01:intern:5', 'high', { months: [2, 3, 4, 5], since_month: 2 })
+    expect(situationMonths(run)).toBe('со 2-го месяца, 4 мес.')
+    const gap = sig('decline:P-01:intern:5', 'high', { months: [2, 5], since_month: 5 })
+    expect(situationMonths(gap)).toBe('5-й месяц')
+  })
+})
+
+describe('afterReview', () => {
+  it('итог и повтор после ложной тревоги', () => {
+    const s = sig('silence:P-01:intern:5', 'low', {
+      outcome: { review_month: 3, last_month: 5, repeated: true, text: 'После отметки в 3-м месяце повторилось в 5-м' },
+      review: { status: 'open', note: null, updated_at: null, month: 3, previous: { status: 'rejected', month: 2 } },
+    })
+    expect(afterReview(s)).toEqual([
+      'После отметки в 3-м месяце повторилось в 5-м',
+      'Во 2-м месяце отмечено как ложная тревога, после этого повторилось',
+    ])
+    expect(afterReview(sig('silence:P-01:intern:5', 'low'))).toEqual([])
   })
 })

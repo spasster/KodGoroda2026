@@ -5,11 +5,13 @@ import { segmentRows } from './model'
 
 function sig(pair: string, month: number, severity: Severity, status: ReviewStatus = 'open', active = true): Signal {
   return {
-    key: `decline:${pair}:intern:${month}`,
+    key: `decline:${pair}:intern`,
     type: 'decline',
     pair_id: pair,
     role: 'intern',
     month,
+    months: [month],
+    since_month: month,
     severity,
     title: '',
     explanation: '',
@@ -17,7 +19,8 @@ function sig(pair: string, month: number, severity: Severity, status: ReviewStat
     values: [],
     quotes: [],
     active: active && status !== 'rejected',
-    review: { status, note: null, updated_at: null },
+    review: { status, note: null, updated_at: null, month: null, previous: null },
+    outcome: null,
   }
 }
 

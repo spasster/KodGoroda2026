@@ -28,10 +28,10 @@ export const queryKeys = {
   health: ['health'] as const,
   analytics: ['analytics'] as const,
   brief: (pairId: string) => ['pair', pairId, 'brief'] as const,
-  cabinet: (role: string, id: string) => ['cabinet', role, id] as const,
+  method: ['method'] as const,
 }
 
-// Ключ сигнала по контракту: {type}:{pair_id}:{role}:{month}.
+// Ключ ситуации по контракту: {type}:{pair_id}:{role}.
 export function pairIdFromSignalKey(key: string): string | null {
   return key.split(':')[1] || null
 }
@@ -45,12 +45,15 @@ export function invalidateAfterResponse(qc: QueryClient) {
   void qc.invalidateQueries({ queryKey: queryKeys.signals })
   void qc.invalidateQueries({ queryKey: queryKeys.people })
   void qc.invalidateQueries({ queryKey: queryKeys.analytics })
+  void qc.invalidateQueries({ queryKey: queryKeys.method })
 }
 
 // Отметка HR меняет сигнал, итоги и статус пары.
 export function invalidateAfterReview(qc: QueryClient, key: string) {
   void qc.invalidateQueries({ queryKey: queryKeys.overview })
   void qc.invalidateQueries({ queryKey: queryKeys.signals })
+  void qc.invalidateQueries({ queryKey: queryKeys.method })
+  void qc.invalidateQueries({ queryKey: queryKeys.analytics })
   const pairId = pairIdFromSignalKey(key)
   if (pairId) void qc.invalidateQueries({ queryKey: queryKeys.pair(pairId) })
 }
@@ -122,8 +125,10 @@ export function useReview() {
       const snapshot = targets.flatMap((queryKey) => qc.getQueriesData({ queryKey }))
 
       // Бэкенд так же обрезает пробелы и пустую заметку хранит как null.
-      const review = { status: vars.status, note: vars.note?.trim() || null, updated_at: new Date().toISOString() }
-      const patch = (s: Signal): Signal => (s.key === vars.key ? { ...s, review } : s)
+      const note = vars.note?.trim() || null
+      const updated_at = new Date().toISOString()
+      const patch = (s: Signal): Signal =>
+        s.key === vars.key ? { ...s, review: { ...s.review, status: vars.status, note, updated_at } } : s
       qc.setQueriesData<Signal[]>({ queryKey: queryKeys.signals }, (list) => list?.map(patch))
       if (pairId) {
         qc.setQueryData<PairDetail>(queryKeys.pair(pairId), (d) => d && { ...d, signals: d.signals.map(patch) })
@@ -162,6 +167,6 @@ export function useAddNote(pairId: string) {
   })
 }
 
-export function useCabinet(role: 'intern' | 'mentor', id: string) {
-  return useQuery({ queryKey: queryKeys.cabinet(role, id), queryFn: () => api.cabinet(role, id), enabled: id !== '' })
+export function useMethod() {
+  return useQuery({ queryKey: queryKeys.method, queryFn: api.method })
 }

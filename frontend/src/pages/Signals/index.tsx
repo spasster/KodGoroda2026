@@ -23,7 +23,7 @@ const SEGMENTS: { value: Segment; label: string }[] = [
   { value: 'done', label: 'Разобранные' },
   { value: 'all', label: 'Все' },
 ]
-const KINDS: Kind[] = ['gap', 'decline', 'text', 'silence']
+const KINDS: Kind[] = ['gap', 'decline', 'low_question', 'text', 'silence']
 const SEVERITIES: Severity[] = ['high', 'medium', 'low']
 const STATUS_RANK: Record<PairStatus, number> = { risk: 0, watch: 1, ok: 2 }
 

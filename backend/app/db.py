@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     signal_key TEXT PRIMARY KEY,
     status     TEXT NOT NULL,
     note       TEXT,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    month      INTEGER
 );
 CREATE TABLE IF NOT EXISTS notes (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,6 +74,9 @@ def init_schema(path: Path) -> None:
     with connect(path) as conn:
         conn.execute("PRAGMA journal_mode = WAL")
         conn.executescript(SCHEMA)
+        # База с прошлой версии: отметка теперь помнит месяц.
+        if "month" not in {r["name"] for r in conn.execute("PRAGMA table_info(reviews)")}:
+            conn.execute("ALTER TABLE reviews ADD COLUMN month INTEGER")
 
 
 def clear(conn: sqlite3.Connection) -> None:
@@ -160,12 +164,12 @@ def get_reviews(conn: sqlite3.Connection) -> dict[str, sqlite3.Row]:
     return {r["signal_key"]: r for r in conn.execute("SELECT * FROM reviews")}
 
 
-def set_review(conn: sqlite3.Connection, key: str, status: str, note: str | None) -> None:
+def set_review(conn: sqlite3.Connection, key: str, status: str, note: str | None, month: int) -> None:
     conn.execute(
-        "INSERT INTO reviews (signal_key, status, note, updated_at) VALUES (?, ?, ?, ?)"
+        "INSERT INTO reviews (signal_key, status, note, updated_at, month) VALUES (?, ?, ?, ?, ?)"
         " ON CONFLICT(signal_key) DO UPDATE SET status = excluded.status, note = excluded.note,"
-        " updated_at = excluded.updated_at",
-        (key, status, note, now_iso()),
+        " updated_at = excluded.updated_at, month = excluded.month",
+        (key, status, note, now_iso(), month),
     )
 
 

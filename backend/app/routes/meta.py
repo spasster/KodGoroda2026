@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from .. import db
 from ..context import Context
 from ..schemas import Health, People
+from ..method import method
 from ..views import people
 from .deps import get_ctx
 
@@ -25,3 +26,8 @@ def survey(ctx: Context = Depends(get_ctx)) -> dict:
 @router.get("/people", response_model=People)
 def list_people(ctx: Context = Depends(get_ctx)) -> People:
     return people(ctx.snapshot())
+
+
+@router.get("/method")
+def get_method(ctx: Context = Depends(get_ctx)) -> dict:
+    return method(ctx.snapshot(), ctx.files.quality)

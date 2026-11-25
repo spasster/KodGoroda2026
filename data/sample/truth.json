@@ -16,9 +16,15 @@
       "min_index": 0.65,
       "max_sentiment": -0.2
     },
+    "low_question": {
+      "max_score": 0.25
+    },
     "silence": {
       "length_drop": 0.6,
       "min_prev_length": 40
+    },
+    "baseline": {
+      "index_below": 0.625
     },
     "quote_min_length": 12
   },
@@ -158,6 +164,7 @@
           "signal_keys": []
         }
       ],
+      "situations": [],
       "signals": [],
       "optional": [],
       "note": "Сигналов быть не должно ни при каком прочтении правил."
@@ -232,6 +239,7 @@
           "signal_keys": [
             "decline:P-02:intern:4",
             "gap_intern_low:P-02:both:4",
+            "low_question:P-02:intern:4",
             "text_vs_score:P-02:mentor:4",
             "silence:P-02:intern:4"
           ]
@@ -243,6 +251,84 @@
             "text_vs_score:P-02:mentor:5",
             "silence:P-02:intern:5"
           ]
+        }
+      ],
+      "situations": [
+        {
+          "key": "decline:P-02:intern",
+          "type": "decline",
+          "role": "intern",
+          "month": 4,
+          "months": [
+            3,
+            4
+          ],
+          "since_month": 3,
+          "severity": "medium",
+          "active": true
+        },
+        {
+          "key": "gap_intern_low:P-02:both",
+          "type": "gap_intern_low",
+          "role": "both",
+          "month": 4,
+          "months": [
+            4
+          ],
+          "since_month": 4,
+          "severity": "high",
+          "active": true
+        },
+        {
+          "key": "low_question:P-02:intern",
+          "type": "low_question",
+          "role": "intern",
+          "month": 4,
+          "months": [
+            4
+          ],
+          "since_month": 4,
+          "severity": "medium",
+          "active": true
+        },
+        {
+          "key": "silence:P-02:intern",
+          "type": "silence",
+          "role": "intern",
+          "month": 5,
+          "months": [
+            3,
+            4,
+            5
+          ],
+          "since_month": 3,
+          "severity": "medium",
+          "active": true
+        },
+        {
+          "key": "text_vs_score:P-02:intern",
+          "type": "text_vs_score",
+          "role": "intern",
+          "month": 2,
+          "months": [
+            2
+          ],
+          "since_month": 2,
+          "severity": "medium",
+          "active": false
+        },
+        {
+          "key": "text_vs_score:P-02:mentor",
+          "type": "text_vs_score",
+          "role": "mentor",
+          "month": 5,
+          "months": [
+            4,
+            5
+          ],
+          "since_month": 4,
+          "severity": "medium",
+          "active": true
         }
       ],
       "signals": [
@@ -301,6 +387,17 @@
           "basis": "scores",
           "text_analysis": false,
           "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла. Разрыв растёт второй месяц."
+        },
+        {
+          "key": "low_question:P-02:intern:4",
+          "pair_id": "P-02",
+          "type": "low_question",
+          "role": "intern",
+          "month": 4,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "В 4-м месяце: «Насколько вам комфортна текущая нагрузка?» — 2. Средняя по анкете 3."
         },
         {
           "key": "silence:P-02:intern:4",
@@ -409,24 +506,58 @@
         },
         {
           "month": 3,
-          "status": "watch",
+          "status": "risk",
           "signal_keys": [
-            "gap_intern_low:P-03:both:3"
+            "gap_intern_low:P-03:both:3",
+            "low_question:P-03:intern:3"
           ]
         },
         {
           "month": 4,
           "status": "risk",
           "signal_keys": [
-            "gap_intern_low:P-03:both:4"
+            "gap_intern_low:P-03:both:4",
+            "low_question:P-03:intern:4"
           ]
         },
         {
           "month": 5,
           "status": "risk",
           "signal_keys": [
-            "gap_intern_low:P-03:both:5"
+            "gap_intern_low:P-03:both:5",
+            "low_question:P-03:intern:5"
           ]
+        }
+      ],
+      "situations": [
+        {
+          "key": "gap_intern_low:P-03:both",
+          "type": "gap_intern_low",
+          "role": "both",
+          "month": 5,
+          "months": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "since_month": 2,
+          "severity": "high",
+          "active": true
+        },
+        {
+          "key": "low_question:P-03:intern",
+          "type": "low_question",
+          "role": "intern",
+          "month": 5,
+          "months": [
+            3,
+            4,
+            5
+          ],
+          "since_month": 3,
+          "severity": "medium",
+          "active": true
         }
       ],
       "signals": [
@@ -453,6 +584,17 @@
           "why": "Наставник 4,75, стажёр 3,4, разрыв 1,35 балла."
         },
         {
+          "key": "low_question:P-03:intern:3",
+          "pair_id": "P-03",
+          "type": "low_question",
+          "role": "intern",
+          "month": 3,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "В 3-м месяце: «Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3,4."
+        },
+        {
           "key": "gap_intern_low:P-03:both:4",
           "pair_id": "P-03",
           "type": "gap_intern_low",
@@ -464,6 +606,17 @@
           "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
         },
         {
+          "key": "low_question:P-03:intern:4",
+          "pair_id": "P-03",
+          "type": "low_question",
+          "role": "intern",
+          "month": 4,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "В 4-м месяце: «Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3."
+        },
+        {
           "key": "gap_intern_low:P-03:both:5",
           "pair_id": "P-03",
           "type": "gap_intern_low",
@@ -473,6 +626,17 @@
           "basis": "scores",
           "text_analysis": false,
           "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
+        },
+        {
+          "key": "low_question:P-03:intern:5",
+          "pair_id": "P-03",
+          "type": "low_question",
+          "role": "intern",
+          "month": 5,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "В 5-м месяце: «Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3."
         }
       ],
       "optional": []
@@ -484,9 +648,9 @@
       "scenario": "нет задач",
       "story": "Стажёр ставит вежливые 4 почти везде, а пишет, что задач почти нет и он целыми днями читает документацию. Наставник доволен. Проблему видно только по тексту.",
       "expect_no_signals": false,
-      "status": "risk",
+      "status": "watch",
       "status_by_reading": [
-        "risk"
+        "watch"
       ],
       "series": [
         {
@@ -553,6 +717,23 @@
           "signal_keys": [
             "text_vs_score:P-04:intern:5"
           ]
+        }
+      ],
+      "situations": [
+        {
+          "key": "text_vs_score:P-04:intern",
+          "type": "text_vs_score",
+          "role": "intern",
+          "month": 5,
+          "months": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "since_month": 2,
+          "severity": "medium",
+          "active": true
         }
       ],
       "signals": [
@@ -668,7 +849,8 @@
           "status": "risk",
           "signal_keys": [
             "decline:P-05:mentor:3",
-            "gap_mentor_low:P-05:both:3"
+            "gap_mentor_low:P-05:both:3",
+            "low_question:P-05:mentor:3"
           ]
         },
         {
@@ -676,7 +858,8 @@
           "status": "risk",
           "signal_keys": [
             "decline:P-05:mentor:4",
-            "gap_mentor_low:P-05:both:4"
+            "gap_mentor_low:P-05:both:4",
+            "low_question:P-05:mentor:4"
           ]
         },
         {
@@ -684,8 +867,54 @@
           "status": "risk",
           "signal_keys": [
             "decline:P-05:mentor:5",
-            "gap_mentor_low:P-05:both:5"
+            "gap_mentor_low:P-05:both:5",
+            "low_question:P-05:mentor:5"
           ]
+        }
+      ],
+      "situations": [
+        {
+          "key": "decline:P-05:mentor",
+          "type": "decline",
+          "role": "mentor",
+          "month": 5,
+          "months": [
+            3,
+            4,
+            5
+          ],
+          "since_month": 3,
+          "severity": "medium",
+          "active": true
+        },
+        {
+          "key": "gap_mentor_low:P-05:both",
+          "type": "gap_mentor_low",
+          "role": "both",
+          "month": 5,
+          "months": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "since_month": 2,
+          "severity": "high",
+          "active": true
+        },
+        {
+          "key": "low_question:P-05:mentor",
+          "type": "low_question",
+          "role": "mentor",
+          "month": 5,
+          "months": [
+            3,
+            4,
+            5
+          ],
+          "since_month": 3,
+          "severity": "high",
+          "active": true
         }
       ],
       "signals": [
@@ -723,6 +952,17 @@
           "why": "Стажёр 4,8, наставник 3, разрыв 1,8 балла."
         },
         {
+          "key": "low_question:P-05:mentor:3",
+          "pair_id": "P-05",
+          "type": "low_question",
+          "role": "mentor",
+          "month": 3,
+          "severity": "medium",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "В 3-м месяце: «Насколько оперативно стажёр выполняет задачи?» — 2. Средняя по анкете 3."
+        },
+        {
           "key": "decline:P-05:mentor:4",
           "pair_id": "P-05",
           "type": "decline",
@@ -745,6 +985,17 @@
           "why": "Стажёр 4,6, наставник 2,5, разрыв 2,1 балла."
         },
         {
+          "key": "low_question:P-05:mentor:4",
+          "pair_id": "P-05",
+          "type": "low_question",
+          "role": "mentor",
+          "month": 4,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "В 4-м месяце: «Насколько оперативно стажёр выполняет задачи?» — 2; «Насколько стажёр самостоятелен?» — 2. Средняя по анкете 2,5."
+        },
+        {
           "key": "decline:P-05:mentor:5",
           "pair_id": "P-05",
           "type": "decline",
@@ -765,6 +1016,17 @@
           "basis": "scores",
           "text_analysis": false,
           "why": "Стажёр 4,6, наставник 2, разрыв 2,6 балла."
+        },
+        {
+          "key": "low_question:P-05:mentor:5",
+          "pair_id": "P-05",
+          "type": "low_question",
+          "role": "mentor",
+          "month": 5,
+          "severity": "high",
+          "basis": "scores",
+          "text_analysis": false,
+          "why": "В 5-м месяце: «Как стажёр справляется в целом?» — 2; «Насколько оперативно стажёр выполняет задачи?» — 1; «Насколько стажёр самостоятелен?» — 2. Средняя по анкете 2."
         }
       ],
       "optional": []
@@ -826,6 +1088,17 @@
       "basis": "scores",
       "text_analysis": false,
       "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла. Разрыв растёт второй месяц."
+    },
+    {
+      "key": "low_question:P-02:intern:4",
+      "pair_id": "P-02",
+      "type": "low_question",
+      "role": "intern",
+      "month": 4,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "В 4-м месяце: «Насколько вам комфортна текущая нагрузка?» — 2. Средняя по анкете 3."
     },
     {
       "key": "silence:P-02:intern:4",
@@ -896,6 +1169,17 @@
       "why": "Наставник 4,75, стажёр 3,4, разрыв 1,35 балла."
     },
     {
+      "key": "low_question:P-03:intern:3",
+      "pair_id": "P-03",
+      "type": "low_question",
+      "role": "intern",
+      "month": 3,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "В 3-м месяце: «Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3,4."
+    },
+    {
       "key": "gap_intern_low:P-03:both:4",
       "pair_id": "P-03",
       "type": "gap_intern_low",
@@ -907,6 +1191,17 @@
       "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
     },
     {
+      "key": "low_question:P-03:intern:4",
+      "pair_id": "P-03",
+      "type": "low_question",
+      "role": "intern",
+      "month": 4,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "В 4-м месяце: «Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3."
+    },
+    {
       "key": "gap_intern_low:P-03:both:5",
       "pair_id": "P-03",
       "type": "gap_intern_low",
@@ -916,6 +1211,17 @@
       "basis": "scores",
       "text_analysis": false,
       "why": "Наставник 4,75, стажёр 3, разрыв 1,75 балла."
+    },
+    {
+      "key": "low_question:P-03:intern:5",
+      "pair_id": "P-03",
+      "type": "low_question",
+      "role": "intern",
+      "month": 5,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "В 5-м месяце: «Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3."
     },
     {
       "key": "text_vs_score:P-04:intern:2",
@@ -999,6 +1305,17 @@
       "why": "Стажёр 4,8, наставник 3, разрыв 1,8 балла."
     },
     {
+      "key": "low_question:P-05:mentor:3",
+      "pair_id": "P-05",
+      "type": "low_question",
+      "role": "mentor",
+      "month": 3,
+      "severity": "medium",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "В 3-м месяце: «Насколько оперативно стажёр выполняет задачи?» — 2. Средняя по анкете 3."
+    },
+    {
       "key": "decline:P-05:mentor:4",
       "pair_id": "P-05",
       "type": "decline",
@@ -1021,6 +1338,17 @@
       "why": "Стажёр 4,6, наставник 2,5, разрыв 2,1 балла."
     },
     {
+      "key": "low_question:P-05:mentor:4",
+      "pair_id": "P-05",
+      "type": "low_question",
+      "role": "mentor",
+      "month": 4,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "В 4-м месяце: «Насколько оперативно стажёр выполняет задачи?» — 2; «Насколько стажёр самостоятелен?» — 2. Средняя по анкете 2,5."
+    },
+    {
       "key": "decline:P-05:mentor:5",
       "pair_id": "P-05",
       "type": "decline",
@@ -1041,6 +1369,17 @@
       "basis": "scores",
       "text_analysis": false,
       "why": "Стажёр 4,6, наставник 2, разрыв 2,6 балла."
+    },
+    {
+      "key": "low_question:P-05:mentor:5",
+      "pair_id": "P-05",
+      "type": "low_question",
+      "role": "mentor",
+      "month": 5,
+      "severity": "high",
+      "basis": "scores",
+      "text_analysis": false,
+      "why": "В 5-м месяце: «Как стажёр справляется в целом?» — 2; «Насколько оперативно стажёр выполняет задачи?» — 1; «Насколько стажёр самостоятелен?» — 2. Средняя по анкете 2."
     }
   ],
   "optional": [],
@@ -1624,6 +1963,18 @@
             "required": true
           },
           {
+            "key": "low_question:P-01:intern:6",
+            "pair_id": "P-01",
+            "type": "low_question",
+            "role": "intern",
+            "month": 6,
+            "severity": "high",
+            "basis": "scores",
+            "text_analysis": false,
+            "why": "В 6-м месяце: «Как в целом проходит стажировка?» — 2; «Насколько вам интересны задачи?» — 2. Средняя по анкете 2,6.",
+            "required": true
+          },
+          {
             "key": "silence:P-01:mentor:6",
             "pair_id": "P-01",
             "type": "silence",
@@ -1642,7 +1993,7 @@
           "P-01": "risk",
           "P-02": "risk",
           "P-03": "risk",
-          "P-04": "risk",
+          "P-04": "watch",
           "P-05": "risk"
         },
         "pair_status_by_reading": {}
@@ -1672,7 +2023,7 @@
           "P-01": "risk",
           "P-02": "risk",
           "P-03": "risk",
-          "P-04": "risk",
+          "P-04": "watch",
           "P-05": "risk"
         },
         "pair_status_by_reading": {}
@@ -1713,7 +2064,7 @@
           "P-01": "risk",
           "P-02": "risk",
           "P-03": "risk",
-          "P-04": "risk",
+          "P-04": "watch",
           "P-05": "risk"
         },
         "pair_status_by_reading": {}
@@ -1722,6 +2073,18 @@
         "file": "intern_S-03_m6.json",
         "pair_id": "P-03",
         "new_signals": [
+          {
+            "key": "low_question:P-03:intern:6",
+            "pair_id": "P-03",
+            "type": "low_question",
+            "role": "intern",
+            "month": 6,
+            "severity": "high",
+            "basis": "scores",
+            "text_analysis": false,
+            "why": "В 6-м месяце: «Хватает ли вам помощи наставника?» — 1. Средняя по анкете 2,6.",
+            "required": true
+          },
           {
             "key": "silence:P-03:mentor:6",
             "pair_id": "P-03",
@@ -1741,7 +2104,7 @@
           "P-01": "risk",
           "P-02": "risk",
           "P-03": "risk",
-          "P-04": "risk",
+          "P-04": "watch",
           "P-05": "risk"
         },
         "pair_status_by_reading": {}
@@ -1825,6 +2188,18 @@
             "basis": "scores",
             "text_analysis": false,
             "why": "Индекс наставника за три месяца: 2,5 → 2 → 1,5.",
+            "required": true
+          },
+          {
+            "key": "low_question:P-05:mentor:6",
+            "pair_id": "P-05",
+            "type": "low_question",
+            "role": "mentor",
+            "month": 6,
+            "severity": "high",
+            "basis": "scores",
+            "text_analysis": false,
+            "why": "В 6-м месяце: «Как стажёр справляется в целом?» — 2; «Насколько оперативно стажёр выполняет задачи?» — 1; «Насколько стажёр самостоятелен?» — 2; «Насколько стажёр вовлечён в работу команды?» — 1. Средняя по анкете 1,5.",
             "required": true
           }
         ],

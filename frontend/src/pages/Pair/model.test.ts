@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import type { CommentItem, Overview, Signal } from '../../api/types'
-import { doneSignals, explanationLine, marksWorthShowing, neighbours, openGroups, pairOrder, signalQuote } from './model'
+import { doneSignals, explanationLine, marksWorthShowing, neighbours, openSignals, pairOrder, signalQuote } from './model'
 
 function sig(over: Partial<Signal> & Pick<Signal, 'type' | 'month'>): Signal {
   return {
-    key: `${over.type}:P-01:${over.role ?? 'intern'}:${over.month}`,
+    key: `${over.type}:P-01:${over.role ?? 'intern'}`,
     pair_id: 'P-01',
     role: 'intern',
+    months: [over.month],
+    since_month: over.month,
     severity: 'medium',
     title: 'Заголовок',
     explanation: '',
@@ -15,7 +17,8 @@ function sig(over: Partial<Signal> & Pick<Signal, 'type' | 'month'>): Signal {
     values: [],
     quotes: [],
     active: true,
-    review: { status: 'open', note: null, updated_at: null },
+    review: { status: 'open', note: null, updated_at: null, month: null, previous: null },
+    outcome: null,
     ...over,
   }
 }
@@ -47,23 +50,17 @@ describe('explanationLine', () => {
   })
 })
 
-describe('openGroups', () => {
-  it('склеивает одно условие за разные месяцы, разные заголовки не склеивает', () => {
+describe('openSignals', () => {
+  it('оставляет открытые активные, сначала важные', () => {
+    const rejected = { status: 'rejected' as const, note: null, updated_at: null, month: 4, previous: null }
     const list = [
-      sig({ type: 'silence', month: 5, title: 'Стажёр не заполнил анкету' }),
-      sig({ type: 'silence', month: 4, title: 'Стажёр оставил комментарий пустым', severity: 'low' }),
-      sig({ type: 'gap_intern_low', role: 'both', month: 5, severity: 'high', title: 'Разрыв' }),
-      sig({ type: 'gap_intern_low', role: 'both', month: 4, severity: 'high', title: 'Разрыв' }),
+      sig({ type: 'silence', month: 5, severity: 'low' }),
+      sig({ type: 'gap_intern_low', role: 'both', month: 5, severity: 'high' }),
       sig({ type: 'decline', month: 3, active: false }),
-      sig({ type: 'decline', month: 5, review: { status: 'rejected', note: null, updated_at: null } }),
+      sig({ type: 'decline', month: 5, review: rejected }),
     ]
-    const groups = openGroups(list)
-    expect(groups.map((g) => [g.head.title, g.signals.map((s) => s.month)])).toEqual([
-      ['Разрыв', [5, 4]],
-      ['Стажёр не заполнил анкету', [5]],
-      ['Стажёр оставил комментарий пустым', [4]],
-    ])
-    expect(doneSignals(list).map((s) => s.month)).toEqual([5, 3])
+    expect(openSignals(list).map((s) => s.type)).toEqual(['gap_intern_low', 'silence'])
+    expect(doneSignals(list).map((s) => s.type)).toEqual(['decline', 'decline'])
   })
 })
 

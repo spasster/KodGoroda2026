@@ -9,6 +9,9 @@
 Читает interns.xlsx и mentors.xlsx, считает сигналы по правилам docs/contract.md и порогам
 survey/signals.json и пишет truth.json рядом с таблицами. С бэкендом код не делит.
 
+Считает месячные сигналы (signals) и ситуации поверх них (pairs[].situations): одна на тип и роль у пары.
+Статус пары берётся по активным ситуациям, статус клетки месяца по месячным сигналам.
+
 Спорные места правил закреплены в docs/contract.md, раздел «Как читать условия». Скрипт считает
 по ним, поэтому signals совпадает с тем, что должен дать бэкенд, а optional пуст. Другие прочтения
 перечислены в READINGS для справки. Сигналы по тексту опираются на ручную разметку
@@ -211,6 +214,17 @@ def compute(data: dict, people: dict, labels: dict, rd: dict, near: Near) -> dic
                 add("gap_mentor_low", pair, "both", m, sev, "scores",
                     f"Стажёр {num(i)}, наставник {num(mt)}, разрыв {num(-gaps[m])} балла.")
 
+        # low_question: оценка по одному вопросу не выше порога, один сигнал на анкету
+        qtext = {role: {q["id"]: q["text"] for q in SURVEY["roles"][role]["questions"]} for role in ROLES}
+        for role in ROLES:
+            for m in sorted(series[role]):
+                sc_ = data[(pair, role, m)]["scores"]
+                low = [(q, v) for q, v in sc_.items() if norm(v) <= TH["low_question"]["max_score"] + 1e-9]
+                if low:
+                    shown = "; ".join(f"«{qtext[role][q]}» — {v}" for q, v in low)
+                    add("low_question", pair, role, m, "high" if len(low) >= 2 or any(v <= SMIN for _, v in low) else "medium",
+                        "scores", f"В {m}-м месяце: {shown}. Средняя по анкете {num(series[role][m])}.")
+
         # text_vs_score
         for role in ROLES:
             for m, x in series[role].items():
@@ -278,15 +292,33 @@ def status_of(sigs: list[dict]) -> str:
     return "watch" if sigs else "ok"
 
 
-def statuses(sigs: dict, data: dict, people: dict, rd: dict) -> tuple[dict, dict]:
+def statuses(sigs: dict, data: dict, people: dict, rd: dict) -> tuple[dict, dict, dict]:
+    """Статус пары считается по ситуациям (все месячные сигналы одного типа и роли), клетки месяца по месячным."""
     last_all = max(m for (_, _, m) in data)
-    pair_status, cells = {}, {}
+    pair_status, cells, sits = {}, {}, {}
     for p in people:
         last = max(m for (pp, _, m) in data if pp == p) if rd["active_window"] == "pair_last_month" else last_all
         mine = [s for s in sigs.values() if s["pair_id"] == p]
-        pair_status[p] = status_of([s for s in mine if s["month"] > last - TH["active_months"]])
+        edge = last - TH["active_months"]
+        groups: dict[tuple, list[dict]] = {}
+        for s in sorted(mine, key=lambda s: s["month"]):
+            groups.setdefault((s["type"], s["role"]), []).append(s)
+        sits[p] = []
+        for (type_, role), items in groups.items():
+            months = [x["month"] for x in items]
+            since = months[-1]
+            for k in range(len(months) - 1, 0, -1):
+                if months[k] - months[k - 1] != 1:
+                    break
+                since = months[k - 1]
+            active = months[-1] > edge
+            pool = [x["severity"] for x in items if x["month"] > edge] if active else [items[-1]["severity"]]
+            sits[p].append({"key": f"{type_}:{p}:{role}", "type": type_, "role": role, "month": months[-1],
+                            "months": months, "since_month": since, "severity": max(pool, key=SEV.get),
+                            "active": active})
+        pair_status[p] = status_of([x for x in sits[p] if x["active"]])
         cells[p] = {m: status_of([s for s in mine if s["month"] == m]) for m in range(1, last_all + 1)}
-    return pair_status, cells
+    return pair_status, cells, sits
 
 
 def evaluate(data: dict, people: dict, labels: dict, near: Near) -> dict:
@@ -356,7 +388,7 @@ def main() -> None:
     meta = {p.pair_id: p for p in sc.lineup(len(people))}
     near = Near()
     ev = evaluate(data, people, labels, near)
-    _, _, prim_status, prim_cells = ev["primary"]
+    _, _, prim_status, prim_cells, prim_sits = ev["primary"]
     months = sorted({m for (_, _, m) in data})
 
     problems = []
@@ -387,6 +419,7 @@ def main() -> None:
                        "signal_keys": [s["key"] for s in ev["primary"][1].values()
                                        if s["pair_id"] == pid and s["month"] == m]}
                       for m in months],
+            "situations": sorted(prim_sits[pid], key=lambda x: (x["type"], x["role"])),
             "signals": [strip(s) for s in req],
             "optional": [strip(s) for s in opt],
         }

@@ -6,7 +6,6 @@ import { ArrowUpRight, Moon, Sun } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 
-import { RoleSwitch } from './RoleSwitch'
 import { useOverview } from '../api/queries'
 import { DemoPanel } from '../demo/DemoPanel'
 import { useTheme } from '../lib/theme'
@@ -36,9 +35,7 @@ export function AppShell() {
   }, [pairId])
 
   // Карточка пары подсвечивает «Обзор».
-  const section = pathname.startsWith('/signals') ? 'signals' : pathname.startsWith('/analytics') ? 'analytics' : pathname === '/' || pairId ? 'overview' : null
-  // В кабинете стажёра или наставника разделов HR нет.
-  const cabinet = pathname.startsWith('/me/')
+  const section = pathname.startsWith('/signals') ? 'signals' : pathname.startsWith('/analytics') ? 'analytics' : pathname.startsWith('/method') ? 'method' : pathname === '/' || pairId ? 'overview' : null
   const open = overview.data?.totals.open_signals ?? 0
 
   return (
@@ -49,7 +46,7 @@ export function AppShell() {
             <Mark />
             <span className={s.name}>Стажировки</span>
           </Link>
-          <nav className={s.nav} aria-label="Разделы" hidden={cabinet}>
+          <nav className={s.nav} aria-label="Разделы">
             <Link to="/" aria-current={section === 'overview' ? 'page' : undefined}>
               Обзор
             </Link>
@@ -60,13 +57,15 @@ export function AppShell() {
             <Link to="/analytics" aria-current={section === 'analytics' ? 'page' : undefined}>
               Аналитика
             </Link>
+            <Link to="/method" aria-current={section === 'method' ? 'page' : undefined}>
+              Как считаем
+            </Link>
             <a href="/form" target="_blank" rel="noopener" className={s.formLink}>
               Форма
               <ArrowUpRight aria-hidden="true" strokeWidth={1.8} />
             </a>
           </nav>
           <LiveIndicator updatedAt={overview.dataUpdatedAt} />
-          <RoleSwitch />
           <ThemeButton />
         </div>
       </header>
@@ -74,7 +73,7 @@ export function AppShell() {
         <Outlet />
       </main>
       <Toasts />
-      {!cabinet && <DemoPanel />}
+      <DemoPanel />
     </>
   )
 }

@@ -1,9 +1,10 @@
 // Расчёты карточки пары поверх API. Экран описан в docs/design/v2.md, раздел
 // «Карточка пары».
 
-import type { Cell, CommentItem, Overview, PairStatus, Role, Severity, Signal } from '../../api/types'
-import { formatNumber, monthsPhrase } from '../../lib/format'
-import { compareSignals, isOpen, sentenceAround, SEVERITY_RANK } from '../../lib/rules'
+import type { QuestionRow, Tone } from '../../components'
+import type { Cell, CommentItem, Overview, PairDetail, PairStatus, Role, Signal, Survey } from '../../api/types'
+import { formatNumber } from '../../lib/format'
+import { compareSignals, isOpen, sentenceAround } from '../../lib/rules'
 
 const STATUS_RANK: Record<PairStatus, number> = { risk: 0, watch: 1, ok: 2 }
 
@@ -36,38 +37,14 @@ export function inWindow(signal: Signal, lastMonth: number, activeMonths: number
   return signal.month > lastMonth - activeMonths
 }
 
-// Открытые сигналы одного условия за разные месяцы (тип, роль и заголовок
-// совпадают): один разговор, одна карточка, отметка уходит на все.
-export interface SignalGroup {
-  id: string
-  head: Signal
-  signals: Signal[]
-  severity: Severity
-}
-
-export function openGroups(signals: readonly Signal[]): SignalGroup[] {
-  const byKey = new Map<string, Signal[]>()
-  for (const s of signals.filter(isOpen)) {
-    const id = `${s.type}:${s.role}:${s.title}`
-    byKey.set(id, [...(byKey.get(id) ?? []), s])
-  }
-  return [...byKey]
-    .map(([id, list]) => {
-      const all = [...list].sort((a, b) => b.month - a.month)
-      const severity = all.reduce<Severity>((acc, s) => (SEVERITY_RANK[s.severity] < SEVERITY_RANK[acc] ? s.severity : acc), 'low')
-      return { id, head: all[0], signals: all, severity }
-    })
-    .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || compareSignals(a.head, b.head))
+// Открытые ситуации: сначала важные, потом свежие.
+export function openSignals(signals: readonly Signal[]): Signal[] {
+  return signals.filter(isOpen).sort(compareSignals)
 }
 
 // Отмеченные и старые сигналы: от свежего к старому.
 export function doneSignals(signals: readonly Signal[]): Signal[] {
   return signals.filter((s) => !isOpen(s)).sort((a, b) => b.month - a.month || compareSignals(a, b))
-}
-
-// «5-й месяц», «4–5-й месяцы».
-export function groupMonths(group: SignalGroup): string {
-  return monthsPhrase(group.signals.map((s) => s.month))
 }
 
 // Одна строка объяснения с цифрами: первое предложение текста бэкенда. Если оно
@@ -119,4 +96,23 @@ export function signalQuote(signal: Signal, comments: readonly CommentItem[]): Q
 export function marksWorthShowing(text: string, marks: readonly Range[]): Range[] {
   const core = text.replace(/[\s.!?…]+$/, '').length
   return marks.some((m) => m.start <= 0 && m.end >= core) ? [] : [...marks]
+}
+
+// Оценки пары по вопросам: строки по вопросам шкалы, значения по месяцам программы.
+export function questionGroups(survey: Survey, series: PairDetail['series'], months: readonly number[]) {
+  return (['intern', 'mentor'] as Role[]).map((role) => ({
+    role,
+    rows: survey.roles[role].questions
+      .filter((q) => q.type === 'scale')
+      .map<QuestionRow>((q) => ({
+        id: q.id,
+        text: q.text,
+        values: months.map((m) => series.find((x) => x.month === m)?.[role][q.id] ?? null),
+      })),
+  }))
+}
+
+// Клетка с низкой оценкой: не выше max_score от размаха шкалы, как у сигнала «низкая оценка по вопросу».
+export function lowTone(scale: { min: number; max: number }, maxScore: number): (value: number | null) => Tone {
+  return (v) => (v == null ? 'none' : (v - scale.min) / (scale.max - scale.min) <= maxScore ? 'low' : 'fine')
 }

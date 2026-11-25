@@ -85,6 +85,7 @@ class SurveyFiles:
         self._signals = _JsonFile(survey_dir / "signals.json")
         self._import_map = _JsonFile(survey_dir / "import_map.json")
         self._people = _JsonFile(survey_dir / "people.json")
+        self._quality = _JsonFile(survey_dir / "quality.json")
         self._survey_obj: Survey | None = None
         self._survey_src: Any = None
 
@@ -110,6 +111,11 @@ class SurveyFiles:
     @property
     def import_map(self) -> dict:
         return self._import_map.get({}) or {}
+
+    @property
+    def quality(self) -> dict | None:
+        """Результаты проверки модели, их пишет отдельный скрипт. Файла нет — None."""
+        return self._quality.get(None)
 
     @property
     def names(self) -> dict[str, str]:

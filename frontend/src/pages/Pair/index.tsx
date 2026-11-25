@@ -12,14 +12,14 @@ import { api, ApiError } from '../../api/client'
 import { queryKeys, useOverview, usePair, usePeople, useSurvey } from '../../api/queries'
 import type { Overview, PairDetail, PairStatus } from '../../api/types'
 import { PAIR_STATUS_LABEL, personName } from '../../lib/format'
-import { Hero } from '../../components'
+import { Hero, QuestionTable } from '../../components'
 import { useReduced, variants } from '../../lib/motion'
 import { collectMonth } from '../../lib/rules'
 import { BriefCard } from './BriefCard'
 import { Chart } from './Chart'
 import { Comments } from './Comments'
 import { clearFreshMarks } from './freshMarks'
-import { neighbours, pairOrder } from './model'
+import { lowTone, neighbours, pairOrder, questionGroups } from './model'
 import s from './Pair.module.css'
 import { SignalList } from './SignalList'
 
@@ -85,6 +85,7 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
   const months = survey.data?.months ?? Math.max(p.last_month, ...p.cells.map((c) => c.month))
   const scale = overview?.scale ?? survey.data?.scale ?? DEFAULT_SCALE
   const collect = collectMonth(people.data, months)
+  const monthList = Array.from({ length: months }, (_, i) => i + 1)
 
   return (
     <>
@@ -108,6 +109,16 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
                 Оценки по месяцам
               </h2>
               <Chart cells={p.cells} months={months} scale={scale} />
+              {survey.data && (
+                <div className={s.grades}>
+                  <QuestionTable
+                    compact
+                    months={monthList}
+                    groups={questionGroups(survey.data, p.series, monthList)}
+                    tone={lowTone(scale, survey.data.thresholds.low_question.max_score)}
+                  />
+                </div>
+              )}
             </section>
             <Comments pair={p} collect={collect} className={s.commentsCard} />
           </div>

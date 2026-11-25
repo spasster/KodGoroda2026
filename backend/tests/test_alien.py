@@ -66,6 +66,7 @@ def test_alien_set_connects_by_config_only(name, baseline, tmp_path):
         assert c.get("/api/overview").status_code == 200
         assert c.get("/api/signals?status=all").status_code == 200
         assert c.get("/api/analytics").status_code == 200
+        assert c.get("/api/method").status_code == 200
         scale = ctx.survey.scale_max
         got = snapshot(c)
         assert sorted(got) == [1, 2, 3, 4, 5] or name == "two_sheets"
@@ -100,9 +101,7 @@ def test_messy_pairs_from_sheet_and_extra_questions(tmp_path):
         assert {"comment", "change", "stay", "improve", "deadlines"} <= texts
         detail = c.get("/api/pairs/P-1").json()
         assert {x["question_id"] for x in detail["comments"]} <= {"comment", "change", "improve"}  # да/нет в комментарии не попадает
-        cab = c.get("/api/cabinet/intern/СТАЖЁР 1")
-        assert cab.status_code == 200
-        assert "stay" not in {q["id"] for q in cab.json()["questions"]}
+        assert c.get("/api/cabinet/intern/СТАЖЁР 1").status_code == 404
 
 
 def test_pairs_by_number_without_mentor_column(tmp_path):

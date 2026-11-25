@@ -1,19 +1,25 @@
 // Типы API из docs/contract.md. Меняется контракт, меняется этот файл.
 
 export type Role = 'intern' | 'mentor'
-export type SignalType = 'decline' | 'gap_intern_low' | 'gap_mentor_low' | 'text_vs_score' | 'silence'
+export type SignalType = 'decline' | 'gap_intern_low' | 'gap_mentor_low' | 'low_question' | 'text_vs_score' | 'silence'
 export type Severity = 'high' | 'medium' | 'low'
 export type PairStatus = 'risk' | 'watch' | 'ok'
 export type ReviewStatus = 'open' | 'confirmed' | 'rejected'
 
 export interface Quote { role: Role; month: number; question_id: string; text: string; start: number; end: number }
 export interface Signal {
-  key: string; type: SignalType; pair_id: string; role: Role | 'both'; month: number; severity: Severity
+  // Ситуация: все месячные срабатывания одного типа у одной пары и роли. Ключ без месяца.
+  key: string; type: SignalType; pair_id: string; role: Role | 'both'
+  month: number; months: number[]; since_month: number; severity: Severity
   title: string; explanation: string; action: string
   values: { role: Role; month: number; value: number | null }[]
   quotes: Quote[]
   active: boolean
-  review: { status: ReviewStatus; note: string | null; updated_at: string | null }
+  review: {
+    status: ReviewStatus; note: string | null; updated_at: string | null
+    month: number | null; previous: { status: ReviewStatus; month: number } | null
+  }
+  outcome: { review_month: number; last_month: number; repeated: boolean; text: string } | null
 }
 export interface Cell {
   month: number; intern_index: number | null; mentor_index: number | null; gap: number | null
@@ -57,6 +63,7 @@ export interface SurveyRole { title: string; person_label: string; questions: Qu
 export interface Thresholds {
   active_months: number
   gap: { min_gap: number; high_gap: number }
+  low_question: { max_score: number }
 }
 export interface Survey {
   title: string
@@ -109,7 +116,7 @@ export interface ImportReport {
 export interface ResponseEvent { pair_id: string; role: Role; person_id: string; month: number; source: string; new_signal_keys: string[] }
 export interface ReviewEvent { key: string; status: ReviewStatus }
 
-// ---------- Аналитика, подготовка к разговору, кабинеты ----------
+// ---------- Аналитика, подготовка к разговору, методика ----------
 
 export interface Analytics {
   months: number[]
@@ -118,7 +125,11 @@ export interface Analytics {
   program: { month: number; intern: number | null; mentor: number | null; responses: number; expected: number }[]
   questions: { role: Role; question_id: string; text: string; values: (number | null)[]; delta: number | null }[]
   topics: { topic: string; label: string; intern: number; mentor: number }[]
-  early: { pair_id: string; intern_id: string; intern_name: string | null; first_signal_month: number; risk_month: number | null }[]
+  early: {
+    pair_id: string; intern_id: string; intern_name: string | null; first_signal_month: number; risk_month: number | null
+    baseline_month: number | null; lead_months: number | null
+  }[]
+  effect: { pairs_with_signals: number; earlier: number; same_or_later: number; invisible: number; avg_lead: number | null; baseline_score: number }
 }
 
 export interface Brief {
@@ -127,16 +138,12 @@ export interface Brief {
   notes: { id: number; text: string; at: string }[]
 }
 
-export interface Cabinet {
-  role: Role
-  id: string
-  name: string | null
-  partner_id: string
-  partner_name: string | null
-  months: number
-  open_month: number
-  next_month: number | null
-  scale: { min: number; max: number }
-  questions: { id: string; text: string }[]
-  history: { month: number; filled: boolean; index: number | null; answers: Record<string, number | null>; comment: string | null }[]
+// GET /api/method
+export interface MethodCounts { found: number; missed: number; false_alarms: number }
+export interface QualitySet { id: string; name: string; comments: number; problems: number; model: MethodCounts; rules: MethodCounts }
+export interface Quality { updated: string; model: string; seconds_per_comment: number; sets: QualitySet[]; errors: string[] }
+export interface MethodSignal {
+  type: SignalType; name: string; how: string; why: string[]; action: string; limit: string; source: string | null
+  open: number; confirmed: number; rejected: number
 }
+export interface Method { principles: string[]; signals: MethodSignal[]; baseline: string; quality: Quality | null }

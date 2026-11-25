@@ -1,0 +1,17 @@
+.scroll { overflow-x: auto; }
+.table { width: 100%; border-collapse: separate; border-spacing: 6px 6px; font-size: var(--fs-s); }
+.table thead th { color: var(--text-2); font-weight: var(--fw-regular); font-variant-numeric: tabular-nums; text-align: center; }
+.table th[scope="row"] { text-align: left; font-weight: var(--fw-regular); padding-right: 16px; }
+.role { padding-top: 10px; text-align: left; color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: .06em; }
+.table td { width: 72px; text-align: center; }
+.cell { display: block; padding: 9px 0; border-radius: var(--r-s); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+.fine { background: var(--sunken); }
+.mid { background: var(--watch-wash); }
+.low { background: var(--risk-wash); }
+.none { color: var(--text-3); }
+.delta { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.deltaBad { color: var(--risk); font-weight: var(--fw-bold); }
+
+.compact { border-spacing: 4px 4px; }
+.compact td { width: 52px; }
+.compact .cell { padding: 6px 0; }

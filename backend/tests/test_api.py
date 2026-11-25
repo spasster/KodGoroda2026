@@ -12,8 +12,8 @@ from app.main import create_app
 from .conftest import INTERN_HEADERS, MENTOR_HEADERS, write_xlsx
 
 # Ключи типов из контракта.
-SIGNAL = {"key", "type", "pair_id", "role", "month", "severity", "title", "explanation", "action", "values", "quotes",
-          "active", "review"}
+SIGNAL = {"key", "type", "pair_id", "role", "month", "months", "since_month", "severity", "title", "explanation", "action",
+          "values", "quotes", "active", "review", "outcome"}
 QUOTE = {"role", "month", "question_id", "text", "start", "end"}
 CELL = {"month", "intern_index", "mentor_index", "gap", "status", "signal_keys", "missing"}
 PAIR_SUMMARY = {"pair_id", "intern_id", "mentor_id", "status", "last_month", "intern_index_last", "mentor_index_last",
@@ -67,7 +67,7 @@ def test_overview_and_pair_shapes(client, post):
     assert all(set(c) == COMMENT for c in d["comments"])
     for s in d["signals"]:
         assert set(s) == SIGNAL
-        assert set(s["review"]) == {"status", "note", "updated_at"}
+        assert set(s["review"]) == {"status", "note", "updated_at", "month", "previous"}
         assert all(set(q) == QUOTE for q in s["quotes"])
         assert all(set(v) == {"role", "month", "value"} for v in s["values"])
     tvs = next(s for s in d["signals"] if s["type"] == "text_vs_score")
@@ -88,12 +88,12 @@ def test_ingest_replace_and_new_signals(client, post):
     first = post("intern", "S-01", 1, 4.0)
     assert first["pair_id"] == "P-01" and first["replaced"] is False
     # Наставник ещё не заполнил: сигнал молчания для него появился сразу.
-    assert [s["key"] for s in first["new_signals"]] == ["silence:P-01:mentor:1"]
+    assert [s["key"] for s in first["new_signals"]] == ["silence:P-01:mentor"]
     second = post("mentor", "M-01", 1, 4.2)
     assert second["new_signals"] == []
     again = post("intern", "S-01", 1, 2.6)
     assert again["replaced"] is True
-    assert [s["key"] for s in again["new_signals"]] == ["gap_intern_low:P-01:both:1"]
+    assert [s["key"] for s in again["new_signals"]] == ["gap_intern_low:P-01:both"]
     assert client.get("/api/health").json()["responses"] == 2
 
 
@@ -179,16 +179,16 @@ def test_yandex_webhook_mentor_with_ids(client, post):
 def test_review_flow_and_filters(client, post):
     post.pair("01", 1, 3.4, 4.4)
     post.pair("02", 1, 2.8, 4.4)
-    r = client.post("/api/signals/gap_intern_low:P-02:both:1/review", json={"status": "confirmed"})
+    r = client.post("/api/signals/gap_intern_low:P-02:both/review", json={"status": "confirmed"})
     assert r.json()["review"]["status"] == "confirmed" and r.json()["active"] is True
-    assert set(s["key"] for s in client.get("/api/signals", params={"status": "confirmed"}).json()) == {"gap_intern_low:P-02:both:1"}
+    assert set(s["key"] for s in client.get("/api/signals", params={"status": "confirmed"}).json()) == {"gap_intern_low:P-02:both"}
     assert len(client.get("/api/signals", params={"status": "open", "active": "true"}).json()) == 1
     ov = client.get("/api/overview").json()
     assert ov["totals"]["confirmed"] == 1 and ov["totals"]["open_signals"] == 1
-    r = client.post("/api/signals/gap_intern_low:P-02:both:1/review", json={"status": "open"})
+    r = client.post("/api/signals/gap_intern_low:P-02:both/review", json={"status": "open"})
     assert r.json()["review"]["status"] == "open"
     assert client.post("/api/signals/nope/review", json={"status": "open"}).status_code == 404
-    bad = client.post("/api/signals/gap_intern_low:P-02:both:1/review", json={"status": "maybe"})
+    bad = client.post("/api/signals/gap_intern_low:P-02:both/review", json={"status": "maybe"})
     assert bad.status_code == 422 and "confirmed" in bad.json()["detail"]
     assert client.get("/api/signals", params={"status": "weird"}).status_code == 422
 
@@ -288,7 +288,7 @@ def test_events_are_broadcast(client, post):
     bus = client.app.state.ctx.bus
     queue = bus.subscribe()
     post("intern", "S-01", 1, 4.0)
-    client.post("/api/signals/silence:P-01:mentor:1/review", json={"status": "confirmed"})
+    client.post("/api/signals/silence:P-01:mentor/review", json={"status": "confirmed"})
     client.post("/api/admin/reset")
     messages = []
     deadline = time.time() + 2
@@ -299,8 +299,8 @@ def test_events_are_broadcast(client, post):
             time.sleep(0.01)
     bus.unsubscribe(queue)
     assert messages[0].startswith("event: response\ndata: ")
-    assert '"pair_id": "P-01"' in messages[0] and '"new_signal_keys": ["silence:P-01:mentor:1"]' in messages[0]
-    assert messages[1] == 'event: review\ndata: {"key": "silence:P-01:mentor:1", "status": "confirmed"}\n\n'
+    assert '"pair_id": "P-01"' in messages[0] and '"new_signal_keys": ["silence:P-01:mentor"]' in messages[0]
+    assert messages[1] == 'event: review\ndata: {"key": "silence:P-01:mentor", "status": "confirmed"}\n\n'
     assert messages[2] == "event: reset\ndata: {}\n\n"
 
 

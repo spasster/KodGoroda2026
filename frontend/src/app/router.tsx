@@ -2,9 +2,9 @@ import { createBrowserRouter } from 'react-router-dom'
 
 import { EmptyState, LinkButton } from '../components'
 import { AnalyticsPage } from '../pages/Analytics'
-import { CabinetPage } from '../pages/Cabinet'
 import { FormPage } from '../pages/Form'
 import { FormQrPage } from '../pages/Form/Qr'
+import { MethodPage } from '../pages/Method'
 import { OverviewPage } from '../pages/Overview'
 import { PairPage } from '../pages/Pair'
 import { SignalsPage } from '../pages/Signals'
@@ -34,7 +34,7 @@ export const router = createBrowserRouter([
       { path: 'pairs/:id', element: <PairPage /> },
       { path: 'signals', element: <SignalsPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'me/:role/:id', element: <CabinetPage /> },
+      { path: 'method', element: <MethodPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },

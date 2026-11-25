@@ -7,7 +7,17 @@ from app.indices import Dataset, r1
 from .conftest import INTERN_Q, MENTOR_Q
 
 
-def signals(client, **params) -> dict:
+def signals(client) -> dict:
+    """Месячные срабатывания по ключу `тип:пара:роль:месяц`. Из них склеиваются ситуации."""
+    snap = client.app.state.ctx.snapshot()
+    return {m.key: {"role": m.role, "month": m.month, "severity": m.severity, "title": m.title,
+                    "explanation": m.explanation, "action": m.action,
+                    "values": [v.model_dump() for v in m.values], "quotes": [q.model_dump() for q in m.quotes]}
+            for m in snap.monthly}
+
+
+def situations(client, **params) -> dict:
+    """Ситуации, как их отдаёт API, по ключу `тип:пара:роль`."""
     return {s["key"]: s for s in client.get("/api/signals", params=params).json()}
 
 
@@ -261,13 +271,13 @@ def test_active_window_and_pair_status(client, post):
     post.pair("01", 1, 2.8, 4.4)  # high в первом месяце
     for m in (2, 3, 4):
         post.pair("01", m, 4.0, 4.2)
-    s = signals(client)
-    assert s["gap_intern_low:P-01:both:1"]["active"] is False  # последние 2 месяца пары: 3 и 4
+    s = situations(client)
+    assert s["gap_intern_low:P-01:both"]["active"] is False  # последние 2 месяца пары: 3 и 4
     overview = client.get("/api/overview").json()
     pair = overview["pairs"][0]
     assert pair["status"] == "ok"
     assert pair["cells"][0]["status"] == "risk"  # ячейка считается без учёта active_months
-    assert pair["cells"][0]["signal_keys"] == ["gap_intern_low:P-01:both:1"]
+    assert pair["cells"][0]["signal_keys"] == ["gap_intern_low:P-01:both"]
 
 
 def test_status_watch_and_risk(client, post):
@@ -281,9 +291,15 @@ def test_status_watch_and_risk(client, post):
     assert [p["pair_id"] for p in client.get("/api/overview").json()["pairs"]] == ["P-01", "P-02", "P-03"]
 
 
-def test_two_medium_signals_make_risk(client, post):
-    post.pair("01", 1, 3.4, 4.4, intern_comment=None)
-    post.pair("01", 2, 3.4, 4.4)
+def test_two_medium_situations_make_risk(client):
+    # Разрыв 1,4 балла (medium) и одна двойка в анкете стажёра (medium): две ситуации.
+    for role, person, other, scores in (("intern", "S-01", "M-01", [4, 3, 3, 2, 3]), ("mentor", "M-01", "S-01", [5, 4, 4, 5])):
+        ids = INTERN_Q if role == "intern" else MENTOR_Q
+        extra = {"mentor_id": other} if role == "intern" else {"intern_id": other}
+        assert client.post("/api/ingest", json={"role": role, "person_id": person, "month": 1,
+                                                "answers": dict(zip(ids, scores)), **extra}).status_code == 200
+    assert {k: s["severity"] for k, s in situations(client).items()} == {
+        "gap_intern_low:P-01:both": "medium", "low_question:P-01:intern": "medium"}
     pair = client.get("/api/overview").json()["pairs"][0]
     assert pair["open_signals"] == 2
     assert pair["status"] == "risk"
@@ -291,7 +307,7 @@ def test_two_medium_signals_make_risk(client, post):
 
 def test_rejected_signal_is_inactive_and_lowers_status(client, post):
     post.pair("01", 1, 3.4, 4.4)
-    key = "gap_intern_low:P-01:both:1"
+    key = "gap_intern_low:P-01:both"
     r = client.post(f"/api/signals/{key}/review", json={"status": "rejected", "note": "Знаем, обсудили"})
     assert r.status_code == 200
     body = r.json()
@@ -338,3 +354,257 @@ def test_quote_positions_in_utf16(client, post):
     for q in quotes:
         shown = js[q["start"] * 2:q["end"] * 2].decode("utf-16-le")
         assert shown == q["text"]
+
+
+# Низкая оценка по вопросу.
+
+def send(client, role, person, month, scores, comment=None):
+    ids = INTERN_Q if role == "intern" else MENTOR_Q
+    other = {"mentor_id": "M-" + person[2:]} if role == "intern" else {"intern_id": "S-" + person[2:]}
+    answers = dict(zip(ids, scores))
+    if comment is not None:
+        answers["comment"] = comment
+    r = client.post("/api/ingest", json={"role": role, "person_id": person, "month": month, "answers": answers, **other})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_low_question_single_medium(client):
+    send(client, "intern", "S-01", 1, [4, 4, 4, 2, 4])
+    send(client, "mentor", "M-01", 1, [4, 4, 4, 4])
+    s = signals(client)["low_question:P-01:intern:1"]
+    assert s["severity"] == "medium" and s["role"] == "intern"
+    assert s["title"] == "Стажёр ставит 2 за «Хватает ли вам помощи наставника?»"
+    assert s["explanation"] == "В 1-м месяце: «Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3,6."
+    assert s["action"] == "Спросить стажёра, что стоит за этой оценкой."
+    assert [v["value"] for v in s["values"]] == [3.6]
+    assert not any(k.startswith("low_question:P-01:mentor") for k in signals(client))
+
+
+def test_low_question_minimum_score_is_high(client):
+    send(client, "intern", "S-01", 1, [4, 4, 4, 1, 4])
+    assert signals(client)["low_question:P-01:intern:1"]["severity"] == "high"
+
+
+def test_low_question_several_questions_one_signal_high(client):
+    send(client, "intern", "S-01", 1, [4, 4, 2, 2, 4])
+    found = {k: s for k, s in signals(client).items() if k.startswith("low_question")}
+    assert list(found) == ["low_question:P-01:intern:1"]
+    s = found["low_question:P-01:intern:1"]
+    assert s["severity"] == "high"
+    assert s["title"] == "Стажёр ставит низкие оценки по 2 вопросам"
+    assert s["explanation"] == ("В 1-м месяце: «Насколько понятно, что от вас ждут в задачах?» — 2; "
+                                "«Хватает ли вам помощи наставника?» — 2. Средняя по анкете 3,2.")
+
+
+def test_low_question_mentor_and_threshold(client):
+    send(client, "mentor", "M-01", 1, [4, 4, 3, 4], "")  # тройка выше порога
+    send(client, "mentor", "M-01", 2, [4, 4, 2, 4])
+    found = {k for k in signals(client) if k.startswith("low_question")}
+    assert found == {"low_question:P-01:mentor:2"}
+    s = signals(client)["low_question:P-01:mentor:2"]
+    assert s["title"] == "Наставник ставит 2 за «Насколько стажёр самостоятелен?»"
+    assert s["action"] == "Спросить наставника, что именно не получается у стажёра и знает ли об этом стажёр."
+
+
+def test_low_question_threshold_from_signals_json(client, survey_dir):
+    send(client, "intern", "S-01", 1, [4, 4, 3, 4, 4])
+    assert not any(k.startswith("low_question") for k in signals(client))
+    th = json.loads((survey_dir / "signals.json").read_text(encoding="utf-8"))
+    th["low_question"] = {"max_score": 0.5}
+    (survey_dir / "signals.json").write_text(json.dumps(th), encoding="utf-8")
+    import os
+    import time
+    os.utime(survey_dir / "signals.json", (time.time() + 5, time.time() + 5))
+    assert "low_question:P-01:intern:1" in signals(client)
+
+
+# Ситуации.
+
+def test_months_merge_into_one_situation(client, post):
+    post.pair("01", 1, 2.8, 4.4)  # high
+    post.pair("01", 2, 3.4, 4.4)  # medium
+    post.pair("01", 3, 3.4, 4.4)  # medium
+    assert {k for k in signals(client) if k.startswith("gap_intern_low")} == {
+        f"gap_intern_low:P-01:both:{m}" for m in (1, 2, 3)}
+    found = situations(client)
+    s = found["gap_intern_low:P-01:both"]
+    assert (s["month"], s["months"], s["since_month"]) == (3, [1, 2, 3], 1)
+    assert s["explanation"] == "В 3-м месяце стажёр ставит 3,4, наставник 4,4. Разрыв 1,0 балла. Повторяется с 1-го месяца, 3 мес. подряд."
+    assert s["severity"] == "medium"  # в окне активных месяцев (2 и 3) только medium
+    assert s["active"] is True
+    assert s["review"] == {"status": "open", "note": None, "updated_at": None, "month": None, "previous": None}
+    assert s["outcome"] is None
+    ov = client.get("/api/overview").json()
+    assert ov["pairs"][0]["open_signals"] == 1
+    assert [c["signal_keys"] for c in ov["pairs"][0]["cells"]] == [["gap_intern_low:P-01:both"]] * 3
+
+
+def test_since_month_starts_after_a_break(client, post):
+    for m, intern in ((1, 3.4), (2, 3.4), (3, 4.4), (4, 3.4)):
+        post.pair("01", m, intern, 4.4)
+    s = situations(client)["gap_intern_low:P-01:both"]
+    assert s["months"] == [1, 2, 4] and s["since_month"] == 4 and s["month"] == 4
+    assert s["explanation"].endswith("Разрыв 1,0 балла.")  # серия из одного месяца без пометки
+
+
+def test_inactive_situation_keeps_last_month_severity(client, post):
+    post.pair("01", 1, 2.8, 4.4)  # high
+    for m in (2, 3, 4):
+        post.pair("01", m, 4.4, 4.4)
+    s = situations(client)["gap_intern_low:P-01:both"]
+    assert s["active"] is False and s["severity"] == "high" and s["months"] == [1]
+
+
+def test_situation_quotes_fresh_months_first(client, post):
+    post.pair("01", 1, 4.6, 4.4, intern_comment="Задач почти нет, сижу без дела.")
+    post.pair("01", 2, 4.6, 4.4, intern_comment="Третью неделю сижу без задач, новых задач не дали.")
+    s = situations(client)["text_vs_score:P-01:intern"]
+    assert s["months"] == [1, 2]
+    assert s["quotes"][0]["month"] == 2 and {q["month"] for q in s["quotes"]} == {1, 2}
+    assert len(s["quotes"]) <= 3
+
+
+def test_new_situation_and_new_month_are_new_signals(client, post):
+    first = post("intern", "S-01", 1, 3.4, mentor_id="M-01")
+    assert [s["key"] for s in first["new_signals"]] == ["silence:P-01:mentor"]
+    second = post("mentor", "M-01", 1, 4.4)
+    assert [s["key"] for s in second["new_signals"]] == ["gap_intern_low:P-01:both"]
+    # Тот же разрыв в следующем месяце: ситуация старая, но у неё появился новый месяц.
+    post("intern", "S-01", 2, 3.4)
+    third = post("mentor", "M-01", 2, 4.4)
+    assert [s["key"] for s in third["new_signals"]] == ["gap_intern_low:P-01:both"]
+    assert third["new_signals"][0]["months"] == [1, 2]
+    # Замена анкеты без нового месяца ничего не добавляет.
+    assert post("mentor", "M-01", 2, 4.4)["new_signals"] == []
+
+
+# Отметка HR на ситуацию.
+
+def review(client, key, status, note=None):
+    r = client.post(f"/api/signals/{key}/review", json={"status": status, "note": note})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_review_remembers_pair_last_month(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    post.pair("01", 2, 3.4, 4.4)
+    out = review(client, "gap_intern_low:P-01:both", "confirmed", "Поговорили")
+    assert out["review"]["month"] == 2 and out["review"]["status"] == "confirmed"
+
+
+def test_rejected_situation_reopens_when_it_fires_again(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    key = "gap_intern_low:P-01:both"
+    out = review(client, key, "rejected", "Так у него всегда")
+    assert out["review"]["status"] == "rejected" and out["active"] is False
+    post.pair("01", 2, 3.8, 4.4)  # не сработало: отметка остаётся
+    again = situations(client)[key]
+    assert again["review"]["status"] == "rejected" and again["review"]["previous"] is None
+    post.pair("01", 3, 3.4, 4.4)  # сработало позже отметки
+    s = situations(client)[key]
+    assert s["review"]["status"] == "open"
+    assert s["review"]["previous"] == {"status": "rejected", "month": 1}
+    assert s["review"]["note"] == "Так у него всегда"
+    assert s["active"] is True and s["months"] == [1, 3]
+    ov = client.get("/api/overview").json()
+    assert ov["pairs"][0]["open_signals"] == 1 and ov["pairs"][0]["status"] == "watch"
+    assert ov["totals"]["rejected"] == 0
+    # Месяцы до отметки на ячейках остаются снятыми, свежий виден.
+    assert [c["status"] for c in ov["pairs"][0]["cells"]] == ["ok", "ok", "watch"]
+    # Новая отметка стирает «повтор».
+    done = review(client, key, "rejected")
+    assert done["review"]["status"] == "rejected" and done["review"]["previous"] is None and done["review"]["month"] == 3
+
+
+def test_confirmed_situation_does_not_reopen(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    key = "gap_intern_low:P-01:both"
+    review(client, key, "confirmed")
+    post.pair("01", 2, 3.4, 4.4)
+    s = situations(client)[key]
+    assert s["review"]["status"] == "confirmed" and s["review"]["previous"] is None and s["active"] is True
+
+
+# Что изменилось после отметки.
+
+def test_outcome_needs_confirmed_status_and_a_newer_month(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    key = "gap_intern_low:P-01:both"
+    assert review(client, key, "confirmed")["outcome"] is None  # после отметки анкет ещё нет
+    post.pair("01", 2, 4.2, 4.4)
+    assert situations(client)[key]["outcome"]["review_month"] == 1
+    review(client, key, "rejected")
+    assert situations(client)[key]["outcome"] is None  # ложная тревога: сравнивать не с чем
+    review(client, key, "open")
+    assert situations(client)[key]["outcome"] is None
+
+
+def test_outcome_gap_goes_down(client, post):
+    post.pair("01", 1, 2.8, 4.4)
+    post.pair("01", 2, 2.8, 4.4)
+    key = "gap_intern_low:P-01:both"
+    review(client, key, "confirmed")
+    post.pair("01", 3, 4.0, 4.4)
+    out = situations(client)[key]["outcome"]
+    assert out == {"review_month": 2, "last_month": 3, "repeated": False,
+                   "text": "После отметки в 2-м месяце разрыв: 1,6 → 0,4"}
+
+
+def test_outcome_repeated_gap(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    key = "gap_intern_low:P-01:both"
+    review(client, key, "confirmed")
+    post.pair("01", 2, 3.0, 4.4)
+    out = situations(client)[key]["outcome"]
+    assert out["repeated"] is True and out["text"] == "После отметки в 1-м месяце разрыв: 1,0 → 1,4"
+
+
+def test_outcome_decline_shows_index(client, post):
+    for m, v in enumerate([4.6, 3.8, 3.0], start=1):
+        post.pair("01", m, v, v)
+    key = "decline:P-01:intern"
+    review(client, key, "confirmed")
+    post.pair("01", 4, 4.2, 4.2)
+    out = situations(client)[key]["outcome"]
+    assert out["text"] == "После отметки в 3-м месяце оценка стажёра: 3,0 → 4,2" and out["repeated"] is False
+    assert situations(client)["decline:P-01:mentor"]["outcome"] is None
+
+
+def test_outcome_low_question_shows_index_of_role(client):
+    send(client, "mentor", "M-01", 1, [4, 4, 2, 4])
+    key = "low_question:P-01:mentor"
+    review(client, key, "confirmed")
+    send(client, "mentor", "M-01", 2, [5, 5, 4, 4])
+    assert situations(client)[key]["outcome"]["text"] == "После отметки в 1-м месяце оценка наставника: 3,5 → 4,5"
+
+
+def test_outcome_silence_words(client, post):
+    post.pair("01", 1, 4.0, 4.2)
+    post("mentor", "M-01", 2, 4.2)  # стажёр пока молчит
+    key = "silence:P-01:intern"
+    review(client, key, "confirmed")
+    post.pair("01", 3, 4.0, 4.2)
+    out = situations(client)[key]["outcome"]
+    assert out["repeated"] is False and out["text"] == "После отметки в 2-м месяце не повторялось"
+    post("mentor", "M-01", 4, 4.2)  # снова только наставник
+    out = situations(client)[key]["outcome"]
+    assert out["repeated"] is True and out["text"] == "После отметки в 2-м месяце повторилось в 4-м"
+
+
+def test_reviews_table_gets_month_column(tmp_path):
+    import sqlite3
+
+    from app import db
+    path = tmp_path / "old.sqlite"
+    conn = sqlite3.connect(path)
+    conn.execute("CREATE TABLE reviews (signal_key TEXT PRIMARY KEY, status TEXT NOT NULL, note TEXT, updated_at TEXT NOT NULL)")
+    conn.execute("INSERT INTO reviews VALUES ('x', 'confirmed', NULL, '2026-11-01T00:00:00Z')")
+    conn.commit()
+    conn.close()
+    db.init_schema(path)
+    with db.connect(path) as conn:
+        assert conn.execute("SELECT month FROM reviews").fetchone()["month"] is None
+        db.set_review(conn, "x", "rejected", None, 3)
+        assert conn.execute("SELECT month FROM reviews").fetchone()["month"] == 3

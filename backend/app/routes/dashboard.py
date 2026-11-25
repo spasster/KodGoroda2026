@@ -39,11 +39,13 @@ class ReviewIn(BaseModel):
 @router.post("/signals/{key}/review", response_model=Signal)
 def review_signal(key: str, body: ReviewIn, ctx: Context = Depends(get_ctx)) -> Signal:
     with ctx.write_lock:
-        if ctx.snapshot().signal(key) is None:
+        snap = ctx.snapshot()
+        signal = snap.signal(key)
+        if signal is None:
             raise HTTPException(404, f"Сигнал {key} не найден")
         note = (body.note or "").strip() or None
         with ctx.connect() as conn:
-            db.set_review(conn, key, body.status, note)
+            db.set_review(conn, key, body.status, note, snap.ds.pair_last_month(signal.pair_id))
         signal = ctx.snapshot().signal(key)
     ctx.bus.publish("review", {"key": key, "status": body.status})
     return signal

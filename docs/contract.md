@@ -7,6 +7,7 @@
 ```
 survey/survey.json      анкета: роли, вопросы, шкала, парные вопросы
 survey/signals.json     пороги сигналов
+survey/quality.json     результаты проверки модели (необязательно, пишет отдельный скрипт)
 survey/import_map.json  соответствие колонок Excel полям (создаёт бэкенд для формата data/sample)
 data/generate.py        генератор тестового набора
 data/sample/            interns.xlsx, mentors.xlsx, truth.json
@@ -63,10 +64,10 @@ docker-compose.yml, Makefile, .env.example
 - `pairs(pair_id, intern_id, mentor_id)`. `pair_id` строится из ID стажёра: `S-03` → `P-03`. Пара один к одному.
 - `responses(id, pair_id, role, person_id, month, source, submitted_at, created_at)`. `source`: `excel`, `form`, `yandex`, `gsheet`. Уникальность по `(pair_id, role, month)`, повторная анкета заменяет прежнюю.
 - `answers(response_id, question_id, score, text)`.
-- `reviews(signal_key, status, note, updated_at)`.
+- `reviews(signal_key, status, note, updated_at, month)`. Ключ — ситуация. `month` — последний месяц с анкетами у пары на момент отметки. В старой базе колонку добавляет `ALTER TABLE` при запуске.
 - `text_cache(text_hash, analyzer, result_json)`.
 
-Сигналы не хранятся: данных мало, они пересчитываются при каждом запросе. Кэшируется только разбор текста.
+Сигналы и ситуации не хранятся: данных мало, они пересчитываются при каждом запросе. Кэшируется только разбор текста.
 
 ## Индексы
 
@@ -92,17 +93,18 @@ def analyze(text: str, role: str, question_id: str) -> TextInsight
 
 ## Сигналы
 
-Тип, условие, важность. Пороги из `survey/signals.json`.
+Бэкенд считает месячные сигналы: условие сработало в конкретном месяце. Наружу API отдаёт **ситуации**: все месячные сигналы одного типа у одной пары и роли склеены в одну запись. Месячные сигналы остаются внутри: по ним считаются статус клетки месяца и эталон `data/truth.json`.
+
+Тип, условие, важность месячного сигнала. Пороги из `survey/signals.json`.
 
 | `type` | Условие | `role` | Важность |
 |---|---|---|---|
 | `decline` | нормированный индекс роли упал на `two_month_drop` и больше два месяца подряд или на `single_drop` за месяц | `intern` или `mentor` | `high` за резкий спад, иначе `medium` |
 | `gap_intern_low` | `gap / размах >= min_gap`: стажёру хуже, чем видит наставник | `both` | `high`, если `>= high_gap` или разрыв растёт второй месяц, иначе `medium` |
 | `gap_mentor_low` | `-gap / размах >= min_gap`: наставник недоволен, а стажёр оценивает всё высоко | `both` | `medium`, `high` при `>= high_gap` |
+| `low_question` | в анкете роли за месяц есть вопрос типа `scale` с нормированной оценкой `<= low_question.max_score` (по умолчанию 0,25: на шкале 1–5 это 2 и ниже). Один сигнал на анкету, даже если низких вопросов несколько | `intern` или `mentor` | `high`, если таких вопросов два и больше или оценка равна минимуму шкалы, иначе `medium` |
 | `text_vs_score` | нормированный индекс роли `>= min_index`, а комментарий той же анкеты с `sentiment <= max_sentiment` или с темой из `tasks_shortage`, `overload`, `mentor` | `intern` или `mentor` | `medium`, `high` для темы `mentor` |
 | `silence` | (а) нет анкеты за месяц, хотя у второй стороны пары она есть или месяц уже прошёл для остальных пар; (б) комментарий пуст, хотя в прошлые месяцы был; (в) длина комментария упала на `length_drop` против среднего прошлых при среднем `>= min_prev_length`; (г) все оценки анкеты одинаковые три месяца подряд | `intern` или `mentor` | (а) `medium`, остальное `low` |
-
-Сигнал фиксируется на месяц, в котором условие выполнилось. Одинаковое условие в соседние месяцы даёт отдельные сигналы.
 
 Как читать условия. Бэкенд и эталон `data/expected.py` считают одинаково:
 - Спад за два месяца: индекс падал в каждом из двух месяцев, а в сумме упал на `two_month_drop` и больше. Ряд 4,6 → 4,4 → 3,8 даёт сигнал, ряд 4,4 → 4,2 → 4,0 не даёт.
@@ -112,13 +114,36 @@ def analyze(text: str, role: str, question_id: str) -> TextInsight
 - Молчание (в): средняя длина считается только по непустым прошлым комментариям.
 - Молчание (г): в каждой из трёх анкет подряд все оценки одинаковые. От анкеты к анкете оценка может меняться.
 - Текст против оценки: хватает одного комментария с проверенной цитатой и тональностью не выше `max_sentiment` или с темой из списка. Пометка спорной разметки `sure: false` в `data/scenarios.py` сигнал не отменяет.
+- Низкая оценка по вопросу: берутся только вопросы типа `scale`, оценка сравнивается с порогом после нормировки.
 - Активные месяцы отсчитываются от последнего месяца, по которому у пары есть анкета.
 
-Ключ сигнала стабилен: `{type}:{pair_id}:{role}:{month}`. Отметки HR привязаны к ключу.
+### Ситуации
 
-Активный сигнал: месяц сигнала входит в последние `active_months` месяцев пары и статус не `rejected`.
+Ситуация = все месячные сигналы одного `type`, `pair_id` и `role`. Ключ ситуации стабилен и без месяца: `{type}:{pair_id}:{role}`. Месячный сигнал внутри имеет ключ `{type}:{pair_id}:{role}:{month}`, наружу он не выходит, кроме `data/truth.json`.
 
-Статус пары: `risk`, если есть активный `high` или два и больше активных сигнала; `watch`, если есть один активный; иначе `ok`. Статус ячейки месяца считается так же по сигналам этого месяца без учёта `active_months`.
+- `month` — последний месяц, когда сработало; `months` — все такие месяцы по возрастанию; `since_month` — начало последней непрерывной серии месяцев, которая кончается на `month`.
+- `active`: `month` входит в последние `active_months` месяцев пары и статус не `rejected`. Подтверждённая ситуация остаётся активной, отклонённая нет.
+- `severity`: самая высокая важность среди месячных сигналов в окне активных месяцев. Если ситуация не активна, важность последнего месяца.
+- `title`, `action`, `values` берутся от последнего месячного сигнала. `explanation` тоже, а если серия длиннее одного месяца, в конец добавляется «Повторяется с 3-го месяца, 2 мес. подряд.»
+- `quotes` собираются из месячных сигналов: свежие месяцы первыми, без повторов, не больше 3.
+- Статус пары: `risk`, если есть активная ситуация с `high` или активных ситуаций две и больше; `watch`, если одна; иначе `ok`. Статус клетки месяца считается по месячным сигналам этого месяца без учёта `active_months`; месячные сигналы отклонённой ситуации в клетке не считаются.
+- `Cell.signal_keys` — ключи ситуаций, которые сработали в этом месяце. `highlights[].signal_key` — ключ ситуации.
+- `open_signals`, `totals.open_signals`, `totals.confirmed`, `totals.rejected` считаются по ситуациям.
+
+### Отметка HR
+
+HR отмечает ситуацию целиком: «подтвердилось» (`confirmed`) или «ложная тревога» (`rejected`). Вместе со статусом запоминается `review.month` — последний месяц с анкетами у пары на момент отметки.
+
+**Повтор после ложной тревоги.** Если статус `rejected`, а ситуация сработала в месяце позже `review.month`, статус снова `open`, а `review.previous = {status: 'rejected', month}`. Заметка остаётся. Новая отметка HR убирает `previous`. У `confirmed` статус не меняется.
+
+**Что изменилось после отметки (`outcome`).** Заполняется, если статус `confirmed` (или есть `review.previous`) и у пары есть анкеты за месяц позже `review.month`. Иначе `null`. `repeated`: ситуация сработала в месяце позже `review.month`. `text` по типу:
+- разрывы: «После отметки в 4-м месяце разрыв: 1,8 → 0,6» (модуль разрыва в месяце отметки и в последнем месяце, где ответили обе стороны);
+- `decline`, `low_question`: «После отметки в 4-м месяце оценка стажёра: 3,0 → 4,2» (индекс роли в месяце отметки и в последнем месяце с её анкетой);
+- `text_vs_score`, `silence`: «После отметки в 4-м месяце повторилось в 5-м» или «После отметки в 4-м месяце не повторялось».
+
+Если для сравнения нет значения (нет анкеты в месяце отметки), берётся формулировка «повторилось / не повторялось».
+
+### Тексты
 
 Каждый сигнал содержит понятный HR текст на русском:
 - `title`: что произошло, коротко. Пример: «Стажёр оценивает стажировку всё ниже».
@@ -135,19 +160,30 @@ def analyze(text: str, role: str, question_id: str) -> TextInsight
 
 ```ts
 type Role = 'intern' | 'mentor'
-type SignalType = 'decline' | 'gap_intern_low' | 'gap_mentor_low' | 'text_vs_score' | 'silence'
+type SignalType = 'decline' | 'gap_intern_low' | 'gap_mentor_low' | 'low_question' | 'text_vs_score' | 'silence'
 type Severity = 'high' | 'medium' | 'low'
 type PairStatus = 'risk' | 'watch' | 'ok'
 type ReviewStatus = 'open' | 'confirmed' | 'rejected'
 
 interface Quote { role: Role; month: number; question_id: string; text: string; start: number; end: number }
+// Одна ситуация: все месячные срабатывания одного типа у пары и роли
 interface Signal {
-  key: string; type: SignalType; pair_id: string; role: Role | 'both'; month: number; severity: Severity
+  key: string                  // `{type}:{pair_id}:{role}`, без месяца
+  type: SignalType; pair_id: string; role: Role | 'both'
+  month: number                // последний месяц, когда сработало
+  months: number[]             // все месяцы, когда сработало
+  since_month: number          // начало последней непрерывной серии, которая кончается на `month`
+  severity: Severity
   title: string; explanation: string; action: string
   values: { role: Role; month: number; value: number | null }[]
   quotes: Quote[]
   active: boolean
-  review: { status: ReviewStatus; note: string | null; updated_at: string | null }
+  review: {
+    status: ReviewStatus; note: string | null; updated_at: string | null
+    month: number | null                                       // месяц, когда поставлена отметка
+    previous: { status: ReviewStatus; month: number } | null   // ложная тревога, после которой сработало снова
+  }
+  outcome: { review_month: number; last_month: number; repeated: boolean; text: string } | null
 }
 interface Cell {
   month: number; intern_index: number | null; mentor_index: number | null; gap: number | null
@@ -168,6 +204,15 @@ interface CommentItem {
   role: Role; month: number; question_id: string; question_text: string; text: string
   sentiment: number | null; topics: string[]; highlights: { start: number; end: number; signal_key: string }[]
 }
+interface MethodSignal {
+  type: SignalType; name: string
+  how: string; why: string[]; action: string; limit: string; source: string | null
+  open: number; confirmed: number; rejected: number    // ситуаций сейчас
+}
+interface Method {
+  principles: string[]; signals: MethodSignal[]; baseline: string
+  quality: object | null     // survey/quality.json как есть
+}
 interface PairDetail extends PairSummary {
   series: { month: number; intern_index: number | null; mentor_index: number | null
             intern: Record<string, number | null>; mentor: Record<string, number | null> }[]
@@ -185,8 +230,9 @@ interface PairDetail extends PairSummary {
 | `GET /api/people` | `{interns: [{id, mentor_id, pair_id, next_month}], mentors: [...]}` для выбора в форме; `next_month` — первый месяц без анкеты |
 | `GET /api/overview` | `Overview` |
 | `GET /api/pairs/{pair_id}` | `PairDetail`, 404 если нет |
-| `GET /api/signals?status=open\|confirmed\|rejected\|all&active=true` | `Signal[]`, сначала `high`, потом свежие |
-| `POST /api/signals/{key}/review` | тело `{status, note?}`, ответ — обновлённый `Signal` |
+| `GET /api/signals?status=open\|confirmed\|rejected\|all&active=true` | `Signal[]` (ситуации), сначала `high`, потом по свежести `month` |
+| `POST /api/signals/{key}/review` | `key` — ключ ситуации. Тело `{status, note?}`, запоминает `review.month`, ответ — обновлённый `Signal` |
+| `GET /api/method` | `Method`: принципы, по каждому сигналу формула, причины, действие, ограничения и источник, число ситуаций по статусам; `quality` — содержимое `survey/quality.json` (в папке `SURVEY_DIR`) или `null` |
 | `POST /api/ingest` | приём анкеты, см. ниже |
 | `POST /api/ingest/yandex` | вебхук Яндекс Форм, см. ниже |
 | `POST /api/sync/gsheet` | забрать новые строки из опубликованных CSV Google Таблиц (`GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`) |
@@ -204,13 +250,13 @@ interface PairDetail extends PairSummary {
 
 - Пара находится по `person_id`. Для нового стажёра можно передать `intern_id` и `mentor_id`, тогда пара создаётся.
 - Оценки проверяются по шкале, лишние ключи игнорируются, неизвестный вопрос в ответе не ошибка.
-- Ответ: `{ response_id, pair_id, replaced: bool, new_signals: Signal[] }`, где `new_signals` — сигналы, которых не было до этой анкеты.
+- Ответ: `{ response_id, pair_id, replaced: bool, new_signals: Signal[] }`, где `new_signals` — ситуации, которых не было до этой анкеты, и ситуации, у которых после неё появился новый месяц в `months`.
 - Ошибки: 422 с `{detail}` на русском.
 
 Вебхук Яндекс Форм `POST /api/ingest/yandex` принимает плоский JSON: `role`, `person_id`, `month` и ответы, где ключ — `id` вопроса или его текст. Значения могут быть строками. В Яндекс Формах в разделе «Интеграции» настраивается HTTP POST на `<адрес>/api/ingest/yandex` с телом-шаблоном из переменных ответов. Пример тела лежит в `docs/integrations.md`.
 
 События `GET /api/events` (SSE), каждые 15 секунд комментарий `: ping`:
-- `event: response`, `data: {pair_id, role, person_id, month, source, new_signal_keys}`
+- `event: response`, `data: {pair_id, role, person_id, month, source, new_signal_keys}` (ключи ситуаций, как в `new_signals`)
 - `event: review`, `data: {key, status}`
 - `event: reset`, `data: {}`
 
@@ -229,18 +275,44 @@ interface PairDetail extends PairSummary {
 - `/` Обзор: итоги, таблица «пара × месяц», активные сигналы, последние поступления.
 - `/pairs/:id` Карточка пары: две линии индексов, ответы по вопросам, комментарии с подсвеченными цитатами, сигналы с действием и отметкой.
 - `/signals` Сигналы: очередь «с кем поговорить», фильтры по статусу и важности, отметка «подтвердилось» или «ложная тревога».
+- `/method` Как считаем: принципы, по каждому сигналу формула, причины и ограничения, результаты проверки модели (`GET /api/method`).
 - `/form` Форма для стажёра и наставника: собирается из `/api/survey`, удобна с телефона, без навигации дашборда.
 
 Новый ответ, пришедший через SSE, виден без перезагрузки: обновляются данные и показывается уведомление.
 
-## Дополнения: аналитика, подготовка к разговору, кабинеты
+## Дополнения: аналитика, подготовка к разговору, методика
 
 | Метод и путь | Что делает |
 |---|---|
-| `GET /api/analytics` | общая аналитика программы: средние по месяцам, вопросы по месяцам, темы комментариев, месяц первого сигнала по парам |
-| `GET /api/pairs/{pair_id}/brief` | сводка по паре, вопросы для разговора (`to`: кому задавать), заметки HR. Собирается правилами из сигналов и тем |
+| `GET /api/analytics` | общая аналитика программы: средние по месяцам, вопросы по месяцам, темы комментариев, раннее предупреждение по парам (`early`), сравнение с базовым способом (`effect`) |
+| `GET /api/pairs/{pair_id}/brief` | сводка по паре, вопросы для разговора (`to`: кому задавать), заметки HR. Собирается правилами из ситуаций и тем |
 | `POST /api/pairs/{pair_id}/notes` | тело `{text}`: добавить заметку HR, ответ как у `brief` |
-| `GET /api/cabinet/{intern\|mentor}/{person_id}` | личный кабинет: только свои ответы по месяцам, ответы второй стороны пары не отдаются |
 
 Имена людей берутся из `survey/people.json` (ID → имя). Нет записи — интерфейс показывает ID.
-Кабинеты открываются переключателем роли в шапке, входа по паролю нет: это демонстрация.
+
+Кабинетов стажёра и наставника нет: интерфейс один, для HR.
+
+### Раннее предупреждение и эффект
+
+Базовый способ: HR смотрит среднюю оценку за один месяц и реагирует, когда она ниже `baseline.index_below` (по умолчанию 0,625, на шкале 1–5 это 3,5). Порог в нормированном индексе, сравнение строгое.
+
+`early[]` — пары, у которых есть хотя бы одна не отклонённая ситуация:
+
+```ts
+interface Early {
+  pair_id: string; intern_id: string; intern_name: string | null
+  first_signal_month: number       // первый месяц срабатывания
+  risk_month: number | null        // месяц, когда пара стала «Пора поговорить»
+  baseline_month: number | null    // первый месяц, когда индекс стажёра или наставника ниже порога
+  lead_months: number | null       // baseline_month - first_signal_month; null, если базовый способ не сработал
+}
+```
+
+Блок `effect` в ответе аналитики:
+
+```ts
+effect: { pairs_with_signals: number; earlier: number; same_or_later: number; invisible: number
+          avg_lead: number | null; baseline_score: number }
+```
+
+`earlier` — пар с `lead_months > 0`; `same_or_later` — с `lead_months <= 0`; `invisible` — пар, где базовый способ не сработал совсем; `avg_lead` — среднее `lead_months` по парам, где он не `null`, один знак; `baseline_score` — порог в баллах шкалы.

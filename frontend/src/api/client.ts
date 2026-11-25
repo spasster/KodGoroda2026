@@ -4,11 +4,11 @@
 import type {
   Analytics,
   Brief,
-  Cabinet,
   Health,
   ImportReport,
   IngestRequest,
   IngestResult,
+  Method,
   Overview,
   PairDetail,
   People,
@@ -95,7 +95,7 @@ export const api = {
   analytics: () => request<Analytics>('/analytics'),
   brief: (pairId: string) => request<Brief>(`/pairs/${encodeURIComponent(pairId)}/brief`),
   addNote: (pairId: string, text: string) => postJson<Brief>(`/pairs/${encodeURIComponent(pairId)}/notes`, { text }),
-  cabinet: (role: 'intern' | 'mentor', id: string) => request<Cabinet>(`/cabinet/${role}/${encodeURIComponent(id)}`),
+  method: () => request<Method>('/method'),
 
   ingest: (payload: IngestRequest) => postJson<IngestResult>('/ingest', payload),
   ingestYandex: (payload: Record<string, unknown>) => postJson<IngestResult>('/ingest/yandex', payload),
