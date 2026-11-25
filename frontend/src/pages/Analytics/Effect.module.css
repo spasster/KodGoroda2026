@@ -1,0 +1,44 @@
+.hero {
+  position: relative; overflow: hidden; grid-column: 1 / -1;
+  padding: var(--s-6) var(--s-6) calc(var(--s-6) + 4px);
+  border-radius: var(--r-card); background: var(--hero-bg); color: var(--hero-text);
+}
+.overline {
+  display: block; color: var(--hero-text-2); font-family: var(--font-wide); font-size: 11px; font-weight: var(--fw-medium);
+  letter-spacing: .12em; text-transform: uppercase;
+}
+.title { margin: var(--s-2) 0 var(--s-5); font-family: var(--font-wide); font-size: var(--fs-xl); font-weight: var(--fw-medium); line-height: var(--lh-tight); }
+
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5) var(--s-6); margin: 0; }
+.stat { min-width: 0; }
+.value { font-family: var(--font-wide); font-size: 44px; font-weight: var(--fw-medium); line-height: 1.05; font-variant-numeric: tabular-nums; }
+.label { margin: var(--s-2) 0 0; max-width: 30ch; color: var(--hero-text-2); font-size: var(--fs-s); line-height: var(--lh-snug); }
+
+.note { max-width: 78ch; margin: var(--s-5) 0 0; color: var(--hero-text-2); font-size: var(--fs-xs); line-height: var(--lh-body); }
+
+.early {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-6);
+  margin: var(--s-4) 0 0; padding: 0; list-style: none; font-size: var(--fs-s);
+}
+.early li { display: flex; flex-direction: column; padding: var(--s-2) 0; border-top: 1px solid var(--hero-line); }
+.early a { color: var(--hero-text); font-weight: var(--fw-medium); text-decoration: none; }
+.early a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.early span { color: var(--hero-text-2); font-size: var(--fs-xs); }
+
+/* Светящаяся линия по нижнему краю: прорисовывается слева направо за 600 мс. */
+.trace {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--hero-glow);
+  filter: drop-shadow(0 0 6px var(--hero-glow)); transform-origin: 0 50%;
+  animation: draw 600ms var(--ease-io) both;
+}
+@keyframes draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+@media (max-width: 1023px) {
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .early { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .hero { padding: var(--s-5) var(--s-4) var(--s-6); }
+  .value { font-size: 36px; }
+}
+@media (prefers-reduced-motion: reduce) { .trace { animation: none; } }

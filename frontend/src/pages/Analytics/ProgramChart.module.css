@@ -1,0 +1,18 @@
+.chart { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font); }
+.reveal { transform-origin: 0 0; transition: transform 900ms var(--ease-io); }
+.grid { stroke: var(--chart-grid); stroke-width: 1; }
+.gridHalf { stroke: var(--chart-grid); stroke-width: 1; stroke-dasharray: 2 4; opacity: .7; }
+.tick { fill: var(--text-3); font-size: 12px; font-variant-numeric: tabular-nums; }
+.breakGap { fill: var(--surface); }
+.breakMark { fill: none; stroke: var(--text-3); stroke-width: 1.4; stroke-linecap: round; }
+.internLine, .mentorLine { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.internLine { stroke: var(--series-intern); }
+.mentorLine { stroke: var(--series-mentor); stroke-width: 2.5; }
+.internDot { fill: var(--series-intern); stroke: var(--surface); stroke-width: 2; }
+.mentorDot { fill: var(--series-mentor); stroke: var(--surface); stroke-width: 2; }
+.internValue, .mentorValue { font-size: 16px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.internValue { fill: var(--series-intern); }
+.mentorValue { fill: var(--series-mentor); }
+.who { font-size: 13px; font-weight: var(--fw-regular); }
+
+@media (prefers-reduced-motion: reduce) { .reveal { transition: none; } }
