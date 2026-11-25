@@ -1,103 +1,73 @@
-/* Обзор, docs/design/v2.md: заголовок, четыре итога, таблица пар в белой карточке. */
+/* Обзор, docs/design/v2.md: шапка страницы и одна таблица «стажёр × месяц». */
 
 .error { margin-top: 24px; }
 
-/* ---------- Заголовок ---------- */
-.head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; padding: 32px 0 24px; }
-.title { font-family: var(--font-wide); font-size: var(--fs-2xl); font-weight: var(--fw-bold); line-height: var(--lh-tight); }
-.when { color: var(--text-2); font-size: var(--fs-m); }
-
-/* ---------- Итоги ---------- */
-.totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.total {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
-  padding: 20px 24px 22px; border: 0; border-radius: var(--r-card);
-  background: var(--surface); box-shadow: var(--shadow-low); color: var(--text-1); text-align: left;
-  transition: box-shadow var(--dur-2) var(--ease-out);
-}
-.pick:not(:disabled):hover { box-shadow: var(--shadow-middle); }
-.pick[aria-pressed="true"] { box-shadow: var(--shadow-low), inset 0 0 0 2px var(--brand); }
-.pick:disabled { cursor: default; }
-.totalNum {
-  display: inline-flex; align-items: baseline; gap: 10px;
-  font-family: var(--font-wide); font-size: 40px; font-weight: var(--fw-bold); line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-.roll { position: relative; display: inline-flex; overflow: hidden; }
-.of { font-size: var(--fs-l); color: var(--text-2); }
-.totalLabel { display: inline-flex; align-items: center; gap: 8px; }
-
 /* ---------- Таблица ---------- */
-.card {
-  margin-top: 16px; padding: 8px 16px 12px;
-  border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low);
-}
-.table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-.colWho { width: 240px; }
-.colMain { width: 280px; }
+.card { margin-top: var(--s-2); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low); overflow: hidden; }
+.scroll { overflow-x: auto; }
+.table { width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 
 .table thead th {
-  height: 44px; padding: 0 4px; border-bottom: 1px solid var(--line);
+  height: 36px; padding: 0 var(--s-2); border-bottom: 1px solid var(--line);
   color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-regular); text-align: left; white-space: nowrap;
 }
-.table thead th:first-child { padding-left: 8px; }
-.table thead th:last-child { padding-left: 20px; }
-.table thead th.thMonth { text-align: center; font-variant-numeric: tabular-nums; }
+.thWho { position: sticky; left: 0; z-index: 2; width: 260px; padding-left: var(--s-4) !important; background: var(--surface); }
+.thMonth { width: 76px; text-align: center !important; font-variant-numeric: tabular-nums; }
+.thMain { padding-left: var(--s-4) !important; }
+.thDone { width: 96px; }
+
+/* Подзаголовок группы. */
+.group td { padding: 0; border-bottom: 1px solid var(--line); background: var(--sunken); }
+.groupLabel {
+  position: sticky; left: 0; display: inline-block; padding: 6px var(--s-4);
+  color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-medium);
+}
 
 .table tbody th, .table tbody td {
-  padding: 6px 4px; border-bottom: 1px solid var(--line);
+  padding: var(--s-1) var(--s-2); border-bottom: 1px solid var(--line);
   vertical-align: middle; text-align: left; font-weight: var(--fw-regular);
-  transition: background var(--dur-1) linear;
+  background: var(--surface); transition: background var(--dur-1) linear;
 }
 .table tbody tr:last-child > * { border-bottom: 0; }
 
 .row { cursor: pointer; }
-.row:hover > * { background: var(--hover); }
+.row:hover > *, .row:focus-within > * { background: var(--sunken); }
 
 /* Стажёр и наставник. */
-.table tbody th.who { padding-left: 8px; padding-right: 16px; }
-.intern { display: block; color: var(--text-1); font-size: var(--fs-m); font-weight: var(--fw-medium); line-height: var(--lh-snug); text-decoration: none; }
-.mentor { display: block; margin-top: 2px; color: var(--text-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
-.intern, .mentor { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who { position: sticky; left: 0; z-index: 1; padding-left: var(--s-4) !important; }
+.link { display: block; color: var(--text-1); text-decoration: none; border-radius: var(--r-s); }
+.link:focus-visible { outline-offset: 2px; }
+.nameLine { display: flex; align-items: center; gap: var(--s-2); min-width: 0; }
+.name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-m); font-weight: var(--fw-medium); line-height: var(--lh-snug); }
+.mentor { display: block; margin: 2px 0 0 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
+.newTag { flex: none; color: var(--brand-text); font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap; }
 
-/* Клетка месяца: две оценки друг под другом на заливке статуса. */
-.cell {
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 56px; border-radius: var(--r-m);
-  font-variant-numeric: tabular-nums; line-height: 1.2;
+/* Клетка месяца: две оценки друг под другом, заливка по статусу месяца. */
+.cell, .cellEmpty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 48px; border-radius: var(--r-s); font-variant-numeric: tabular-nums; line-height: 1.2;
   transition: background-color var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out);
 }
 .risk { background: var(--risk-wash); }
 .watch { background: var(--watch-wash); }
-.ok { background: var(--empty-wash); }
-.vIntern { color: var(--brand-text); font-size: var(--fs-m); font-weight: var(--fw-medium); }
-.vMentor { color: var(--text-2); font-size: var(--fs-s); }
-.vNone { color: var(--text-2); font-weight: var(--fw-regular); }
-
-/* Месяц сбора без анкет: пустая точка. */
-.wait::before { content: ""; width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line-strong); }
-
-/* Новое: синее кольцо и метка, пока пару не открыли. */
-.fresh { box-shadow: 0 0 0 2px var(--brand); animation: fresh-in var(--dur-3) var(--ease-out); }
-.newTag {
-  position: absolute; top: -9px; right: 6px;
-  height: 18px; padding: 0 6px; border-radius: var(--r-pill);
-  background: var(--brand); color: var(--brand-fg);
-  font-size: 12px; font-weight: var(--fw-medium); line-height: 18px;
-}
-@keyframes fresh-in { from { box-shadow: 0 0 0 6px transparent; } to { box-shadow: 0 0 0 2px var(--brand); } }
+.vIntern, .vMentor { font-size: var(--fs-s); font-weight: var(--fw-medium); }
+.vIntern { color: var(--series-intern); }
+.vMentor { color: var(--series-mentor); }
+.vNone { color: var(--text-3); font-weight: var(--fw-regular); }
+.fresh { box-shadow: 0 0 0 2px var(--brand); }
 
 /* Главное. */
-.table tbody td.main { padding-left: 20px; padding-right: 8px; }
-.mainInner { display: flex; align-items: baseline; gap: 10px; line-height: var(--lh-snug); }
-.mainDot { position: relative; top: -1px; }
+.main { padding-left: var(--s-4) !important; }
+.mainTitle { display: block; font-size: var(--fs-s); line-height: var(--lh-snug); }
+.mainSub { display: block; margin-top: 2px; color: var(--text-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
+.done { color: var(--text-2); font-size: var(--fs-s); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Легенда под таблицей. */
-.legend { display: flex; justify-content: flex-end; gap: 20px; margin-top: 12px; padding: 0 24px; color: var(--text-2); font-size: var(--fs-xs); }
+.legend { display: flex; justify-content: flex-end; gap: var(--s-5); margin-top: var(--s-3); padding: 0 var(--s-4); color: var(--text-2); font-size: var(--fs-xs); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .keyIntern, .keyMentor { width: 8px; height: 8px; border-radius: 50%; }
-.keyIntern { background: var(--brand-text); }
-.keyMentor { background: var(--text-2); }
+.keyIntern { background: var(--series-intern); }
+.keyMentor { background: var(--series-mentor); }
 
 /* ---------- Пустая база и загрузка ---------- */
 .empty { padding-top: 48px; }
@@ -113,45 +83,10 @@
 .emptyError { margin-top: 20px; max-width: 720px; }
 
 .skeleton { padding-top: 32px; gap: 16px; }
-.skelCards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.skelTable { display: flex; flex-direction: column; gap: 8px; }
 
-/* ---------- Брейкпоинты ---------- */
-/* Проектор 1280×720: итоги и строки плотнее, чтобы влезло больше пар. */
+/* Проектор 1280×720: строки плотнее, чтобы влезло больше пар. */
 @media (max-height: 800px) and (min-width: 768px) {
-  .head { padding: 24px 0 16px; }
-  .total { padding: 16px 24px 18px; gap: 6px; }
-  .totalNum { font-size: 36px; }
-  .cell { height: 52px; }
-  .table tbody th, .table tbody td { padding-block: 5px; }
-}
-@media (max-width: 1199px) {
-  .colWho { width: 200px; }
-  .colMain { width: 240px; }
-}
-@media (max-width: 1023px) {
-  .totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .card { overflow-x: auto; }
-  .table { min-width: 860px; }
-}
-/* Телефон: стажёр, один месяц и главное. */
-@media (max-width: 767px) {
-  .head { padding: 20px 0 16px; }
-  .title { font-size: var(--fs-xl); }
-  .totals { gap: 12px; }
-  .total { padding: 16px; border-radius: 20px; }
-  .totalNum { font-size: 32px; }
-  .of { font-size: var(--fs-m); }
-  .totalLabel { font-size: var(--fs-xs); }
-  .card { padding: 4px 12px 8px; border-radius: 20px; overflow: visible; }
-  .table { min-width: 0; }
-  .notPhone { display: none; }
-  .colWho { width: 38%; }
-  .colMain { width: auto; }
-  .table colgroup col:nth-child(n+2):not(.notPhone):not(.colMain) { width: 64px; }
-  .table tbody th.who { padding-left: 4px; padding-right: 8px; }
-  .table thead th:first-child { padding-left: 4px; }
-  .table tbody td.main, .table thead th:last-child { padding-left: 12px; padding-right: 0; }
-  .intern { font-size: var(--fs-s); white-space: normal; }
-  .mainInner { gap: 8px; font-size: var(--fs-xs); }
-  .skelCards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cell, .cellEmpty { height: 42px; }
+  .table tbody th, .table tbody td { padding-block: 2px; }
 }

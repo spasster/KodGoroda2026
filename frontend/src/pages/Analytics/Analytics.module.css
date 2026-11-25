@@ -8,11 +8,6 @@
 .sub { margin: 0 0 10px; color: var(--text-2); font-size: var(--fs-s); }
 .muted { color: var(--text-2); }
 
-.kpis { display: flex; gap: 36px; }
-.kpi { display: flex; flex-direction: column; align-items: flex-end; }
-.kpiValue { font-family: var(--font-wide); font-size: 40px; font-weight: var(--fw-bold); line-height: 1; font-variant-numeric: tabular-nums; }
-.kpiLabel { margin-top: 6px; color: var(--hero-muted); font-size: var(--fs-s); }
-
 /* Темы */
 .topics { display: flex; flex-direction: column; gap: 12px; list-style: none; }
 .topics li { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 24px; align-items: center; gap: 12px; font-size: var(--fs-s); }
@@ -24,16 +19,20 @@
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 10px; height: 10px; border-radius: 50%; }
 
-/* Сбор анкет */
-.rates { display: flex; align-items: flex-end; gap: 10px; height: 96px; margin-bottom: 18px; }
-.rate { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; }
-.rateBar { display: flex; align-items: flex-end; flex: 1; width: 100%; border-radius: var(--r-s); background: var(--sunken); overflow: hidden; }
-.rateBar i { display: block; width: 100%; background: var(--brand); border-radius: var(--r-s); transition: height var(--dur-4) var(--ease-out); }
-.rateNum { color: var(--text-2); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
-.missing { display: flex; flex-direction: column; gap: 10px; list-style: none; max-height: 260px; overflow-y: auto; }
-.missing li { display: flex; align-items: center; gap: 12px; }
-.missName { display: flex; flex-direction: column; min-width: 0; margin-right: auto; font-size: var(--fs-s); font-weight: var(--fw-medium); }
-.missName small { color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-regular); }
+/* Сбор анкет: матрица «кто заполнил» */
+.matrixScroll { overflow-x: auto; }
+.matrix { width: 100%; min-width: 520px; border-collapse: collapse; font-size: var(--fs-s); }
+.matrix th, .matrix td { padding: 5px var(--s-2); border-bottom: 1px solid var(--line); font-weight: var(--fw-regular); text-align: left; }
+.matrix thead th { color: var(--text-2); font-size: var(--fs-xs); }
+.matrix tbody tr:last-child > * { border-bottom: 0; }
+.mWho { white-space: nowrap; }
+.mRole { margin-left: var(--s-2); color: var(--text-2); font-size: var(--fs-xs); }
+.mMonth { width: 40px; text-align: center !important; font-variant-numeric: tabular-nums; }
+.mCurrent { background: var(--brand-wash); }
+.mAct { width: 1%; text-align: right !important; white-space: nowrap; }
+.mFull, .mRing { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+.mFull { background: var(--text-2); }
+.mRing { box-shadow: inset 0 0 0 1.5px var(--line-strong); }
 .copy {
   display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: var(--r-pill);
   background: var(--brand-wash); color: var(--brand-text); font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap;

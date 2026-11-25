@@ -1,17 +1,51 @@
-.page { display: flex; flex-direction: column; gap: 20px; max-width: 980px; padding-top: 28px; padding-bottom: var(--s-8); }
-.stack { display: flex; flex-direction: column; gap: 20px; }
+.page { display: flex; flex-direction: column; gap: var(--s-4); max-width: 1100px; padding-top: var(--s-2); padding-bottom: var(--s-8); }
+.stack { display: flex; flex-direction: column; gap: var(--s-4); }
 .error { margin-top: 24px; }
-.card { padding: 28px 32px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low); min-width: 0; }
-.h2 { margin-bottom: 14px; font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
-.h3 { margin: 20px 0 6px; font-size: var(--fs-m); font-weight: var(--fw-bold); }
-.text, .list, .sets, .principles { font-size: var(--fs-l); line-height: var(--lh-body); }
-.list, .sets, .principles { display: flex; flex-direction: column; gap: 8px; padding-left: 1.4em; }
-.principles { padding-left: 1.4em; }
-.sets { margin-bottom: 12px; }
-.counts { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: var(--fs-l); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
-.baseline { padding: 4px 4px 0; font-size: var(--fs-l); line-height: var(--lh-body); }
+.card { padding: var(--s-5) var(--s-6); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low); min-width: 0; }
+.h2 { margin-bottom: var(--s-3); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+.h3 { margin: var(--s-3) 0 var(--s-1); font-size: var(--fs-s); font-weight: var(--fw-bold); }
+.text, .list, .principles { font-size: var(--fs-m); line-height: var(--lh-body); }
+.list, .principles { display: flex; flex-direction: column; gap: var(--s-2); padding-left: 1.4em; }
+.baseline { padding: var(--s-1) var(--s-1) 0; color: var(--text-2); font-size: var(--fs-s); line-height: var(--lh-body); }
+
+/* Проверка */
+.sets { display: flex; flex-direction: column; gap: var(--s-4); margin-bottom: var(--s-3); }
+.set { display: flex; flex-direction: column; gap: var(--s-1); }
+.setName { font-size: var(--fs-m); font-weight: var(--fw-medium); }
+.setSub { color: var(--text-2); font-size: var(--fs-s); }
+.bar { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); align-items: center; gap: var(--s-4); margin-top: var(--s-1); font-size: var(--fs-s); }
+.track { display: block; height: 8px; border-radius: 4px; background: var(--sunken); overflow: hidden; }
+.track i { display: block; height: 100%; border-radius: 4px; transition: width var(--dur-4) var(--ease-out); }
+.fillAi { background: var(--brand); }
+.fillRules { background: var(--text-3); }
+
+/* Таблица сигналов */
+.scroll { overflow-x: auto; margin: calc(-1 * var(--s-2)) calc(-1 * var(--s-4)); }
+.table { width: 100%; min-width: 820px; border-collapse: collapse; }
+.table th {
+  height: 36px; padding: 0 var(--s-3); border-bottom: 1px solid var(--line);
+  color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-regular); text-align: left; white-space: nowrap;
+}
+.table td { padding: var(--s-3); border-bottom: 1px solid var(--line); vertical-align: top; font-size: var(--fs-s); line-height: var(--lh-snug); }
+.table tbody tr:last-child td { border-bottom: 0; }
+.cName { width: 230px; }
+.cNow { width: 270px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.row { cursor: pointer; }
+.row:hover > td, .rowOpen > td { background: var(--sunken); }
+.toggle {
+  display: inline-flex; align-items: flex-start; gap: var(--s-2); padding: 0; border: 0; background: transparent;
+  color: var(--text-1); text-align: left; font-size: var(--fs-s); font-weight: var(--fw-medium); line-height: var(--lh-snug);
+}
+.toggle:focus-visible { outline-offset: 4px; border-radius: var(--r-s); }
+.chevron { margin-top: 1px; color: var(--text-3); transition: transform var(--dur-2) var(--ease-out); }
+.toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+.detail > td { background: var(--sunken); }
+.detailInner { max-width: 820px; padding: 0 0 var(--s-2) var(--s-5); font-size: var(--fs-s); line-height: var(--lh-body); }
+.detailInner .list { font-size: var(--fs-s); }
+.detailInner .h3:first-child { margin-top: 0; }
 
 @media (max-width: 767px) {
-  .card { padding: 20px 18px; }
-  .text, .list, .sets, .principles, .counts, .baseline { font-size: var(--fs-m); }
+  .card { padding: var(--s-4); }
+  .bar { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
+  .text, .list, .principles { font-size: var(--fs-s); }
 }

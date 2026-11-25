@@ -5,7 +5,7 @@ import { useEffect, useId, useState } from 'react'
 
 import type { PairStatus } from '../../api/types'
 import { formatNumber } from '../../lib/format'
-import s from './Stories.module.css'
+import s from './StoryChart.module.css'
 
 /** Точка графика: месяц и две оценки. Подходит Cell из обзора. */
 export interface ChartPoint {

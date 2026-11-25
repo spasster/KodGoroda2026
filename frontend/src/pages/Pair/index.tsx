@@ -12,7 +12,7 @@ import { api, ApiError } from '../../api/client'
 import { queryKeys, useOverview, usePair, usePeople, useSurvey } from '../../api/queries'
 import type { Overview, PairDetail, PairStatus } from '../../api/types'
 import { PAIR_STATUS_LABEL, personName } from '../../lib/format'
-import { Hero, QuestionTable } from '../../components'
+import { PageHeader, QuestionTable } from '../../components'
 import { useReduced, variants } from '../../lib/motion'
 import { collectMonth } from '../../lib/rules'
 import { BriefCard } from './BriefCard'
@@ -89,14 +89,10 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
 
   return (
     <>
-      <Hero
-        top={
-          <div className={s.heroNav}>
-            <Top id={p.pair_id} overview={overview} />
-          </div>
-        }
+      <PageHeader
+        top={<Top id={p.pair_id} overview={overview} />}
         title={personName(p.intern_name, p.intern_id)}
-        sub={`наставник ${personName(p.mentor_name, p.mentor_id)}`}
+        facts={`наставник ${personName(p.mentor_name, p.mentor_id)}`}
         aside={<Status status={p.status} />}
       />
       <div className="wrap">

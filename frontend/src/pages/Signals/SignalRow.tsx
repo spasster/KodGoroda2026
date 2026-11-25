@@ -1,74 +1,69 @@
-// Строка сигнала: точка важности, заголовок, тип, месяц. По клику
+// Строка таблицы сигналов: важность, стажёр, заголовок, тип, когда, отметка. По клику
 // раскрывается на месте: объяснение, цитата, что сделать, отметка.
 
 import clsx from 'clsx'
-import { ChevronRight } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 import type { CommentItem, PairDetail, Quote, ReviewStatus, Signal } from '../../api/types'
 import { ROLE_LABEL, SEVERITY_LABEL } from '../../lib/format'
-import { dur, ease } from '../../lib/motion'
 import { afterReview, situationMonths } from '../../lib/rules'
 import s from './Signals.module.css'
 
 export type Mark = Exclude<ReviewStatus, 'open'>
 
-const MARK_LABEL: Record<Mark, string> = { confirmed: 'Проблема подтвердилась', rejected: 'Проблемы нет' }
+export const MARK_LABEL: Record<ReviewStatus, string> = { open: 'открыта', confirmed: 'подтвердилась', rejected: 'проблемы нет' }
 
 interface Props {
   signal: Signal
+  /** Имя стажёра. */
+  person: string
   /** Тип сигнала словами: «Расхождение», «Нет ответа». */
   kind: string
   detail?: PairDetail
   open: boolean
   fresh: boolean
-  reduce: boolean
+  /** Сколько колонок в таблице, для строки с подробностями. */
+  cols: number
   onToggle: () => void
   onMark: (status: ReviewStatus) => void
 }
 
-export function SignalRow({ signal: head, kind, detail, open, fresh, reduce, onToggle, onMark }: Props) {
+export function SignalRow({ signal: head, person, kind, detail, open, fresh, cols, onToggle, onMark }: Props) {
   const status = head.review.status
   const panelId = `signal-${head.key}`
-  const t = reduce ? { duration: 0 } : { duration: dur.s, ease: ease.out }
 
   return (
-    <motion.li
-      className={s.item}
-      initial={reduce ? false : { height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={reduce ? undefined : { height: 0, opacity: 0 }}
-      transition={reduce ? { duration: 0 } : { duration: dur.m, ease: ease.out }}
-    >
-      <button type="button" className={s.row} aria-expanded={open} aria-controls={panelId} onClick={onToggle}>
-        {/* Цвет только у открытых: разобранные и старые не требуют внимания. */}
-        <span className={clsx(s.dot, head.active && status === 'open' ? s[head.severity] : s.dotDone)} aria-hidden="true" />
-        <span className="sr-only">Важность {SEVERITY_LABEL[head.severity]}.</span>
-        <span className={s.title}>{head.title}</span>
-        <span className={s.meta}>
-          {status !== 'open' ? (
-            <span className={s.markLabel}>{MARK_LABEL[status]}</span>
-          ) : (
-            fresh && <span className={s.fresh}>новое</span>
-          )}
-          <span className={s.kind}>{kind}</span>
-          <span className={s.month}>{situationMonths(head)}</span>
-        </span>
-        <ChevronRight className={s.chevron} aria-hidden="true" size={20} strokeWidth={1.8} />
-      </button>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            id={panelId}
-            key="panel"
-            className={s.panel}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={t}
+    <>
+      <tr className={clsx(s.row, open && s.rowOpen)} onClick={onToggle}>
+        <td className={s.cDot}>
+          {/* Цвет только у открытых: разобранные и старые не требуют внимания. */}
+          <span className={clsx(s.dot, head.active && status === 'open' ? s[head.severity] : s.dotDone)} aria-hidden="true" />
+          <span className="sr-only">Важность {SEVERITY_LABEL[head.severity]}.</span>
+        </td>
+        <td className={s.cPerson}>{person}</td>
+        <td className={s.cTitle}>
+          <button
+            type="button"
+            className={s.toggle}
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggle()
+            }}
           >
+            {head.title}
+          </button>
+          {fresh && <span className={s.fresh}>новое</span>}
+        </td>
+        <td className={s.cKind}>{kind}</td>
+        <td className={s.cWhen}>{situationMonths(head)}</td>
+        <td className={s.cMark}>{MARK_LABEL[status]}</td>
+      </tr>
+      {open && (
+        <tr id={panelId} className={s.detail}>
+          <td colSpan={cols}>
             <div className={s.panelInner}>
               <p className={s.explain}>{head.explanation}</p>
               <Quotes quotes={head.quotes} comments={detail?.comments} />
@@ -93,12 +88,15 @@ export function SignalRow({ signal: head, kind, detail, open, fresh, reduce, onT
                     Снять отметку
                   </button>
                 )}
+                <Link to={`/pairs/${head.pair_id}`} className={s.pairLink}>
+                  Открыть стажёра
+                </Link>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.li>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 

@@ -1,17 +1,17 @@
-// Экран «Сигналы» (/signals): сигналы сгруппированы по стажёрам, сверху фильтры.
+// Экран «Сигналы» (/signals): сверху фильтры списками, ниже одна таблица сигналов.
 // Строка раскрывается на месте: объяснение, цитата, что сделать, отметка.
 
 import { useQueries } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
 import { api } from '../../api/client'
 import { queryKeys, useOverview, useReview, useSignals } from '../../api/queries'
-import type { PairDetail, PairStatus, PairSummary, ReviewStatus, Severity, Signal } from '../../api/types'
-import { Avatar, Hero } from '../../components'
-import { PAIR_STATUS_LABEL, SEVERITY_LABEL, personName, plural } from '../../lib/format'
+import type { PairDetail, ReviewStatus, Severity } from '../../api/types'
+import { PageHeader } from '../../components'
+import { SEVERITY_LABEL, personName, plural } from '../../lib/format'
 import { dur, ease, useReduced } from '../../lib/motion'
 import { useLive } from '../../live/useLive'
 import { KIND_LABEL, facet, kindOf, matches, segmentRows, type Filters, type Kind, type Segment } from './model'
@@ -25,7 +25,7 @@ const SEGMENTS: { value: Segment; label: string }[] = [
 ]
 const KINDS: Kind[] = ['gap', 'decline', 'low_question', 'text', 'silence']
 const SEVERITIES: Severity[] = ['high', 'medium', 'low']
-const STATUS_RANK: Record<PairStatus, number> = { risk: 0, watch: 1, ok: 2 }
+const COLS = 6
 
 const EMPTY: Record<Segment, string> = {
   open: 'Все сигналы разобраны',
@@ -108,21 +108,6 @@ export function SignalsPage() {
   })
   const details = new Map<string, PairDetail | undefined>(pairIds.map((id, i) => [id, pairQueries[i]?.data]))
 
-  // Группы по стажёрам: сначала те, с кем пора говорить, внутри порядок строк уже задан.
-  const groups = useMemo(() => {
-    const map = new Map<string, Signal[]>()
-    for (const x of list) {
-      const g = map.get(x.pair_id)
-      if (g) g.push(x)
-      else map.set(x.pair_id, [x])
-    }
-    return [...map.entries()].sort(([a, ra], [b, rb]) => {
-      const pa = pairs.get(a)
-      const pb = pairs.get(b)
-      return (pa ? STATUS_RANK[pa.status] : 3) - (pb ? STATUS_RANK[pb.status] : 3) || rb.length - ra.length || (a < b ? -1 : 1)
-    })
-  }, [list, pairs])
-
   const personCounts = facet(inSegment, filters, 'person', (x) => x.pair_id)
   const kindCounts = facet(inSegment, filters, 'kind', kindOf)
   const sevCounts = facet(inSegment, filters, 'severity', (x) => x.severity)
@@ -152,14 +137,7 @@ export function SignalsPage() {
   }
 
   const open = bySegment.open.length
-  const title =
-    !all || open === 0 ? (
-      'Сигналы'
-    ) : (
-      <>
-        <em>{open}</em> {plural(open, ['открытый сигнал', 'открытых сигнала', 'открытых сигналов'])}
-      </>
-    )
+  const done = bySegment.done.length
 
   let body
   if (!all && signals.isError) {
@@ -177,7 +155,7 @@ export function SignalsPage() {
         <Skeleton />
       </div>
     )
-  } else if (groups.length === 0) {
+  } else if (list.length === 0) {
     body = (
       <div className={clsx(s.card, s.empty)}>
         <p className={s.emptyText}>{active ? 'Под такие фильтры ничего не подходит' : all.length === 0 ? EMPTY.all : EMPTY[segment]}</p>
@@ -189,39 +167,56 @@ export function SignalsPage() {
       </div>
     )
   } else {
-    body = groups.map(([pairId, rows]) => (
-      <Group key={pairId} pair={pairs.get(pairId)} pairId={pairId} count={rows.length}>
-        <ul className={s.list}>
-          <AnimatePresence initial={false}>
-            {rows.map((x) => (
-              <SignalRow
-                key={x.key}
-                signal={x}
-                kind={KIND_LABEL[kindOf(x)]}
-                detail={details.get(x.pair_id)}
-                open={openId === x.key}
-                fresh={isFreshCell(x.pair_id, x.month)}
-                reduce={reduce}
-                onToggle={() => setOpenId((id) => (id === x.key ? null : x.key))}
-                onMark={(status) => void mark(x.key, status)}
-              />
-            ))}
-          </AnimatePresence>
-        </ul>
-      </Group>
-    ))
+    body = (
+      <div className={s.card}>
+        <div className={s.scroll}>
+          <table className={s.table}>
+            <thead>
+              <tr>
+                <th scope="col" className={s.cDot}>
+                  <span className="sr-only">Важность</span>
+                </th>
+                <th scope="col">Стажёр</th>
+                <th scope="col">Что случилось</th>
+                <th scope="col" className={s.cKind}>
+                  Тип
+                </th>
+                <th scope="col">Когда</th>
+                <th scope="col">Отметка</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((x) => (
+                <SignalRow
+                  key={x.key}
+                  signal={x}
+                  person={nameOf(x.pair_id)}
+                  kind={KIND_LABEL[kindOf(x)]}
+                  detail={details.get(x.pair_id)}
+                  open={openId === x.key}
+                  fresh={isFreshCell(x.pair_id, x.month)}
+                  cols={COLS}
+                  onToggle={() => setOpenId((id) => (id === x.key ? null : x.key))}
+                  onMark={(status) => void mark(x.key, status)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
   }
 
   return (
     <>
-      <Hero
-        title={title}
+      <PageHeader
+        title="Сигналы"
+        facts={all ? `${open} ${plural(open, ['открытый', 'открытых', 'открытых'])} · ${done} ${plural(done, ['разобранный', 'разобранных', 'разобранных'])}` : undefined}
         aside={
           <div className={s.segments} role="group" aria-label="Какие сигналы показать">
             {SEGMENTS.map((o) => (
               <button key={o.value} type="button" className={s.segment} aria-pressed={segment === o.value} onClick={() => set('show', o.value === 'open' ? null : o.value)}>
                 {o.label}
-                {all && <span className={s.count}>{bySegment[o.value].length}</span>}
               </button>
             ))}
           </div>
@@ -230,34 +225,34 @@ export function SignalsPage() {
       <div className={clsx('wrap', s.page)}>
         {all && inSegment.length > 0 && (
           <div className={s.filters}>
-            <Facet label="Стажёр">
+            <Pick label="Стажёр" any="Все стажёры" value={filters.person} onChange={(v) => set('person', v)}>
               {personIds.map((id) => (
-                <Chip key={id} on={filters.person === id} count={personCounts.get(id) ?? 0} onClick={() => set('person', id)}>
+                <Opt key={id} value={id} on={filters.person === id} count={personCounts.get(id) ?? 0}>
                   {nameOf(id)}
-                </Chip>
+                </Opt>
               ))}
-            </Facet>
-            <Facet label="Что случилось">
+            </Pick>
+            <Pick label="Тип" any="Все типы" value={filters.kind} onChange={(v) => set('kind', v)}>
               {KINDS.map((k) => (
-                <Chip key={k} on={filters.kind === k} count={kindCounts.get(k) ?? 0} onClick={() => set('kind', k)}>
+                <Opt key={k} value={k} on={filters.kind === k} count={kindCounts.get(k) ?? 0}>
                   {KIND_LABEL[k]}
-                </Chip>
+                </Opt>
               ))}
-            </Facet>
-            <Facet label="Важность">
+            </Pick>
+            <Pick label="Важность" any="Любая важность" value={filters.severity} onChange={(v) => set('sev', v)}>
               {SEVERITIES.map((v) => (
-                <Chip key={v} on={filters.severity === v} count={sevCounts.get(v) ?? 0} dot={v} onClick={() => set('sev', v)}>
+                <Opt key={v} value={v} on={filters.severity === v} count={sevCounts.get(v) ?? 0}>
                   {capitalize(SEVERITY_LABEL[v])}
-                </Chip>
+                </Opt>
               ))}
-            </Facet>
-            <Facet label="Месяц">
+            </Pick>
+            <Pick label="Месяц" any="Любой месяц" value={filters.month == null ? null : String(filters.month)} onChange={(v) => set('month', v)}>
               {monthList.map((m) => (
-                <Chip key={m} on={filters.month === m} count={monthCounts.get(m) ?? 0} onClick={() => set('month', String(m))}>
-                  {m}-й
-                </Chip>
+                <Opt key={m} value={String(m)} on={filters.month === m} count={monthCounts.get(m) ?? 0}>
+                  {m}-й месяц
+                </Opt>
               ))}
-            </Facet>
+            </Pick>
             {active && (
               <button type="button" className={s.reset} onClick={reset}>
                 Сбросить
@@ -265,7 +260,7 @@ export function SignalsPage() {
             )}
           </div>
         )}
-        <div className={s.groups}>{body}</div>
+        {body}
         <UndoBar notice={notice} reduce={reduce} onUndo={(n) => void undo(n)} onClose={() => setNotice(null)} />
       </div>
     </>
@@ -276,48 +271,21 @@ function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
-function Facet({ label, children }: { label: string; children: React.ReactNode }) {
+// Выпадающий список фильтра. Первый вариант снимает фильтр.
+function Pick({ label, any, value, onChange, children }: { label: string; any: string; value: string | null; onChange: (v: string | null) => void; children: React.ReactNode }) {
   return (
-    <div className={s.facet}>
-      <span className={s.facetLabel}>{label}</span>
-      <div className={s.chips}>{children}</div>
-    </div>
+    <select className={s.select} aria-label={label} value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
+      <option value="">{any}</option>
+      {children}
+    </select>
   )
 }
 
-function Chip({ on, count, dot, onClick, children }: { on: boolean; count: number; dot?: Severity; onClick: () => void; children: React.ReactNode }) {
+function Opt({ value, on, count, children }: { value: string; on: boolean; count: number; children: React.ReactNode }) {
   return (
-    <button type="button" className={s.chip} aria-pressed={on} disabled={count === 0 && !on} onClick={onClick}>
-      {dot && <i className={clsx(s.dot, s[dot])} aria-hidden="true" />}
-      {children}
-      <span className={s.chipCount}>{count}</span>
-    </button>
-  )
-}
-
-// Карточка стажёра: имя, наставник, статус и его сигналы.
-function Group({ pair, pairId, count, children }: { pair: PairSummary | undefined; pairId: string; count: number; children: React.ReactNode }) {
-  return (
-    <section className={s.card}>
-      <header className={s.groupHead}>
-        <Avatar name={pair ? personName(pair.intern_name, pair.intern_id) : pairId} id={pair?.intern_id ?? pairId} size={40} />
-        <div className={s.who2}>
-          <span className={s.groupName}>{pair ? personName(pair.intern_name, pair.intern_id) : pairId}</span>
-          {pair && <span className={s.groupMentor}>наставник {personName(pair.mentor_name, pair.mentor_id)}</span>}
-        </div>
-        {pair && (
-          <span className={s.groupStatus}>
-            <i className={clsx(s.dot, s[`st_${pair.status}`])} aria-hidden="true" />
-            {PAIR_STATUS_LABEL[pair.status]}
-          </span>
-        )}
-        <span className={s.groupCount}>{count}</span>
-        <Link to={`/pairs/${pairId}`} className={s.groupLink}>
-          Открыть
-        </Link>
-      </header>
-      {children}
-    </section>
+    <option value={value} disabled={count === 0 && !on}>
+      {children} ({count})
+    </option>
   )
 }
 
@@ -372,11 +340,9 @@ function Skeleton() {
   return (
     <ul className={s.list} aria-busy="true" aria-label="Загружаем сигналы">
       {[0, 1, 2, 3, 4].map((i) => (
-        <li key={i} className={s.item}>
-          <div className={s.skelRow}>
-            <span className={s.skel} style={{ width: 10, height: 10, borderRadius: '50%' }} />
-            <span className={s.skel} style={{ width: `${46 - i * 4}%` }} />
-          </div>
+        <li key={i} className={s.skelRow}>
+          <span className={s.skel} style={{ width: 10, height: 10, borderRadius: '50%' }} />
+          <span className={s.skel} style={{ width: `${46 - i * 4}%` }} />
         </li>
       ))}
     </ul>

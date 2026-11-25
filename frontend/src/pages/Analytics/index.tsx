@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { useAnalytics, useMethod, useOverview, usePeople, useSurvey } from '../../api/queries'
-import type { Analytics, People, Role } from '../../api/types'
-import { Avatar, Hero, LoadError, Loading, QuestionTable, Skeleton, type Tone } from '../../components'
+import type { Analytics, Overview, Role } from '../../api/types'
+import { LoadError, Loading, PageHeader, QuestionTable, Skeleton, type Tone } from '../../components'
 import { ROLE_LABEL, formatNumber, monthIn, personName, plural } from '../../lib/format'
 import { collectMonth } from '../../lib/rules'
 import { StoryChart } from '../Overview/StoryChart'
@@ -45,22 +45,22 @@ export function AnalyticsPage() {
   }
 
   const last = a.program[a.program.length - 1]
+  const responses = overview.data?.totals.responses ?? 0
   const months = Array.from({ length: Math.max(survey.data?.months ?? 0, a.months.length) }, (_, i) => i + 1)
   const collect = collectMonth(people.data, survey.data?.months ?? months.length)
 
   return (
     <>
-      <Hero
-        top={`${a.pairs} ${plural(a.pairs, ['пара', 'пары', 'пар'])} · ${overview.data?.totals.responses ?? 0} ${plural(overview.data?.totals.responses ?? 0, ['анкета', 'анкеты', 'анкет'])}`}
+      <PageHeader
         title="Аналитика программы"
-        aside={
-          last && (
-            <div className={s.kpis}>
-              <Kpi label="Стажёры" value={formatNumber(last.intern)} />
-              <Kpi label="Наставники" value={formatNumber(last.mentor)} />
-            </div>
-          )
-        }
+        facts={[
+          `${a.pairs} ${plural(a.pairs, ['пара', 'пары', 'пар'])}`,
+          `${responses} ${plural(responses, ['анкета', 'анкеты', 'анкет'])}`,
+          last && `средняя оценка стажёров ${formatNumber(last.intern)}`,
+          last && `наставников ${formatNumber(last.mentor)}`,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
       />
       <div className={clsx('wrap', s.page)}>
         <section className={clsx(s.card, s.wide)}>
@@ -83,26 +83,17 @@ export function AnalyticsPage() {
           <Heat analytics={a} />
         </section>
 
-        <section className={s.card} id="collect">
+        <section className={clsx(s.card, s.full)} id="collect">
           <h2 className={s.title}>Сбор анкет</h2>
-          <Collect analytics={a} people={people.data} month={collect} />
+          <Collect overview={overview.data} months={months} fallback={collect} />
         </section>
 
-        <section className={clsx(s.card, s.wide)}>
+        <section className={clsx(s.card, s.full)}>
           <h2 className={s.title}>Эффект</h2>
           <Effect analytics={a} />
         </section>
       </div>
     </>
-  )
-}
-
-function Kpi({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={s.kpi}>
-      <span className={s.kpiValue}>{value}</span>
-      <span className={s.kpiLabel}>{label}</span>
-    </div>
   )
 }
 
@@ -145,47 +136,55 @@ function Heat({ analytics: a }: { analytics: Analytics }) {
   return <QuestionTable months={a.months} groups={groups} tone={tone} />
 }
 
-// Сколько анкет пришло по месяцам и кто ещё не заполнил текущий.
-function Collect({ analytics: a, people, month }: { analytics: Analytics; people: People | undefined; month: number | null }) {
-  const missing = month
-    ? [
-        ...(people?.interns ?? []).filter((p) => p.next_month != null && p.next_month <= month).map((p) => ({ ...p, role: 'intern' as Role })),
-        ...(people?.mentors ?? []).filter((p) => p.next_month != null && p.next_month <= month).map((p) => ({ ...p, role: 'mentor' as Role })),
-      ]
-    : []
+// Кто заполнил анкету за какой месяц. Месяц, за который анкет в программе ещё нет, считаем текущим сбором:
+// у тех, кто не заполнил, в строке ссылка на анкету.
+function Collect({ overview, months, fallback }: { overview: Overview | undefined; months: number[]; fallback: number | null }) {
+  if (!overview) return <p className={s.muted}>Нет данных</p>
+  const answered = (month: number) => overview.pairs.some((p) => p.cells.some((c) => c.month === month && (!c.missing.intern || !c.missing.mentor)))
+  const current = months.find((m) => !answered(m)) ?? fallback
+  const rows = [
+    ...overview.pairs.map((p) => ({ role: 'intern' as Role, id: p.intern_id, name: personName(p.intern_name, p.intern_id), cells: p.cells, key: 'intern' as const })),
+    ...overview.pairs.map((p) => ({ role: 'mentor' as Role, id: p.mentor_id, name: personName(p.mentor_name, p.mentor_id), cells: p.cells, key: 'mentor' as const })),
+  ]
   return (
-    <>
-      <div className={s.rates}>
-        {a.program.map((p) => (
-          <div key={p.month} className={s.rate} title={`${p.responses} из ${p.expected}`}>
-            <span className={s.rateBar}>
-              <i style={{ height: `${p.expected ? (p.responses / p.expected) * 100 : 0}%` }} />
-            </span>
-            <span className={s.rateNum}>{p.month}</span>
-          </div>
-        ))}
-      </div>
-      {month && missing.length > 0 && (
-        <>
-          <p className={s.sub}>
-            Не заполнили за {month}-й месяц: {missing.length}
-          </p>
-          <ul className={s.missing}>
-            {missing.map((p) => (
-              <li key={`${p.role}-${p.id}`}>
-                <Avatar name={personName(p.name, p.id)} id={p.id} size={32} />
-                <span className={s.missName}>
-                  {personName(p.name, p.id)}
-                  <small>{ROLE_LABEL[p.role]}</small>
-                </span>
-                <CopyLink role={p.role} id={p.id} />
-              </li>
+    <div className={s.matrixScroll}>
+      <table className={s.matrix}>
+        <thead>
+          <tr>
+            <th scope="col" className={s.mWho}>
+              Кто
+            </th>
+            {months.map((m) => (
+              <th key={m} scope="col" className={clsx(s.mMonth, m === current && s.mCurrent)}>
+                {m}
+              </th>
             ))}
-          </ul>
-        </>
-      )}
-      {month && missing.length === 0 && <p className={s.sub}>За {month}-й месяц заполнили все</p>}
-    </>
+            <th scope="col" className={s.mAct} />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => {
+            const has = (m: number) => {
+              const c = r.cells.find((x) => x.month === m)
+              return !!c && !c.missing[r.key]
+            }
+            return (
+              <tr key={`${r.role}-${r.id}`}>
+                <th scope="row" className={s.mWho}>
+                  {r.name} <span className={s.mRole}>{ROLE_LABEL[r.role]}</span>
+                </th>
+                {months.map((m) => (
+                  <td key={m} className={clsx(s.mMonth, m === current && s.mCurrent)}>
+                    <i className={has(m) ? s.mFull : s.mRing} role="img" aria-label={has(m) ? 'заполнил' : 'не заполнил'} />
+                  </td>
+                ))}
+                <td className={s.mAct}>{current != null && !has(current) && <CopyLink role={r.role} id={r.id} />}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
 

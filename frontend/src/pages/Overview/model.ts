@@ -1,28 +1,34 @@
 // Расчёты обзора поверх API: история каждого стажёра на выбранный месяц.
 
-import type { PairStatus, PairSummary, Quote, Signal } from '../../api/types'
+import type { PairStatus, PairSummary, Signal } from '../../api/types'
 import { compareSignals, isActive, isOpen } from '../../lib/rules'
 
 export interface Story {
   pair: PairSummary
   status: PairStatus
-  /** Главный вывод: заголовок самого важного сигнала. null — всё ровно. */
-  title: string | null
-  quote: Quote | null
+  /** Самая важная активная ситуация. null — всё ровно. */
+  main: Signal | null
+  /** Активных ситуаций всего. */
+  active: number
+  /** Из них отмеченных HR. */
+  reviewed: number
+  /** Открытых, то есть ещё не отмеченных. */
   signals: number
 }
 
 const RANK: Record<PairStatus, number> = { risk: 0, watch: 1, ok: 2 }
 
-/** История пары: статус от бэкенда, вывод и цитата из самого важного активного сигнала. */
+/** История пары: статус от бэкенда, главное из самой важной активной ситуации. */
 export function storyOf(pair: PairSummary, all: Signal[]): Story {
   const act = all.filter((s) => s.pair_id === pair.pair_id && isActive(s)).sort(compareSignals)
+  const open = act.filter(isOpen).length
   return {
     pair,
     status: pair.status,
-    title: act[0]?.title ?? null,
-    quote: act.find((s) => s.quotes.length > 0)?.quotes[0] ?? null,
-    signals: act.filter(isOpen).length,
+    main: act[0] ?? null,
+    active: act.length,
+    reviewed: act.length - open,
+    signals: open,
   }
 }
 

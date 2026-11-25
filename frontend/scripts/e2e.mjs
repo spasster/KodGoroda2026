@@ -69,8 +69,9 @@ async function waitVisible(locator, what, timeout = WAIT) {
   }
 }
 
-// Карточка стажёра на обзоре: ссылка с data-status (risk, watch, ok).
-const pairRow = (page, intern) => page.locator('main a[data-status]').filter({ hasText: intern })
+// Строка стажёра в таблице обзора: ссылка в первой клетке с data-status (risk, watch, ok).
+// Метка «новая анкета» лежит внутри этой ссылки.
+const pairRow = (page, intern) => page.locator('main table a[data-status]').filter({ hasText: intern })
 const cardStatus = (page, intern) => pairRow(page, intern).first().getAttribute('data-status')
 
 const liveDot = (page) => page.locator('header').getByText('онлайн', { exact: true })
@@ -139,8 +140,8 @@ try {
 
   await step('Обзор открылся, у Ильи Морозова «Всё ровно», связь онлайн', dash, async () => {
     await dash.goto(BASE + '/')
-    await waitVisible(pairRow(dash, names.ilya), `Карточка «${names.ilya}» на обзоре`)
-    check((await cardStatus(dash, names.ilya)) === 'ok', `Карточка «${names.ilya}» не в группе «Всё ровно»`)
+    await waitVisible(pairRow(dash, names.ilya), `Строка «${names.ilya}» на обзоре`)
+    check((await cardStatus(dash, names.ilya)) === 'ok', `Строка «${names.ilya}» не в группе «Всё ровно»`)
     await waitVisible(liveDot(dash), 'Точка связи «онлайн» в шапке')
   })
 
@@ -161,7 +162,7 @@ try {
     await waitText(toast, 'Новая анкета', 'Уведомление о новой анкете')
     await waitText(toast, 'Всё ровно', 'Уведомление: статус до анкеты')
     await waitText(toast, 'Пора поговорить', 'Уведомление: статус после анкеты')
-    // Карточка ушла из «Всё ровно» в «Пора поговорить» и получила метку «новая анкета».
+    // Строка ушла из «Всё ровно» в «Пора поговорить» и получила метку «новая анкета».
     const until = Date.now() + WAIT
     let status = ''
     while (Date.now() < until) {
@@ -169,8 +170,8 @@ try {
       if (status === 'risk') break
       await sleep(150)
     }
-    check(status === 'risk', `Карточка «${names.ilya}» осталась в статусе «${status}»`)
-    await waitText(pairRow(dash, names.ilya), 'новая анкета', `Метка «новая анкета» на карточке «${names.ilya}»`)
+    check(status === 'risk', `Строка «${names.ilya}» осталась в статусе «${status}»`)
+    await waitText(pairRow(dash, names.ilya), 'новая анкета', `Метка «новая анкета» в строке «${names.ilya}»`)
     const overview = await api('GET', '/api/overview')
     const p01 = overview.pairs.find((p) => p.pair_id === 'P-01')
     check(p01.status === 'risk', `P-01 после анкеты в статусе ${p01.status}, ждали risk`)

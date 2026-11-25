@@ -1,9 +1,8 @@
 // Общие мелочи для экранов. Описание: README.md рядом.
 
 export { LinkButton } from './Button'
-export { Avatar } from './Avatar'
 export { EmptyState } from './EmptyState'
-export { Hero } from './Hero'
+export { PageHeader } from './PageHeader'
 export { ErrorBanner, LoadError } from './ErrorBanner'
 export { Loading, Skeleton } from './Loading'
 export { QuestionTable, type QuestionRow, type Tone } from './QuestionTable'

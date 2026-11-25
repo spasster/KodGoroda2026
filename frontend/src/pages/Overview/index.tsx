@@ -1,4 +1,4 @@
-// Обзор «Истории»: герой с главным числом и карточки стажёров.
+// Обзор: одна таблица «стажёр × месяц» с группами по статусу.
 
 import { QrCode } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
@@ -6,15 +6,14 @@ import { Link } from 'react-router-dom'
 
 import { useOverview, usePeople, useSignals, useSurvey } from '../../api/queries'
 import type { Overview, Role } from '../../api/types'
-import { Hero, LoadError, Loading, Skeleton } from '../../components'
+import { LinkButton, LoadError, Loading, PageHeader, Skeleton } from '../../components'
 import { calendarMonthName, collectMonth } from '../../lib/rules'
 import { useLive } from '../../live/useLive'
 import { EmptyOverview } from './EmptyOverview'
 import { addFresh, freshKey, pruneFresh, useFreshEntries, type FreshEntry } from './fresh'
 import { responsesIn, sortStories, storyOf } from './model'
 import s from './Overview.module.css'
-import { Stories } from './Stories'
-import h from './Stories.module.css'
+import { OverviewTable } from './OverviewTable'
 
 const ROLES: Role[] = ['intern', 'mentor']
 
@@ -52,7 +51,8 @@ export function OverviewPage() {
   }, [o, overview.dataUpdatedAt, last, isFreshResponse])
 
   const dataEnd = o ? Math.max(0, ...o.months) : 0
-  const freshPairs = useMemo(() => new Set(fresh.map((e) => e.key.split(':')[0])), [fresh])
+  // Ключ метки `${pair_id}:${role}:${month}` сводим к клетке `${pair_id}:${month}`.
+  const freshCells = useMemo(() => new Set(fresh.map((e) => { const [p, , m] = e.key.split(':'); return `${p}:${m}` })), [fresh])
   const stories = useMemo(
     () => sortStories((o?.pairs ?? []).map((p) => storyOf(p, signals.data ?? []))),
     [o, signals.data],
@@ -77,49 +77,40 @@ export function OverviewPage() {
   const total = o.pairs.length
   const risk = stories.filter((st) => st.status === 'risk').length
   const got = month > 0 ? responsesIn(o.pairs, month) : 0
+  const facts = [
+    month > 0 ? `${calendar ? `${capitalize(calendar)}, ` : ''}${month}-й месяц` : null,
+    month > 0 ? `анкет ${got} из ${total * 2}` : null,
+  ].filter((x): x is string => x != null)
 
   return (
     <>
-      <Hero
-        top={month > 0 ? `${calendar ? `${capitalize(calendar)} · ` : ''}${month}-й месяц стажировки` : undefined}
+      <PageHeader
         title={
-          risk === 0 ? (
-            'Все стажировки идут ровно'
-          ) : (
-            <>
-              <em>
-                {risk} из {total}
-              </em>{' '}
-              {total === 1 ? 'стажёра' : 'стажёров'} {risk === 1 ? 'ждёт' : 'ждут'} разговора
-            </>
-          )
+          risk === 0
+            ? 'Все стажёры в порядке'
+            : `${risk} из ${total} ${total === 1 ? 'стажёра' : 'стажёров'} ${risk === 1 ? 'ждёт' : 'ждут'} разговора`
+        }
+        facts={
+          <>
+            {facts.join(' · ')}
+            {month > 0 && got < total * 2 && (
+              <>
+                {' · '}
+                <Link to="/analytics#collect">Кто не заполнил</Link>
+              </>
+            )}
+          </>
         }
         aside={
-          <div className={h.collect}>
-            <div className={h.collectLine}>
-              Анкеты за месяц
-              <span className={h.collectNum}>
-                {got} из {total * 2}
-              </span>
-            </div>
-            <div className={h.bar}>
-              <div className={h.barFill} style={{ width: `${total ? (got / (total * 2)) * 100 : 0}%` }} />
-            </div>
-            {got < total * 2 && (
-              <Link to="/analytics#collect" className={h.missing}>
-                Кто не заполнил
-              </Link>
-            )}
-            <Link to="/form/qr" className={h.qr}>
-              <QrCode size={18} aria-hidden="true" />
-              QR-код анкеты
-            </Link>
-          </div>
+          <LinkButton to="/form/qr" variant="brand">
+            <QrCode aria-hidden="true" strokeWidth={1.8} />
+            QR-код анкеты
+          </LinkButton>
         }
       />
       <div className="wrap">
         {overview.isError && <LoadError query={overview} className={s.error} />}
-        <Stories stories={stories} months={months} scale={o.scale} isFresh={(id) => freshPairs.has(id)} />
+        <OverviewTable stories={stories} months={months} freshCells={freshCells} />
       </div>
     </>
   )
@@ -133,10 +124,10 @@ function OverviewSkeleton() {
   return (
     <div className="wrap">
       <Loading className={s.skeleton}>
-        <Skeleton width={420} height={56} />
-        <div className={s.skelCards}>
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} height={220} radius="var(--r-card)" />
+        <Skeleton width={420} height={40} />
+        <div className={s.skelTable}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} height={56} radius="var(--r-m)" />
           ))}
         </div>
       </Loading>

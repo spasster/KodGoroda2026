@@ -1,21 +1,26 @@
-// Экран «Как считаем» (/method): принципы, проверка ИИ и карточка на каждый сигнал.
+// Экран «Как считаем» (/method): принципы, проверка ИИ и таблица сигналов.
 // Всё берётся из GET /api/method, текстов методики во фронте нет.
 
 import clsx from 'clsx'
+import { ChevronRight } from 'lucide-react'
+import { Fragment, useState } from 'react'
 
 import { useMethod } from '../../api/queries'
-import type { MethodSignal, Quality, QualitySet } from '../../api/types'
-import { Hero, LoadError, Loading, Skeleton } from '../../components'
+import type { Quality, QualitySet } from '../../api/types'
+import { LoadError, Loading, PageHeader, Skeleton } from '../../components'
 import { formatNumber, plural } from '../../lib/format'
 import s from './Method.module.css'
 
 export function MethodPage() {
   const method = useMethod()
   const m = method.data
+  // Раскрыта одна строка, по умолчанию первая.
+  const [openType, setOpenType] = useState<string | null | undefined>(undefined)
+  const current = openType === undefined ? (m?.signals[0]?.type ?? null) : openType
 
   return (
     <>
-      <Hero title="Как считаем сигналы" />
+      <PageHeader title="Как считаем сигналы" />
       <div className={clsx('wrap', s.page)}>
         {method.isError && !m && <LoadError query={method} className={s.error} />}
         {!m && !method.isError && (
@@ -41,9 +46,80 @@ export function MethodPage() {
               <QualityBlock quality={m.quality} />
             </section>
 
-            {m.signals.map((sig) => (
-              <SignalCard key={sig.type} signal={sig} />
-            ))}
+            <section className={s.card} aria-labelledby="method-signals">
+              <h2 id="method-signals" className="sr-only">
+                Сигналы
+              </h2>
+              <div className={s.scroll}>
+                <table className={s.table}>
+                  <thead>
+                    <tr>
+                      <th scope="col" className={s.cName}>
+                        Сигнал
+                      </th>
+                      <th scope="col">Как считаем</th>
+                      <th scope="col" className={s.cNow}>
+                        Сейчас
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {m.signals.map((x) => {
+                      const open = current === x.type
+                      return (
+                        <Fragment key={x.type}>
+                          <tr className={clsx(s.row, open && s.rowOpen)} onClick={() => setOpenType(open ? null : x.type)}>
+                            <td className={s.cName}>
+                              <button
+                                type="button"
+                                className={s.toggle}
+                                aria-expanded={open}
+                                aria-controls={`method-${x.type}`}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setOpenType(open ? null : x.type)
+                                }}
+                              >
+                                <ChevronRight className={s.chevron} aria-hidden="true" size={16} strokeWidth={1.8} />
+                                {x.name}
+                              </button>
+                            </td>
+                            <td>{x.how}</td>
+                            <td className={s.cNow}>
+                              открыто {x.open} · подтвердилось {x.confirmed} · проблемы нет {x.rejected}
+                            </td>
+                          </tr>
+                          {open && (
+                            <tr id={`method-${x.type}`} className={s.detail}>
+                              <td colSpan={3}>
+                                <div className={s.detailInner}>
+                                  <h3 className={s.h3}>Почему важен</h3>
+                                  <ol className={s.list}>
+                                    {x.why.map((w) => (
+                                      <li key={w}>{w}</li>
+                                    ))}
+                                  </ol>
+                                  <h3 className={s.h3}>Что делает HR</h3>
+                                  <p>{x.action}</p>
+                                  <h3 className={s.h3}>Где ошибается</h3>
+                                  <p>{x.limit}</p>
+                                  {x.source && (
+                                    <>
+                                      <h3 className={s.h3}>Опора</h3>
+                                      <p>{x.source}</p>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
             <p className={s.baseline}>{m.baseline}</p>
           </>
@@ -53,27 +129,17 @@ export function MethodPage() {
   )
 }
 
-function setLine(x: QualitySet): string {
-  const n = x.comments
-  const { model: m, rules: r } = x
-  return (
-    `${x.name}. ${n} ${plural(n, ['комментарий', 'комментария', 'комментариев'])}, ${x.problems} с проблемой. ` +
-    `ИИ нашёл ${m.found} из ${x.problems} проблем, ложных тревог ${m.false_alarms}. ` +
-    `Словарь нашёл ${r.found} из ${x.problems}, ложных тревог ${r.false_alarms}.`
-  )
-}
-
 function QualityBlock({ quality }: { quality: Quality | null }) {
-  if (!quality) return <p className={s.text}>Проверка ИИ ещё не запускалась</p>
+  if (!quality) return <p className={s.text}>Проверка ещё не запускалась</p>
   return (
     <>
-      <ul className={s.sets}>
+      <div className={s.sets}>
         {quality.sets.map((x) => (
-          <li key={x.id}>{setLine(x)}</li>
+          <QualitySetView key={x.id} set={x} />
         ))}
-      </ul>
+      </div>
       <p className={s.text}>
-        ИИ {quality.model}, {formatNumber(quality.seconds_per_comment)} с на комментарий.
+        ИИ {quality.model}, {formatNumber(quality.seconds_per_comment)} с на комментарий
       </p>
       {quality.errors.length > 0 && (
         <>
@@ -89,33 +155,28 @@ function QualityBlock({ quality }: { quality: Quality | null }) {
   )
 }
 
-function SignalCard({ signal: x }: { signal: MethodSignal }) {
+function QualitySetView({ set: x }: { set: QualitySet }) {
+  const n = x.comments
   return (
-    <section className={s.card} aria-labelledby={`method-${x.type}`}>
-      <h2 id={`method-${x.type}`} className={s.h2}>
-        {x.name}
-      </h2>
-      <h3 className={s.h3}>Как считаем</h3>
-      <p className={s.text}>{x.how}</p>
-      <h3 className={s.h3}>Почему важен</h3>
-      <ol className={s.list}>
-        {x.why.map((w) => (
-          <li key={w}>{w}</li>
-        ))}
-      </ol>
-      <h3 className={s.h3}>Что делает HR</h3>
-      <p className={s.text}>{x.action}</p>
-      <h3 className={s.h3}>Где ошибается</h3>
-      <p className={s.text}>{x.limit}</p>
-      {x.source && (
-        <>
-          <h3 className={s.h3}>Опора</h3>
-          <p className={s.text}>{x.source}</p>
-        </>
-      )}
-      <p className={s.counts}>
-        Открыто {x.open}, подтвердилось {x.confirmed}, проблемы нет {x.rejected}
+    <div className={s.set}>
+      <p className={s.setName}>{x.name}</p>
+      <p className={s.setSub}>
+        {n} {plural(n, ['комментарий', 'комментария', 'комментариев'])}, {x.problems} с проблемой
       </p>
-    </section>
+      <Bar label={`ИИ: найдено ${x.model.found} из ${x.problems}, ложных тревог ${x.model.false_alarms}`} value={x.model.found} total={x.problems} ai />
+      <Bar label={`Словарь: найдено ${x.rules.found} из ${x.problems}, ложных тревог ${x.rules.false_alarms}`} value={x.rules.found} total={x.problems} />
+    </div>
+  )
+}
+
+// Полоски двух способов в одной шкале от 0 до числа проблем.
+function Bar({ label, value, total, ai = false }: { label: string; value: number; total: number; ai?: boolean }) {
+  return (
+    <div className={s.bar}>
+      <span className={s.barLabel}>{label}</span>
+      <span className={s.track} aria-hidden="true">
+        <i className={ai ? s.fillAi : s.fillRules} style={{ width: `${total ? Math.min(100, (value / total) * 100) : 0}%` }} />
+      </span>
+    </div>
   )
 }
