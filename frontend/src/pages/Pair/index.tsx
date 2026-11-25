@@ -44,7 +44,7 @@ export function PairPage() {
   useEffect(() => {
     if (!name) return
     const prev = document.title
-    document.title = `${name}, стажировки`
+    document.title = `${name} · Стажировка МГТС`
     return () => {
       document.title = prev
     }
