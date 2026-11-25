@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from app.adapters.gsheet import sync_gsheet
 from app.main import create_app
 
-from .conftest import INTERN_HEADERS, MENTOR_HEADERS, write_xlsx
+from .conftest import INTERN_HEADERS, MENTOR_HEADERS, answers, write_xlsx
 
 # Ключи типов из контракта.
 SIGNAL = {"key", "type", "pair_id", "role", "month", "months", "since_month", "severity", "title", "explanation", "action",
@@ -340,3 +340,38 @@ def test_names_from_people_json(client):
     assert all(v is None or isinstance(v, str) for v in names.values())
     people = client.get("/api/people").json()
     assert all("name" in p for p in people["interns"] + people["mentors"])
+
+
+def test_names_match_ids_case_insensitively(client, post, survey_dir):
+    (survey_dir / "people.json").write_text('{"Стажёр 1": "Иван", "m-01": "Пётр"}', encoding="utf-8")
+    post("intern", "Стажёр 1", 1, 4.0, mentor_id="M-01")
+    pair, = client.get("/api/overview").json()["pairs"]
+    assert pair["intern_id"] == "СТАЖЁР 1" and pair["intern_name"] == "Иван" and pair["mentor_name"] == "Пётр"
+
+
+def test_choice_answer_is_stored_and_ignored_by_indices(client, post, survey_dir):
+    import json
+    path = survey_dir / "survey.json"
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw["roles"]["intern"]["questions"].append(
+        {"id": "stay", "type": "choice", "text": "Хотите остаться?", "options": ["Да", "Нет"]})
+    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    body = {"role": "intern", "person_id": "S-01", "mentor_id": "M-01", "month": 1,
+            "answers": {**answers("intern", 4.0), "stay": "Нет"}}
+    assert client.post("/api/ingest", json=body).status_code == 200
+    post("mentor", "M-01", 1, 4.0)
+    ctx = client.app.state.ctx
+    resp = ctx.snapshot().ds.response("P-01", "intern", 1)
+    assert resp.texts["stay"] == "Нет" and "stay" not in resp.scores
+    assert ctx.snapshot().ds.index("P-01", "intern", 1) == 4.0
+    assert client.get("/api/signals").json() == []
+
+
+def test_pair_ids_do_not_collide_and_are_url_safe(client, post):
+    post("intern", "A-1", 1, 4.0, mentor_id="M-1")
+    post("intern", "B-1", 1, 4.0, mentor_id="M-2")
+    post("intern", "X/1:2 3", 1, 4.0, mentor_id="M-3")
+    ids = {p["intern_id"]: p["pair_id"] for p in client.get("/api/overview").json()["pairs"]}
+    assert ids["A-1"] == "P-1" and ids["B-1"] == "P-B-1"
+    assert len(set(ids.values())) == 3 and not any(c in v for v in ids.values() for c in "/: ")
+    assert client.get(f"/api/pairs/{ids['X/1:2 3']}").status_code == 200

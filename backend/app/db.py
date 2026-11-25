@@ -91,7 +91,12 @@ def clear(conn: sqlite3.Connection) -> None:
 def pair_id_for(intern_id: str) -> str:
     """S-03 → P-03, «СТАЖЁР 3» → P-3. Остальные ID получают префикс P-."""
     m = re.fullmatch(r"[^\d]*?[\s-](\d+)", intern_id)
-    return "P-" + (m[1] if m else intern_id)
+    return _safe_id("P-" + (m[1] if m else intern_id))
+
+
+def _safe_id(value: str) -> str:
+    """В pair_id нет «/», «:» и пробела: он стоит в путях /pairs/{id} и в ключах сигналов."""
+    return re.sub(r"[/: ]", "-", value)
 
 
 def get_pair_by_intern(conn: sqlite3.Connection, intern_id: str) -> sqlite3.Row | None:
@@ -104,6 +109,8 @@ def get_pairs_by_mentor(conn: sqlite3.Connection, mentor_id: str) -> list[sqlite
 
 def create_pair(conn: sqlite3.Connection, intern_id: str, mentor_id: str) -> str:
     pair_id = pair_id_for(intern_id)
+    if conn.execute("SELECT 1 FROM pairs WHERE pair_id = ?", (pair_id,)).fetchone():
+        pair_id = _safe_id("P-" + intern_id)  # «A-1» и «B-1» оба дали бы P-1
     conn.execute(
         "INSERT INTO pairs (pair_id, intern_id, mentor_id) VALUES (?, ?, ?)",
         (pair_id, intern_id, mentor_id),

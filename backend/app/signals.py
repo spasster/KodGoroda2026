@@ -44,12 +44,17 @@ def thresholds(raw: dict | None) -> dict:
 # Месяц везде цифрой, как в таблице дашборда: с проектора так читается быстрее.
 def since_month(m: int) -> str:
     """«с 3-го месяца»."""
-    return f"с {m}-го месяца"
+    return f"{'со' if m == 2 else 'с'} {m}-го месяца"
+
+
+def in_ord(m: int) -> str:
+    """«в 5-м», «во 2-м»."""
+    return f"{'во' if m == 2 else 'в'} {m}-м"
 
 
 def in_month(m: int) -> str:
     """«в 5-м месяце»."""
-    return f"в {m}-м месяце"
+    return f"{in_ord(m)} месяце"
 
 
 def plural(n: int, one: str, few: str, many: str) -> str:
@@ -204,7 +209,7 @@ class _Builder:
                         else f"Оценка {who['gen']} по месяцам {months_list(months)}: {chain(vals)}.")
             else:
                 head = (f"Оценка {who['gen']} за месяц упала с {num(pv)} до {num(v)}." if consecutive(months)
-                        else f"Оценка {who['gen']} упала с {num(pv)} в {pm}-м месяце до {num(v)} в {m}-м.")
+                        else f"Оценка {who['gen']} упала с {num(pv)} {in_month(pm)} до {num(v)} {in_ord(m)}.")
             explanation = head + self.biggest_drop(pair_id, role, pm, m)
             since = months[1]
             if role == "intern":
@@ -487,8 +492,19 @@ def _outcome(ds: Dataset, kind: str, pair_id: str, role: str, month: int, review
             answered = any(m > rm for m, _ in ds.series(pair_id, role))
         if not repeated and not answered:
             return None
-        text = f"{head} повторилось в {month}-м" if repeated else f"{head} не повторялось"
+        text = f"{head} повторилось {in_ord(month)}" if repeated else f"{head} не повторялось"
     return Outcome(review_month=rm, last_month=last, repeated=repeated, text=text)
+
+
+def since_of(ds: Dataset, pair_id: str, role: str, months: list[int]) -> int:
+    """Начало последней непрерывной серии. Пропущенная анкета ряд не рвёт: у разрыва нет анкеты хотя бы одной стороны."""
+    roles = ("intern", "mentor") if role == "both" else (role,)
+    since = months[-1]
+    for a, b in zip(reversed(months[:-1]), reversed(months[1:])):
+        if any(all(ds.response(pair_id, r, g) is not None for r in roles) for g in range(a + 1, b)):
+            break
+        since = a
+    return since
 
 
 def compute_signals(ds: Dataset, insights: Insights, th: dict, reviews: dict) -> tuple[list[Monthly], list[Signal]]:
@@ -502,17 +518,13 @@ def compute_signals(ds: Dataset, insights: Insights, th: dict, reviews: dict) ->
     for key, items in groups.items():
         last = items[-1]
         months = [x.month for x in items]
-        since = last.month
-        for a, b in zip(reversed(months[:-1]), reversed(months[1:])):
-            if b - a != 1:
-                break
-            since = a
+        since = since_of(ds, last.pair_id, last.role, months)
         review = _review(reviews.get(key), last.month)
         edge = ds.pair_last_month(last.pair_id) - active_months
         active = last.month > edge and review.status != "rejected"
         severity = (min((x.severity for x in items if x.month > edge), key=SEVERITY_RANK.get) if active
                     else last.severity)
-        run = last.month - since + 1
+        run = sum(1 for x in months if x >= since)
         explanation = last.explanation
         if run > 1:
             explanation += f" Повторяется {since_month(since)}, {run} мес. подряд."

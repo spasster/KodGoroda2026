@@ -257,7 +257,7 @@ function Effect({ analytics: a }: { analytics: Analytics }) {
 // Сколько стажёров получили сигнал раньше, чем средняя оценка упала ниже порога.
 function leadSummary(e: Analytics['effect']): string {
   const score = formatNumber(e.baseline_score)
-  const parts = [`У ${e.earlier} из ${e.pairs_with_signals} стажёров сигнал появился раньше, чем средняя оценка упала ниже ${score}.`]
+  const parts = [`У ${e.earlier} из ${e.pairs_with_signals} ${plural(e.pairs_with_signals, ['стажёра', 'стажёров', 'стажёров'])} сигнал появился раньше, чем средняя оценка упала ниже ${score}.`]
   if (e.avg_lead != null) parts.push(`В среднем на ${formatNumber(e.avg_lead)} мес.`)
   if (e.invisible > 0) parts.push(`У ${e.invisible} ${plural(e.invisible, ['стажёра', 'стажёров', 'стажёров'])} по средней оценке проблему не видно совсем.`)
   return parts.join(' ')
@@ -269,7 +269,7 @@ function leadLine(e: Analytics['early'][number]): string {
   if (e.lead_months === 0) return `${signal}, одновременно со средней оценкой`
   const n = Math.abs(e.lead_months)
   const by = `на ${n} ${plural(n, ['месяц', 'месяца', 'месяцев'])} ${e.lead_months > 0 ? 'раньше' : 'позже'}`
-  return `${signal}, по средней оценке видно с ${e.baseline_month}-го: ${by}`
+  return `${signal}, по средней оценке видно ${e.baseline_month === 2 ? 'со' : 'с'} ${e.baseline_month}-го: ${by}`
 }
 
 function capitalize(word: string): string {

@@ -120,5 +120,8 @@ class SurveyFiles:
     @property
     def names(self) -> dict[str, str]:
         """ID → имя из people.json. Файла нет — словарь пустой, интерфейс покажет ID."""
+        from .importer import parse_id  # ключи нормализуются так же, как ID при импорте
+
         raw = self._people.get({}) or {}
-        return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, str) and v.strip()}
+        return {parse_id(k): v for k, v in raw.items()
+                if not k.startswith("_") and isinstance(v, str) and v.strip() and parse_id(k)}

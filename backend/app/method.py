@@ -1,7 +1,8 @@
 """Экран «Как считаем»: формулы, причины, ограничения. Пороги подставляются из signals.json и шкалы анкеты."""
 
+from math import floor
+
 from .context import Snapshot
-from .indices import r1
 from .signals import num, score_str
 
 PRINCIPLES = [
@@ -95,7 +96,7 @@ def method(snap: Snapshot, quality: dict | None) -> dict:
     def pts(group: str, key: str) -> str:
         return num(th[group][key] * survey.scale_range)
 
-    items = _signals(pts, score_str(r1(points(th["low_question"]["max_score"]))),
+    items = _signals(pts, score_str(floor(points(th["low_question"]["max_score"]) + 1e-9)),
                      num(points(th["text_vs_score"]["min_index"])))
     for item in items:
         item["how"] = item["how"].replace("{drop}", str(round(th["silence"]["length_drop"] * 100)))

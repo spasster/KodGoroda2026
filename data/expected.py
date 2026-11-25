@@ -171,7 +171,7 @@ def compute(data: dict, people: dict, labels: dict, rd: dict, near: Near) -> dic
                 if near.ge(d2, t1, f"{pair} {role} м{m}: спад за месяц"):
                     add("decline", pair, role, m, "high", "scores",
                         f"Индекс {WHO[role]} за месяц: {num(s[m1])} → {num(s[m])}." if m - m1 == 1 else
-                        f"Индекс {WHO[role]} с {m1}-го по {m}-й месяц: {num(s[m1])} → {num(s[m])}.")
+                        f"Индекс {WHO[role]} {'со' if m1 == 2 else 'с'} {m1}-го по {m}-й месяц: {num(s[m1])} → {num(s[m])}.")
                     continue
                 if m0 is None:
                     continue
@@ -223,7 +223,7 @@ def compute(data: dict, people: dict, labels: dict, rd: dict, near: Near) -> dic
                 if low:
                     shown = "; ".join(f"«{qtext[role][q]}» — {v}" for q, v in low)
                     add("low_question", pair, role, m, "high" if len(low) >= 2 or any(v <= SMIN for _, v in low) else "medium",
-                        "scores", f"В {m}-м месяце: {shown}. Средняя по анкете {num(series[role][m])}.")
+                        "scores", f"{'Во' if m == 2 else 'В'} {m}-м месяце: {shown}. Средняя по анкете {num(series[role][m])}.")
 
         # text_vs_score
         for role in ROLES:
@@ -321,7 +321,9 @@ def statuses(sigs: dict, data: dict, people: dict, rd: dict) -> tuple[dict, dict
             months = [x["month"] for x in items]
             since = months[-1]
             for k in range(len(months) - 1, 0, -1):
-                if months[k] - months[k - 1] != 1:
+                # Пропущенная анкета ряд не рвёт: у разрыва нет анкеты хотя бы одной стороны.
+                roles = ("intern", "mentor") if role == "both" else (role,)
+                if any(all((p, r, g) in data for r in roles) for g in range(months[k - 1] + 1, months[k])):
                     break
                 since = months[k - 1]
             active = months[-1] > edge

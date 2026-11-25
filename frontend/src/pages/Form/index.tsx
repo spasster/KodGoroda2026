@@ -284,6 +284,7 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
       const v = draft.answers[q.id]
       if (q.type === 'scale' && typeof v === 'number') answers[q.id] = v
       if (q.type === 'text') answers[q.id] = typeof v === 'string' ? v.trim() : ''
+      if (q.type === 'choice' && typeof v === 'string' && v) answers[q.id] = v
     }
     ingest.mutate(
       // Вторая сторона пары явно: у наставника с двумя стажёрами без неё анкета не найдёт пару.
@@ -344,6 +345,30 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
                   value={String(draft.answers[q.id] ?? '')}
                   onChange={(e) => patch((d) => ({ ...d, answers: { ...d.answers, [q.id]: e.target.value } }))}
                 />
+              </section>
+            )
+          }
+          if (q.type === 'choice') {
+            const options = q.options?.length ? q.options : ['Да', 'Нет']
+            return (
+              <section key={`${role}-${q.id}`} className={s.card} style={order(i + 2)} aria-labelledby={`form-qt-${q.id}`}>
+                <h2 className={s.qt} id={`form-qt-${q.id}`}>
+                  {nbsp(q.text)}
+                </h2>
+                <div className={s.scale} role="radiogroup" aria-labelledby={`form-qt-${q.id}`} style={{ '--n': options.length } as CSSProperties}>
+                  {options.map((o) => (
+                    <label key={o} className={s.opt}>
+                      <input
+                        type="radio"
+                        name={`${role}-${q.id}`}
+                        checked={draft.answers[q.id] === o}
+                        onChange={() => patch((d) => ({ ...d, answers: { ...d.answers, [q.id]: o } }))}
+                        aria-label={o}
+                      />
+                      <span>{o}</span>
+                    </label>
+                  ))}
+                </div>
               </section>
             )
           }

@@ -70,12 +70,13 @@ class FileReport:
     missing_questions: list[str] = field(default_factory=list)
     errors: list[dict] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    first_key: int | None = None  # самый ранний календарный месяц файла, нужен для общей точки отсчёта
 
     def error(self, row: int, message: str) -> None:
         self.errors.append({"row": row, "message": message})
 
     def as_dict(self) -> dict:
-        return self.__dict__.copy()
+        return {k: v for k, v in self.__dict__.items() if k != "first_key"}
 
 
 # Чтение файлов.
@@ -105,21 +106,22 @@ def _sheet_role(name: str) -> str | None:
     n = normalize_header(name)
     if n.startswith(("пары", "pairs")):
         return "pairs"
+    if "настав" in n or "mentor" in n:  # «Анкета наставника о стажёре»: наставник раньше стажёра
+        return "mentor"
     if "стаж" in n or "intern" in n:
         return "intern"
-    if "настав" in n or "mentor" in n:
-        return "mentor"
     return None
 
 
-def read_tables(data: bytes, filename: str) -> list[tuple[Table, str | None]]:
+def read_tables(data: bytes, filename: str, role: str | None = None) -> list[tuple[Table, str | None]]:
     """Таблицы файла с ролью (intern, mentor, pairs или None, если по файлу не понять).
 
     Книга с листами «Стажёры» и «Наставники» даёт две таблицы, лист «Пары» даёт таблицу пар.
-    Обычный файл с одним листом даёт одну таблицу без роли."""
+    Обычный файл с одним листом даёт одну таблицу без роли. Если роль задана (поле загрузки, --role),
+    а лист с ответами один, роль берётся из неё: имя листа решает только для книги с несколькими листами."""
     first = read_bytes(data, filename)
     if Path(filename).suffix.lower() not in (".xlsx", ".xlsm") and data[:2] != b"PK":
-        return [(first, None)]
+        return [(first, role)]
     from openpyxl import load_workbook
 
     wb = load_workbook(io.BytesIO(data), read_only=True)
@@ -127,19 +129,21 @@ def read_tables(data: bytes, filename: str) -> list[tuple[Table, str | None]]:
     wb.close()
     roles = {n: _sheet_role(n) for n in names}
     if not any(roles.values()):
-        return [(first, None)]
-    out = [(_read_xlsx(data, filename, n), r) for n, r in roles.items() if r]
+        return [(first, role)]
+    answer_sheets = sum(r in ROLES for r in roles.values())
+    out = [(_read_xlsx(data, filename, n), role if role and r in ROLES and answer_sheets == 1 else r)
+           for n, r in roles.items() if r]
     if not any(r in ("intern", "mentor") for _, r in out) and not _sheet_role(first.sheet or ""):
-        out.append((first, None))
+        out.append((first, role))
     return out
 
 
-def read_tables_file(path: Path) -> list[tuple[Table, str | None]]:
+def read_tables_file(path: Path, role: str | None = None) -> list[tuple[Table, str | None]]:
     try:
         data = path.read_bytes()
     except OSError as exc:
         raise ImportFileError(f"Не удалось открыть файл {path}: {exc.strerror or exc}") from None
-    return read_tables(data, path.name)
+    return read_tables(data, path.name, role)
 
 
 def parse_pairs(table: Table) -> dict[str, str]:
@@ -430,8 +434,8 @@ def reshape(rows: list[list[Any]], role: str, survey: Survey, import_map: dict) 
     if "question" in fields and "answer" in fields:
         q, a = fields["question"], fields["answer"]
         keep = [i for i, h in enumerate(header) if h not in (None, "") and i not in (q, a)]
-        # Время заполнения у каждого ответа своё, в ключ анкеты оно не входит.
-        key_cols = [i for i in keep if i != fields.get("submitted_at")]
+        # Анкету задают только ID и месяц. Время, «ID ответа» и прочие колонки у каждого ответа свои.
+        key_cols = [fields[f] for f in ("intern_id", "mentor_id", "month") if f in fields]
         questions: dict[str, None] = {}
         forms: dict[tuple, tuple[list[Any], dict[str, Any]]] = {}
         for row in rows[1:]:
@@ -459,7 +463,9 @@ def reshape(rows: list[list[Any]], role: str, survey: Survey, import_map: dict) 
 
 # Таблица → записи.
 
-def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tuple[list[Record], FileReport]:
+def parse_table(table: Table, role: str, survey: Survey, import_map: dict,
+                first_key: int | None = None) -> tuple[list[Record], FileReport]:
+    """first_key: календарный месяц, который считается первым, общий для всех файлов импорта."""
     report = FileReport(file=table.name, role=role, sheet=table.sheet)
     if not table.rows:
         report.warnings.append("Файл пустой")
@@ -533,8 +539,10 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
         keys.append(key)
 
     if any(k is not None for k in keys) or "month" not in fields:
-        base = survey.first_month if survey.first_month is not None else min((k for k in keys if k is not None), default=0)
-        if survey.first_month is None and "month" in fields:
+        report.first_key = min((k for k in keys if k is not None), default=None)
+        base = (survey.first_month if survey.first_month is not None
+                else first_key if first_key is not None else report.first_key or 0)
+        if survey.first_month is None and first_key is None and "month" in fields:
             report.warnings.append("Месяц задан датой или названием. Первый месяц в файле = 1: если в других файлах он другой, "
                                    "задайте first_month в survey.json")
         kept = []

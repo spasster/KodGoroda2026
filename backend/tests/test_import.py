@@ -168,3 +168,38 @@ def test_xlsx_with_huge_dimension_is_bounded():
 
     with pytest.raises(ImportFileError, match="больше 5000 строк"):
         read_bytes(_sheet_with_dimension(1_048_576), "bomb.xlsx")
+
+
+def test_long_format_extra_columns_do_not_split_form(tmp_path):
+    imap = {"intern": {"Кто": "intern_id", "Мес": "month", "В": "question", "О": "answer", "Время": "submitted_at"}}
+    qs = [q.text for q in SURVEY.questions("intern")][:3]
+    path = write_xlsx(tmp_path / "long.xlsx", ["ID ответа", "Время", "Кто", "Мес", "В", "О"], [
+        [i + 1, f"2026-06-0{i + 1} 10:00:00", "S-01", 1, q, 4] for i, q in enumerate(qs)])
+    records, _ = parse_table(read_file(path), "intern", SURVEY, imap)
+    assert len(records) == 1 and sum(1 for s, _t in records[0].answers.values() if s is not None) == 3
+
+
+def test_single_sheet_role_comes_from_upload_field(client, tmp_path):
+    mentors = write_xlsx(tmp_path / "m.xlsx", MENTOR_HEADERS, [
+        ["2026-06-01 10:00:00", "M-01", "S-01", 1, 4, 4, 4, 4, ""]], sheet="Анкета наставника о стажёре")
+    with mentors.open("rb") as f:
+        r = client.post("/api/import/excel", files={"mentors": ("m.xlsx", f.read())})
+    assert r.status_code == 200, r.text
+    resp = client.app.state.ctx.snapshot().ds.response("P-01", "mentor", 1)
+    assert resp is not None
+    assert read_tables_roles(mentors, None) == ["mentor"]
+
+
+def read_tables_roles(path, role):
+    from app.importer import read_tables
+    return [r for _, r in read_tables(path.read_bytes(), path.name, role)]
+
+
+def test_month_by_name_counts_from_earliest_month_of_all_files(client, tmp_path):
+    interns = write_xlsx(tmp_path / "i.xlsx", INTERN_HEADERS, [
+        ["", "S-01", "M-01", "Июнь 2026", 4, 4, 4, 4, 4, ""], ["", "S-01", "M-01", "Июль 2026", 4, 4, 4, 4, 4, ""]])
+    mentors = write_xlsx(tmp_path / "m.xlsx", MENTOR_HEADERS, [["", "M-01", "S-01", "Июль 2026", 4, 4, 4, 4, ""]])
+    files = {"interns": ("i.xlsx", interns.read_bytes()), "mentors": ("m.xlsx", mentors.read_bytes())}
+    assert client.post("/api/import/excel", files=files).status_code == 200
+    ds = client.app.state.ctx.snapshot().ds
+    assert ds.response("P-01", "mentor", 2) is not None and ds.response("P-01", "mentor", 1) is None

@@ -57,7 +57,7 @@ def cmd_reset(_: argparse.Namespace) -> int:
 def cmd_import(args: argparse.Namespace) -> int:
     ctx = _ctx()
     try:
-        tables = [(t, r if r == "pairs" else args.role or r) for p in args.files for t, r in read_tables_file(Path(p))]
+        tables = [tr for p in args.files for tr in read_tables_file(Path(p), args.role)]
     except ImportFileError as exc:
         print(exc, file=sys.stderr)
         return 1
@@ -68,12 +68,12 @@ def cmd_import(args: argparse.Namespace) -> int:
 def cmd_inspect(args: argparse.Namespace) -> int:
     ctx = Context(Settings.from_env())
     try:
-        tables = read_tables_file(Path(args.file))
+        tables = read_tables_file(Path(args.file), args.role)
     except ImportFileError as exc:
         print(exc, file=sys.stderr)
         return 1
     for table, sheet_role in tables:
-        _inspect(ctx, table, "pairs" if sheet_role == "pairs" else args.role or sheet_role)
+        _inspect(ctx, table, sheet_role)
     return 0
 
 

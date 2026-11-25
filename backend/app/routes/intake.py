@@ -65,7 +65,7 @@ async def import_excel(request: Request, interns: UploadFile | None = File(None)
         if len(data) > MAX_UPLOAD:
             raise HTTPException(422, f"Файл {upload.filename} больше 5 МБ, это не похоже на выгрузку анкет")
         if data:
-            tables += [(t, r or role) for t, r in read_tables(data, upload.filename)]
+            tables += read_tables(data, upload.filename, role)
     if not tables:
         raise HTTPException(422, "Загрузите файл в поле interns или mentors")
     do_replace = _truthy(replace if replace is not None else request.query_params.get("replace"))

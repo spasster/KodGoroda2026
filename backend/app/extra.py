@@ -1,9 +1,12 @@
 """Аналитика программы и подготовка к разговору."""
 
+from types import SimpleNamespace
+
 from .analyzer.models import TOPICS
 from .context import Snapshot
 from .indices import r1
-from .views import sort_signals
+from .signals import SEVERITY_RANK, since_of, status_of
+from .views import _dismissed, sort_signals
 
 # Вопросы для разговора по типу сигнала. to — кому задавать.
 _QUESTIONS: dict[str, list[tuple[str, str]]] = {
@@ -74,6 +77,24 @@ def brief(snap: Snapshot, pair_id: str, notes: list) -> dict | None:
     }
 
 
+def _status_at(ds, own: list, month: int, active_months: int) -> str:
+    """Статус пары на конец месяца: ситуации только из срабатываний до него, окно активных месяцев от него."""
+    groups: dict[str, list] = {}
+    for s in sorted((s for s in own if s.month <= month), key=lambda s: s.month):
+        groups.setdefault(s.situation_key, []).append(s)
+    edge = month - active_months
+    sits = []
+    for items in groups.values():
+        last = items[-1]
+        if last.month <= edge:
+            continue
+        months = [x.month for x in items]
+        sits.append(SimpleNamespace(
+            month=last.month, since_month=since_of(ds, last.pair_id, last.role, months),
+            severity=min((x.severity for x in items if x.month > edge), key=SEVERITY_RANK.get)))
+    return status_of(sits)
+
+
 def analytics(snap: Snapshot) -> dict:
     ds = snap.ds
     survey = ds.survey
@@ -118,17 +139,13 @@ def analytics(snap: Snapshot) -> dict:
     below = snap.th["baseline"]["index_below"]
     early = []
     for pid in pairs:
-        kept = {s.key for s in snap.pair_signals(pid) if s.review.status != "rejected"}
-        own = [s for s in snap.monthly if s.pair_id == pid and s.situation_key in kept]
+        by_key = {s.key: s for s in snap.pair_signals(pid)}
+        # Месяцы, снятые отметкой «проблемы нет», не считаем: так же, как в клетках обзора.
+        own = [s for s in snap.monthly if s.pair_id == pid and not _dismissed(by_key[s.situation_key], s.month)]
         if not own:
             continue
         first = min(s.month for s in own)
-        risk_month = None
-        for m in months:
-            window = [s for s in own if m - 1 <= s.month <= m]
-            if any(s.severity == "high" for s in window) or len(window) >= 2:
-                risk_month = m
-                break
+        risk_month = next((m for m in months if _status_at(ds, own, m, int(snap.th["active_months"])) == "risk"), None)
         baseline_month = next((m for m in months for role in ("intern", "mentor")
                                if (n := ds.norm_index(pid, role, m)) is not None and n < below - 1e-9), None)
         pair = ds.pairs[pid]

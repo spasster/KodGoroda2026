@@ -56,7 +56,7 @@ def test_method_thresholds_follow_signals_json_and_scale(client, survey_dir):
     # Размах 9: 0,25 · 9 = 2,25 → 2,3; 0,12 · 9 = 1,08 → 1,1; 0,4 · 9 = 3,6; шкала начинается с 1.
     assert "упала на 2,3 балла" in s["decline"]["how"] and "потеряла за них 1,1 балла" in s["decline"]["how"]
     assert "от 3,6 балла" in s["gap_intern_low"]["how"]
-    assert s["low_question"]["how"] == "По любому вопросу анкеты поставлено 3,7 или ниже."  # 1 + 0,3 · 9
+    assert s["low_question"]["how"] == "По любому вопросу анкеты поставлено 3 или ниже."  # 1 + 0,3 · 9 = 3,7, оценки целые
     assert "оценка анкеты 6,9 и выше" in s["text_vs_score"]["how"]  # 1 + 0,65 · 9 = 6,85
     assert "ниже 6,6." in method(client)["baseline"]  # 1 + 0,625 · 9 = 6,625
 

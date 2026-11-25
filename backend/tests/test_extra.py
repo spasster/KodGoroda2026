@@ -73,3 +73,20 @@ def test_baseline_threshold_from_signals_json(client, post, survey_dir):
     os.utime(survey_dir / "signals.json", (time.time() + 5, time.time() + 5))
     a = client.get("/api/analytics").json()
     assert a["early"][0]["baseline_month"] == 2 and a["effect"]["baseline_score"] == 4.2
+
+
+def test_risk_month_uses_pair_status_rule(client, post):
+    # Высокий разрыв один месяц это «Пора поговорить» по клетке, но статус пары risk только на втором месяце подряд.
+    post.pair("01", 1, 2.8, 4.4)
+    post.pair("01", 2, 2.8, 4.4)
+    e = client.get("/api/analytics").json()["early"][0]
+    assert e["first_signal_month"] == 1 and e["risk_month"] == 2
+
+
+def test_first_signal_month_skips_dismissed_months(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    client.post("/api/signals/gap_intern_low:P-01:both/review", json={"status": "rejected"})
+    post.pair("01", 2, 4.4, 4.4)
+    post.pair("01", 3, 3.4, 4.4)
+    e = client.get("/api/analytics").json()["early"][0]
+    assert e["first_signal_month"] == 3

@@ -126,9 +126,9 @@ export function SignalsPage() {
   const personCounts = facet(inSegment, filters, 'person', (x) => x.pair_id)
   const kindCounts = facet(inSegment, filters, 'kind', kindOf)
   const sevCounts = facet(inSegment, filters, 'severity', (x) => x.severity)
-  const monthCounts = facet(inSegment, filters, 'month', (x) => x.month)
+  const monthCounts = facet(inSegment, filters, 'month', (x) => x.months)
   const personIds = [...new Set(inSegment.map((x) => x.pair_id))].sort()
-  const monthList = [...new Set(inSegment.map((x) => x.month))].sort((a, b) => a - b)
+  const monthList = [...new Set(inSegment.flatMap((x) => x.months))].sort((a, b) => a - b)
 
   const say = (n: Omit<Notice, 'id'>) => setNotice({ ...n, id: ++noticeId.current })
 

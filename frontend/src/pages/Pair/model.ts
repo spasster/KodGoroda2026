@@ -62,7 +62,7 @@ export function explanationLine(signal: Signal): string {
   const to = vals[vals.length - 1]
   if (!from || !to || from.month === to.month) return first
   const who = role === 'intern' ? 'стажёра' : 'наставника'
-  return `С ${from.month}-го по ${to.month}-й месяц оценка ${who} снизилась с ${formatNumber(from.value)} до ${formatNumber(to.value)}.`
+  return `${from.month === 2 ? 'Со' : 'С'} ${from.month}-го по ${to.month}-й месяц оценка ${who} снизилась с ${formatNumber(from.value)} до ${formatNumber(to.value)}.`
 }
 
 export interface Range {

@@ -45,7 +45,7 @@ def review_signal(key: str, body: ReviewIn, ctx: Context = Depends(get_ctx)) -> 
             raise HTTPException(404, f"Сигнал {key} не найден")
         note = (body.note or "").strip() or None
         with ctx.connect() as conn:
-            db.set_review(conn, key, body.status, note, snap.ds.pair_last_month(signal.pair_id))
+            db.set_review(conn, key, body.status, note, signal.month)
         signal = ctx.snapshot().signal(key)
     ctx.bus.publish("review", {"key": key, "status": body.status})
     return signal

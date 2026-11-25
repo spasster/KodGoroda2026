@@ -128,7 +128,7 @@ export function useReview() {
       const note = vars.note?.trim() || null
       const updated_at = new Date().toISOString()
       const patch = (s: Signal): Signal =>
-        s.key === vars.key ? { ...s, review: { ...s.review, status: vars.status, note, updated_at } } : s
+        s.key === vars.key ? { ...s, review: { ...s.review, status: vars.status, note, updated_at, previous: null }, outcome: null } : s
       qc.setQueriesData<Signal[]>({ queryKey: queryKeys.signals }, (list) => list?.map(patch))
       if (pairId) {
         qc.setQueryData<PairDetail>(queryKeys.pair(pairId), (d) => d && { ...d, signals: d.signals.map(patch) })

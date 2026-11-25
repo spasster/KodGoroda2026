@@ -220,6 +220,7 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
     """Импорт таблиц. Роль берётся из пары (таблица, роль) или определяется по файлу."""
     survey, import_map = ctx.survey, ctx.files.import_map
     parsed = []
+    sources = []
     pair_map = {parse_id(k): parse_id(v) for k, v in (import_map.get("pairs") or {}).items() if parse_id(k) and parse_id(v)}
     for table, role in tables:
         if role == "pairs":
@@ -227,6 +228,13 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
             continue
         role = role or detect_role(table, survey, import_map)
         parsed.append((role, *parse_table(table, role, survey, import_map)))
+        sources.append(table)
+    # Месяц датой считается от самого раннего месяца среди всех таблиц, а не каждой по отдельности.
+    firsts = [r.first_key for _, _, r in parsed if r.first_key is not None]
+    if survey.first_month is None and firsts and len(set(firsts)) > 1:
+        parsed = [(role, *parse_table(table, role, survey, import_map, min(firsts)))
+                  if report.first_key is not None else (role, records, report)
+                  for table, (role, records, report) in zip(sources, parsed)]
     link_pairs(parsed, pair_map)
     parsed.sort(key=lambda x: ROLES.index(x[0]))  # стажёры раньше: их строки создают пары
     # Полная замена стирает базу. Если в файлах ни одной анкеты, стирать нечем заменять.

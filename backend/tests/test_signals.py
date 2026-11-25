@@ -64,7 +64,7 @@ def test_decline_two_months_medium(client, post):
     assert s["severity"] == "medium"
     assert s["title"] == "Стажёр оценивает стажировку всё ниже"
     assert "4,6 → 3,8 → 3,0" in s["explanation"]
-    assert s["action"] == "Поговорить со стажёром один на один: что изменилось с 2-го месяца."
+    assert s["action"] == "Поговорить со стажёром один на один: что изменилось со 2-го месяца."
     assert [v["value"] for v in s["values"]] == [4.6, 3.8, 3.0]
     assert "decline:P-01:intern:2" not in signals(client)  # 0,8 балла за месяц ещё не резкий спад
 
@@ -81,7 +81,7 @@ def test_decline_sharp_high_with_question(client, post):
     assert s["title"] == "Оценка стажёра резко упала"
     assert "с 4,4 до 3,0" in s["explanation"]
     assert "«Хватает ли вам помощи наставника?»" in s["explanation"]
-    assert "в 2-м месяце" in s["action"]
+    assert "во 2-м месяце" in s["action"]
 
 
 def test_decline_for_mentor(client, post):
@@ -241,7 +241,7 @@ def test_silence_empty_comment(client, post):
     s = signals(client)["silence:P-01:intern:2"]
     assert s["severity"] == "low"
     assert s["title"] == "Стажёр не написал комментарий"
-    assert s["explanation"].startswith("В 2-м месяце комментарий пустой. Раньше стажёр писал в среднем 41 знак.")
+    assert s["explanation"].startswith("Во 2-м месяце комментарий пустой. Раньше стажёр писал в среднем 41 знак.")
 
 
 def test_silence_comment_got_short(client, post):
@@ -513,6 +513,20 @@ def test_review_remembers_pair_last_month(client, post):
     assert out["review"]["month"] == 2 and out["review"]["status"] == "confirmed"
 
 
+def test_review_month_is_last_month_of_situation_not_of_pair(client, post):
+    for m, v in ((1, 4.6), (2, 4.0), (3, 3.2)):
+        post("intern", "S-01", m, v)
+    for m, v in ((1, 4.6), (2, 4.6), (3, 4.6), (4, 4.6)):
+        post("mentor", "M-01", m, v)
+    key = "decline:P-01:intern"
+    out = review(client, key, "rejected")
+    assert out["review"]["month"] == 3  # у пары последний месяц 4-й, у ситуации 3-й
+    post("intern", "S-01", 4, 1.0)
+    s = situations(client)[key]
+    assert s["review"]["status"] == "open" and s["review"]["previous"] == {"status": "rejected", "month": 3}
+    assert s["active"] is True
+
+
 def test_rejected_situation_reopens_when_it_fires_again(client, post):
     post.pair("01", 1, 3.4, 4.4)
     key = "gap_intern_low:P-01:both"
@@ -568,7 +582,7 @@ def test_outcome_gap_goes_down(client, post):
     post.pair("01", 3, 4.0, 4.4)
     out = situations(client)[key]["outcome"]
     assert out == {"review_month": 2, "last_month": 3, "repeated": False,
-                   "text": "После отметки в 2-м месяце разрыв сократился: 1,6 → 0,4"}
+                   "text": "После отметки во 2-м месяце разрыв сократился: 1,6 → 0,4"}
 
 
 def test_outcome_gap_waits_for_both_sides(client, post):
@@ -615,10 +629,10 @@ def test_outcome_silence_words(client, post):
     review(client, key, "confirmed")
     post.pair("01", 3, 4.0, 4.2)
     out = situations(client)[key]["outcome"]
-    assert out["repeated"] is False and out["text"] == "После отметки в 2-м месяце не повторялось"
+    assert out["repeated"] is False and out["text"] == "После отметки во 2-м месяце не повторялось"
     post("mentor", "M-01", 4, 4.2)  # снова только наставник
     out = situations(client)[key]["outcome"]
-    assert out["repeated"] is True and out["text"] == "После отметки в 2-м месяце повторилось в 4-м"
+    assert out["repeated"] is True and out["text"] == "После отметки во 2-м месяце повторилось в 4-м"
 
 
 def test_reviews_table_gets_month_column(tmp_path):
@@ -636,3 +650,25 @@ def test_reviews_table_gets_month_column(tmp_path):
         assert conn.execute("SELECT month FROM reviews").fetchone()["month"] is None
         db.set_review(conn, "x", "rejected", None, 3)
         assert conn.execute("SELECT month FROM reviews").fetchone()["month"] == 3
+
+
+def test_missing_form_does_not_break_the_series(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    post.pair("01", 2, 3.4, 4.4)
+    post("mentor", "M-01", 3, 4.4)  # стажёр пропустил 3-й месяц
+    post.pair("01", 4, 3.4, 4.4)
+    s = situations(client)["gap_intern_low:P-01:both"]
+    assert s["months"] == [1, 2, 4] and s["since_month"] == 1
+    assert s["explanation"].endswith("Повторяется с 1-го месяца, 3 мес. подряд.")
+
+
+def test_second_month_takes_vo_and_so(client, post):
+    post.pair("01", 1, 3.4, 4.4)
+    post.pair("01", 2, 3.4, 4.4)
+    s = situations(client)["gap_intern_low:P-01:both"]
+    assert s["explanation"] == "Во 2-м месяце стажёр ставит 3,4, наставник 4,4. Разрыв 1,0 балла. Повторяется с 1-го месяца, 2 мес. подряд."
+    post.pair("03", 1, 4.4, 4.4)
+    post.pair("03", 2, 3.4, 4.4)
+    post.pair("03", 3, 3.4, 4.4)
+    t = situations(client)["gap_intern_low:P-03:both"]
+    assert t["explanation"].endswith("Повторяется со 2-го месяца, 2 мес. подряд.")

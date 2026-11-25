@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ReviewStatus, Severity, Signal } from '../../api/types'
-import { segmentRows } from './model'
+import { NO_FILTERS, facet, matches, segmentRows } from './model'
 
 function sig(pair: string, month: number, severity: Severity, status: ReviewStatus = 'open', active = true): Signal {
   return {
@@ -46,5 +46,14 @@ describe('сегменты экрана сигналов', () => {
 
   it('все: вся история', () => {
     expect(segmentRows(all, 'all')).toHaveLength(all.length)
+  })
+})
+
+describe('фильтр по месяцу', () => {
+  it('находит ситуацию по любому её месяцу, счётчики так же', () => {
+    const s = { ...sig('P-07', 4, 'medium'), months: [2, 4] }
+    expect(matches(s, { ...NO_FILTERS, month: 2 })).toBe(true)
+    expect(matches(s, { ...NO_FILTERS, month: 3 })).toBe(false)
+    expect([...facet([s], NO_FILTERS, 'month', (x) => x.months)]).toEqual([[2, 1], [4, 1]])
   })
 })

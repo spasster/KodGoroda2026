@@ -57,7 +57,7 @@ export type SeriesPoint = PairDetail['series'][number]
 export interface Health { ok: boolean; pairs: number; responses: number; analyzer: string }
 
 // GET /api/survey: содержимое survey/survey.json.
-export interface Question { id: string; type: 'scale' | 'text'; text: string }
+export interface Question { id: string; type: 'scale' | 'text' | 'choice'; text: string; options?: string[] }
 export interface SurveyRole { title: string; person_label: string; questions: Question[] }
 // Пороги из survey/signals.json, которые нужны фронту. Бэкенд отдаёт их целиком.
 export interface Thresholds {

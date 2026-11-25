@@ -53,17 +53,17 @@ export function matches(s: Signal, f: Filters, skip?: keyof Filters): boolean {
     (skip === 'person' || !f.person || s.pair_id === f.person) &&
     (skip === 'kind' || !f.kind || kindOf(s) === f.kind) &&
     (skip === 'severity' || !f.severity || s.severity === f.severity) &&
-    (skip === 'month' || f.month == null || s.month === f.month)
+    (skip === 'month' || f.month == null || s.months.includes(f.month))
   )
 }
 
 /** Сколько сигналов останется, если выбрать значение в этой группе (остальные фильтры учтены). */
-export function facet<K extends keyof Filters>(rows: readonly Signal[], f: Filters, group: K, value: (s: Signal) => NonNullable<Filters[K]>) {
+export function facet<K extends keyof Filters>(rows: readonly Signal[], f: Filters, group: K, value: (s: Signal) => NonNullable<Filters[K]> | readonly NonNullable<Filters[K]>[]) {
   const counts = new Map<NonNullable<Filters[K]>, number>()
   for (const s of rows) {
     if (!matches(s, f, group)) continue
     const v = value(s)
-    counts.set(v, (counts.get(v) ?? 0) + 1)
+    for (const x of Array.isArray(v) ? v : [v]) counts.set(x, (counts.get(x) ?? 0) + 1)
   }
   return counts
 }
