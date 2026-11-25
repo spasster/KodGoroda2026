@@ -5,7 +5,7 @@ import threading
 from dataclasses import dataclass
 
 from . import db
-from .analyzer import TextAnalyzer, build_analyzer
+from .analyzer import TextAnalyzer, build_analyzer, with_text_check
 from .config import Settings
 from .events import EventBus
 from .indices import Dataset
@@ -69,6 +69,7 @@ class Context:
                 " UNION ALL SELECT MAX(updated_at) FROM reviews)").fetchone()[0]
         insights = analyze_texts(ds, self.analyzer, int(th["quote_min_length"]))
         monthly, signals = compute_signals(ds, insights, th, reviews)
+        signals = [with_text_check(s, insights, self.analyzer, int(th["quote_min_length"])) for s in signals]
         return Snapshot(ds, insights, signals, monthly, recent, len(ds.responses), updated or db.now_iso(),
                         self.files.names, th)
 

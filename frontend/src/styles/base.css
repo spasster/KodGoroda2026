@@ -100,3 +100,28 @@ mark {
     transition-delay: 0ms !important;
   }
 }
+
+/* Оверлайн: подпись над блоком капсом с разрядкой, как «ОСЕНЬ 2026 · МОСКВА» на studchamp.mgts.ru. */
+.overline {
+  display: block;
+  color: var(--text-3);
+  font-family: var(--font-wide);
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+/* Режим проектора: клавиша p (lib/projector.ts). Крупнее текст, насыщеннее заливки. */
+:root[data-projector] {
+  --fs-xs: 15px;
+  --fs-s: 17px;
+  --fs-m: 20px;
+  --fs-l: 23px;
+  --fs-xl: 28px;
+  --fs-page: 34px;
+  --risk-wash: #FBC3AE;
+  --watch-wash: #FBDF96;
+  --text-2: #4A535C;
+}

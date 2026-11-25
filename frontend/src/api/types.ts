@@ -20,6 +20,8 @@ export interface Signal {
     month: number | null; previous: { status: ReviewStatus; month: number } | null
   }
   outcome: { review_month: number; last_month: number; repeated: boolean; text: string } | null
+  // Только у text_vs_score: кто нашёл жалобу и нашёл бы её словарь.
+  text_check?: { by: 'model' | 'rules'; rules_found: boolean } | null
 }
 export interface Cell {
   month: number; intern_index: number | null; mentor_index: number | null; gap: number | null

@@ -17,7 +17,7 @@ from .llm import LLMAnalyzer
 from .models import TOPICS, Concern, TextInsight
 from .quotes import verify_quote
 
-__all__ = ["TOPICS", "Concern", "TextInsight", "TextAnalyzer", "verify_quote", "build_analyzer"]
+__all__ = ["TOPICS", "Concern", "TextInsight", "TextAnalyzer", "verify_quote", "build_analyzer", "with_text_check"]
 
 log = logging.getLogger(__name__)
 # После ошибки модели столько секунд разбираем словарём, не дожидаясь таймаута на каждый комментарий.
@@ -105,3 +105,26 @@ def build_analyzer(settings, db_path: Path) -> TextAnalyzer:
     if settings.llm_provider not in ("", "rules"):
         log.warning("Неизвестный LLM_PROVIDER=%s, беру rules", settings.llm_provider)
     return TextAnalyzer(db_path)
+
+
+def with_text_check(signal, insights, analyzer: TextAnalyzer, min_quote: int):
+    """Сигнал «жалоба при высоких оценках» с пометкой, кто нашёл жалобу.
+
+    Модель включена: прогоняем словарь по тем же комментариям, из которых взяты
+    цитаты. Словарь ничего не нашёл — значит, жалобу увидела только модель.
+    Словарь дешёвый и детерминированный, его не кэшируем.
+    """
+    if signal.type != "text_vs_score":
+        return signal
+    from ..schemas import TextCheck
+
+    if not analyzer.llm:
+        return signal.model_copy(update={"text_check": TextCheck(by="rules", rules_found=True)})
+    found = False
+    for q in signal.quotes:
+        for item in insights.get((signal.pair_id, q.role, q.month), []):
+            if item.question_id != q.question_id:
+                continue
+            if _verified(rules.analyze(item.text, q.role, item.question_id), item.text, min_quote).concerns:
+                found = True
+    return signal.model_copy(update={"text_check": TextCheck(by="model", rules_found=found)})

@@ -13,7 +13,7 @@ from .conftest import INTERN_HEADERS, MENTOR_HEADERS, answers, write_xlsx
 
 # Ключи типов из контракта.
 SIGNAL = {"key", "type", "pair_id", "role", "month", "months", "since_month", "severity", "title", "explanation", "action",
-          "values", "quotes", "active", "review", "outcome"}
+          "values", "quotes", "active", "review", "outcome", "text_check"}
 QUOTE = {"role", "month", "question_id", "text", "start", "end"}
 CELL = {"month", "intern_index", "mentor_index", "gap", "status", "signal_keys", "missing"}
 PAIR_SUMMARY = {"pair_id", "intern_id", "mentor_id", "status", "last_month", "intern_index_last", "mentor_index_last",

@@ -136,6 +136,8 @@ HR отмечает ситуацию целиком: «Проблема подт
 
 **Повтор после отметки «Проблемы нет».** Если статус `rejected`, а ситуация сработала в месяце позже `review.month`, статус снова `open`, а `review.previous = {status: 'rejected', month}`. Заметка остаётся. Новая отметка HR убирает `previous`. У `confirmed` статус не меняется.
 
+**Кто нашёл жалобу (`text_check`).** Только у `text_vs_score`. При модели (`LLM_PROVIDER=openai`) бэкенд прогоняет словарь по комментариям, из которых взяты цитаты: `by: 'model'`, `rules_found` — нашёл ли словарь там хоть одну жалобу с цитатой. При словаре `by: 'rules'`, `rules_found: true`. Интерфейс пишет «словарь не нашёл» только при `rules_found: false`.
+
 **Что изменилось после отметки (`outcome`).** Заполняется, если статус `confirmed` (или есть `review.previous`) и у пары есть анкеты за месяц позже `review.month`. Иначе `null`. `repeated`: ситуация сработала в месяце позже `review.month`. `text` по типу:
 - разрывы: «После отметки в 4-м месяце разрыв сократился: 1,8 → 0,6», «…разрыв вырос: 1,8 → 2,2», «…разрыв не изменился: 1,8» (модуль разрыва в месяце отметки и в последнем месяце, где ответили обе стороны);
 - `decline`, `low_question`: «После отметки в 4-м месяце оценка стажёра выросла: 3,0 → 4,2», «…упала: …», «…не изменилась: 3,0» (индекс роли в месяце отметки и в последнем месяце с её анкетой);
@@ -184,6 +186,8 @@ interface Signal {
     previous: { status: ReviewStatus; month: number } | null   // «проблемы нет», после которой сработало снова
   }
   outcome: { review_month: number; last_month: number; repeated: boolean; text: string } | null
+  // Только у text_vs_score, иначе null: кто нашёл жалобу и нашёл бы её словарь в тех же комментариях.
+  text_check: { by: 'model' | 'rules'; rules_found: boolean } | null
 }
 interface Cell {
   month: number; intern_index: number | null; mentor_index: number | null; gap: number | null

@@ -40,20 +40,27 @@
 
   /* Статусы: точка + мягкая заливка ячейки */
   --risk: #F95721;
-  --risk-wash: #FEE6DD;
-  --watch: #FAC031;
-  --watch-wash: #FEF3D6;
+  --risk-wash: #FDD9CC;
+  --watch: #E8A400;
+  --watch-wash: #FDEBBF;
   --ok: #26CD58;
   --ok-wash: #E3F8E9;
   --empty-wash: #F2F3F7;
 
-  /* Графики: стажёр синий МГТС, наставник графитовый */
-  --series-intern: var(--mgts-blue);
-  --series-mentor: #626C77;
-  --series-gap: rgb(0 138 224 / .08);
+  /* Графики: стажёр графит, наставник серый. Синий только у того, на что нажимают. */
+  --series-intern: #1D2023;
+  --series-mentor: #969FA8;
+  --series-gap: rgb(249 87 33 / .12);
   --chart-grid: #E2E5EB;
   --risk-gap: rgb(249 87 33 / .16);
   --watch-gap: rgb(250 192 49 / .22);
+
+  /* Графитовая лента наверху страницы, как герой studchamp.mgts.ru */
+  --hero-bg: #1D2023;
+  --hero-text: #FAFAFA;
+  --hero-text-2: #BBC1C9;
+  --hero-line: #2C3135;
+  --hero-glow: #008AE0;
 
   /* Подсветка цитаты */
   --mark-bg: rgb(250 192 49 / .28);
@@ -137,13 +144,16 @@
     --brand-text: #45B6FC;
     --brand-wash: rgb(69 182 252 / .14);
     --focus: #45B6FC;
-    --risk-wash: rgb(249 87 33 / .28);
-    --watch-wash: rgb(250 192 49 / .18);
+    --risk-wash: rgb(249 87 33 / .18);
+    --watch-wash: rgb(232 164 0 / .14);
     --ok-wash: rgb(38 205 88 / .16);
     --empty-wash: #26292D;
-    --series-intern: #45B6FC;
-    --series-mentor: #BBC1C9;
-    --series-gap: rgb(69 182 252 / .10);
+    --series-intern: #FAFAFA;
+    --series-mentor: #8D969F;
+    --series-gap: rgb(249 87 33 / .16);
+    --watch: #FAC031;
+    --hero-bg: #0E1012;
+    --hero-line: #26292D;
     --chart-grid: #2C3135;
     --mark-bg: rgb(250 192 49 / .30);
     --shadow-low: 0 2px 8px rgb(0 0 0 / .4);
@@ -170,13 +180,16 @@
   --brand-text: #45B6FC;
   --brand-wash: rgb(69 182 252 / .14);
   --focus: #45B6FC;
-  --risk-wash: rgb(249 87 33 / .28);
-  --watch-wash: rgb(250 192 49 / .18);
+  --risk-wash: rgb(249 87 33 / .18);
+  --watch-wash: rgb(232 164 0 / .14);
   --ok-wash: rgb(38 205 88 / .16);
   --empty-wash: #26292D;
-  --series-intern: #45B6FC;
-  --series-mentor: #BBC1C9;
-  --series-gap: rgb(69 182 252 / .10);
+  --series-intern: #FAFAFA;
+  --series-mentor: #8D969F;
+  --series-gap: rgb(249 87 33 / .16);
+  --watch: #FAC031;
+  --hero-bg: #0E1012;
+  --hero-line: #26292D;
   --chart-grid: #2C3135;
   --mark-bg: rgb(250 192 49 / .30);
   --shadow-low: 0 2px 8px rgb(0 0 0 / .4);

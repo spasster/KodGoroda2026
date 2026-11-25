@@ -46,6 +46,13 @@ class Outcome(BaseModel):
     text: str
 
 
+class TextCheck(BaseModel):
+    """Кто нашёл жалобу в комментарии: модель или словарь. Только у сигнала text_vs_score."""
+    by: Literal["model", "rules"]
+    # Нашёл бы её словарь в тех же комментариях. У by="rules" всегда True.
+    rules_found: bool
+
+
 class Signal(BaseModel):
     key: str
     type: SignalType
@@ -63,6 +70,7 @@ class Signal(BaseModel):
     active: bool
     review: Review
     outcome: Outcome | None = None
+    text_check: TextCheck | None = None
 
 
 class Missing(BaseModel):
