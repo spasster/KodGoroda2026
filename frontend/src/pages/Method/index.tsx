@@ -31,6 +31,8 @@ export function MethodPage() {
         )}
         {m && (
           <>
+            <QualityHero quality={m.quality} />
+
             <section className={s.card}>
               <ul className={s.principles}>
                 {m.principles.map((p) => (
@@ -39,12 +41,7 @@ export function MethodPage() {
               </ul>
             </section>
 
-            <section className={s.card} aria-labelledby="method-quality">
-              <h2 id="method-quality" className={s.h2}>
-                Проверка
-              </h2>
-              <QualityBlock quality={m.quality} />
-            </section>
+            <QualityDetails quality={m.quality} />
 
             <section className={s.card} aria-labelledby="method-signals">
               <h2 id="method-signals" className="sr-only">
@@ -129,29 +126,75 @@ export function MethodPage() {
   )
 }
 
-function QualityBlock({ quality }: { quality: Quality | null }) {
-  if (!quality) return <p className={s.text}>Проверка ещё не запускалась</p>
+// Настоящие отзывы: набор, по которому не настраивали ни словарь, ни промпт.
+function realSet(quality: Quality): QualitySet | undefined {
+  return quality.sets.find((x) => x.id === 'holdout') ?? quality.sets.find((x) => /настоящ/i.test(x.name))
+}
+
+function QualityHero({ quality }: { quality: Quality | null }) {
+  const real = quality && realSet(quality)
+  if (!quality || !real) return null
+  const n = real.comments
   return (
-    <>
-      <div className={s.sets}>
-        {quality.sets.map((x) => (
-          <QualitySetView key={x.id} set={x} />
-        ))}
+    <section className={s.card} aria-labelledby="method-proof">
+      <h2 id="method-proof" className="sr-only">
+        Проверка на настоящих отзывах
+      </h2>
+      <div className={s.big}>
+        <div>
+          <p className={s.bigNum}>
+            {real.model.found} из {real.problems}
+          </p>
+          <p className={s.bigLabel}>ИИ нашёл проблем</p>
+        </div>
+        <div>
+          <p className={s.bigNum}>
+            {real.rules.found} из {real.problems}
+          </p>
+          <p className={s.bigLabel}>нашёл словарь</p>
+        </div>
+        <div>
+          <p className={s.bigNum}>{real.model.false_alarms}</p>
+          <p className={s.bigLabel}>ложных тревог у ИИ</p>
+        </div>
       </div>
+      <p className={s.caption}>
+        {n} {plural(n, ['настоящий отзыв', 'настоящих отзыва', 'настоящих отзывов'])} стажёров и наставников. По ним не настраивали ни словарь, ни промпт.
+      </p>
+    </section>
+  )
+}
+
+function QualityDetails({ quality }: { quality: Quality | null }) {
+  if (!quality) return null
+  const real = realSet(quality)
+  const tests = quality.sets.filter((x) => x !== real)
+  return (
+    <section className={s.card} aria-labelledby="method-quality">
+      <h2 id="method-quality" className={s.h2}>
+        Где ошибается
+      </h2>
+      {quality.errors.length > 0 && (
+        <ul className={s.list}>
+          {quality.errors.map((e) => (
+            <li key={e}>{e}</li>
+          ))}
+        </ul>
+      )}
       <p className={s.text}>
         ИИ {quality.model}, {formatNumber(quality.seconds_per_comment)} с на комментарий
       </p>
-      {quality.errors.length > 0 && (
-        <>
-          <h3 className={s.h3}>Где ошибается</h3>
-          <ul className={s.list}>
-            {quality.errors.map((e) => (
-              <li key={e}>{e}</li>
+      {tests.length > 0 && (
+        <details className={s.details}>
+          <summary>Тестовый набор, под который писали словарь</summary>
+          <div className={s.sets}>
+            {tests.map((x) => (
+              <QualitySetView key={x.id} set={x} />
             ))}
-          </ul>
-        </>
+          </div>
+        </details>
       )}
-    </>
+    </section>
   )
 }
 

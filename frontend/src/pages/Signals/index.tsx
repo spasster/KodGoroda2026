@@ -1,11 +1,11 @@
-// Экран «Сигналы» (/signals): сверху фильтры списками, ниже одна таблица сигналов.
+// Экран «Все ситуации» (/signals): сверху фильтры списками, ниже одна таблица сигналов.
 // Строка раскрывается на месте: объяснение, цитата, что сделать, отметка.
 
 import { useQueries } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { api } from '../../api/client'
 import { queryKeys, useOverview, useReview, useSignals } from '../../api/queries'
@@ -25,7 +25,7 @@ const SEGMENTS: { value: Segment; label: string }[] = [
 ]
 const KINDS: Kind[] = ['gap', 'decline', 'low_question', 'text', 'silence']
 const SEVERITIES: Severity[] = ['high', 'medium', 'low']
-const COLS = 6
+const COLS = 5
 
 const EMPTY: Record<Segment, string> = {
   open: 'Все сигналы разобраны',
@@ -178,9 +178,6 @@ export function SignalsPage() {
                 </th>
                 <th scope="col">Стажёр</th>
                 <th scope="col">Что случилось</th>
-                <th scope="col" className={s.cKind}>
-                  Тип
-                </th>
                 <th scope="col">Когда</th>
                 <th scope="col">Отметка</th>
               </tr>
@@ -191,7 +188,6 @@ export function SignalsPage() {
                   key={x.key}
                   signal={x}
                   person={nameOf(x.pair_id)}
-                  kind={KIND_LABEL[kindOf(x)]}
                   detail={details.get(x.pair_id)}
                   open={openId === x.key}
                   fresh={isFreshCell(x.pair_id, x.month)}
@@ -210,7 +206,12 @@ export function SignalsPage() {
   return (
     <>
       <PageHeader
-        title="Сигналы"
+        top={
+          <Link to="/analytics" className={s.back}>
+            ← Программа
+          </Link>
+        }
+        title="Все ситуации"
         facts={all ? `${open} ${plural(open, ['открытый', 'открытых', 'открытых'])} · ${done} ${plural(done, ['разобранный', 'разобранных', 'разобранных'])}` : undefined}
         aside={
           <div className={s.segments} role="group" aria-label="Какие сигналы показать">

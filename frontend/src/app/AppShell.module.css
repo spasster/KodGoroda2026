@@ -6,14 +6,18 @@
 }
 .bar { display: flex; align-items: center; gap: 40px; height: var(--header-h); }
 
-.logo { display: flex; align-items: center; gap: 14px; color: var(--text-1); text-decoration: none; white-space: nowrap; }
+.logo { flex: none; display: flex; align-items: center; gap: 14px; color: var(--text-1); text-decoration: none; white-space: nowrap; }
 .mark { display: block; width: 40px; height: 40px; }
 .name {
   padding-left: 14px; border-left: 1px solid var(--line);
   font-family: var(--font-wide); font-size: var(--fs-m); font-weight: var(--fw-bold); line-height: 32px;
 }
 
-.nav { display: flex; align-self: stretch; gap: 8px; }
+.nav { display: flex; align-self: stretch; gap: 8px; min-width: 0; }
+.nav a > span {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+  background: var(--risk-wash); color: var(--text-1); font-size: var(--fs-xs); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums;
+}
 .nav a {
   position: relative; display: flex; align-items: center; gap: 6px; padding: 0 12px;
   color: var(--text-2); font-size: var(--fs-s); font-weight: var(--fw-medium); text-decoration: none; white-space: nowrap;
@@ -52,6 +56,10 @@
   transition: opacity var(--dur-1) linear, transform var(--dur-1) var(--ease-out);
 }
 
+/* Режим проектора: тихая метка рядом с точкой связи. */
+.projector { margin-left: auto; color: var(--text-2); font-size: var(--fs-s); white-space: nowrap; cursor: default; }
+.projector + .live { margin-left: 0; }
+
 /* ---------- Тема: одна кнопка-иконка ---------- */
 .theme {
   display: grid; place-items: center; flex: none; width: 40px; height: 40px; margin-left: -16px;
@@ -68,27 +76,36 @@
   .bar { gap: 8px; }
   .mark { width: 36px; height: 36px; }
   .name, .liveWord, .nav .formLink { display: none; }
-  .nav { margin-left: 4px; gap: 0; }
+  .bar { min-width: 0; }
+  .nav { flex: 0 1 auto; margin-left: 4px; gap: 0; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { flex: none; padding: 0 10px; }
+  .nav a[aria-current="page"]::after { left: 10px; right: 10px; }
+  .live { flex: none; }
+  .projector { display: none; }
   .theme { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ring { display: none; }
 }
 
-/* ---------- Уведомления: правый нижний угол, стопка до трёх ---------- */
+/* ---------- Уведомления: сверху по центру, стопка до трёх ---------- */
 .toasts {
-  position: fixed; z-index: 30; right: var(--gutter); bottom: 24px;
+  position: fixed; z-index: 30; top: calc(var(--header-h) + 16px); left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; gap: 12px;
-  width: min(380px, calc(100vw - 2 * var(--gutter)));
+  width: min(560px, calc(100vw - 32px));
   pointer-events: none;
 }
 .toast {
-  pointer-events: auto; padding: 16px 20px 18px 24px; border: 1px solid var(--line);
+  pointer-events: auto; padding: 18px 20px 18px 24px; border: 1px solid var(--line); border-left: 4px solid var(--text-3);
   border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-high);
 }
+.toast[data-status="risk"] { border-left-color: var(--risk); }
+.toast[data-status="watch"] { border-left-color: var(--watch); }
+.toast[data-status="ok"] { border-left-color: var(--ok); }
 .toastHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.toastTitle { font-size: var(--fs-m); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
-.toastWho { margin-top: 2px; color: var(--text-2); }
+.toastTitle { font-family: var(--font-wide); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+.toastWho { margin-top: 2px; color: var(--text-1); font-size: var(--fs-m); }
 .change { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 8px; }
 .arrow { color: var(--text-2); }
 .toastBtn {
@@ -99,10 +116,6 @@
   transition: background var(--dur-1) linear;
 }
 .toastBtn:hover { background: var(--hover); }
-
-@media (max-width: 767px) {
-  .toasts { bottom: 16px; }
-}
 
 /* ---------- Содержимое: страницы сами оборачивают себя в .wrap ---------- */
 .main { padding-bottom: var(--s-8); }

@@ -8,6 +8,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 
 import { useOverview } from '../api/queries'
 import { DemoPanel } from '../demo/DemoPanel'
+import { useProjector } from '../lib/projector'
 import { useTheme } from '../lib/theme'
 import { useLive } from '../live/useLive'
 import s from './AppShell.module.css'
@@ -35,8 +36,9 @@ export function AppShell() {
   }, [pairId])
 
   // Карточка пары подсвечивает «Обзор».
-  const section = pathname.startsWith('/signals') ? 'signals' : pathname.startsWith('/analytics') ? 'analytics' : pathname.startsWith('/method') ? 'method' : pathname === '/' || pairId ? 'overview' : null
-  const open = overview.data?.totals.open_signals ?? 0
+  const section = pathname.startsWith('/signals') || pathname.startsWith('/analytics') ? 'program' : pathname.startsWith('/method') ? 'method' : pathname === '/' || pairId ? 'talks' : null
+  const risk = overview.data?.totals.risk ?? 0
+  const projector = useProjector()
 
   return (
     <>
@@ -47,15 +49,12 @@ export function AppShell() {
             <span className={s.name}>Стажировки</span>
           </Link>
           <nav className={s.nav} aria-label="Разделы">
-            <Link to="/" aria-current={section === 'overview' ? 'page' : undefined}>
-              Обзор
+            <Link to="/" aria-current={section === 'talks' ? 'page' : undefined}>
+              Разговоры
+              {risk > 0 && <span>{risk}</span>}
             </Link>
-            <Link to="/signals" aria-current={section === 'signals' ? 'page' : undefined}>
-              Сигналы
-              {open > 0 && <span>{open}</span>}
-            </Link>
-            <Link to="/analytics" aria-current={section === 'analytics' ? 'page' : undefined}>
-              Аналитика
+            <Link to="/analytics" aria-current={section === 'program' ? 'page' : undefined}>
+              Программа
             </Link>
             <Link to="/method" aria-current={section === 'method' ? 'page' : undefined}>
               Как считаем
@@ -65,6 +64,11 @@ export function AppShell() {
               <ArrowUpRight aria-hidden="true" strokeWidth={1.8} />
             </a>
           </nav>
+          {projector && (
+            <span className={s.projector} title="Клавиша P">
+              Проектор
+            </span>
+          )}
           <LiveIndicator updatedAt={overview.dataUpdatedAt} />
           <ThemeButton />
         </div>

@@ -1,4 +1,4 @@
-// Строка таблицы сигналов: важность, стажёр, заголовок, тип, когда, отметка. По клику
+// Строка таблицы сигналов: важность, стажёр, заголовок, когда, отметка. По клику
 // раскрывается на месте: объяснение, цитата, что сделать, отметка.
 
 import clsx from 'clsx'
@@ -18,8 +18,6 @@ interface Props {
   signal: Signal
   /** Имя стажёра. */
   person: string
-  /** Тип сигнала словами: «Расхождение», «Нет ответа». */
-  kind: string
   detail?: PairDetail
   open: boolean
   fresh: boolean
@@ -29,7 +27,7 @@ interface Props {
   onMark: (status: ReviewStatus) => void
 }
 
-export function SignalRow({ signal: head, person, kind, detail, open, fresh, cols, onToggle, onMark }: Props) {
+export function SignalRow({ signal: head, person, detail, open, fresh, cols, onToggle, onMark }: Props) {
   const status = head.review.status
   const panelId = `signal-${head.key}`
 
@@ -57,9 +55,8 @@ export function SignalRow({ signal: head, person, kind, detail, open, fresh, col
           </button>
           {fresh && <span className={s.fresh}>новое</span>}
         </td>
-        <td className={s.cKind}>{kind}</td>
         <td className={s.cWhen}>{situationMonths(head)}</td>
-        <td className={s.cMark}>{MARK_LABEL[status]}</td>
+        <td className={s.cMark}>{status === 'open' ? '' : MARK_LABEL[status]}</td>
       </tr>
       {open && (
         <tr id={panelId} className={s.detail}>

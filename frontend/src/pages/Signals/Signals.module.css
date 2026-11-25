@@ -1,23 +1,25 @@
-/* Экран «Сигналы»: выпадающие фильтры и одна таблица в белой карточке. docs/design/v2.md */
+/* Экран «Все ситуации»: выпадающие фильтры и одна таблица в белой карточке. docs/design/v2.md */
 
 .page { padding-bottom: 120px; }
 
 /* ---------- Сегменты в шапке ---------- */
 .segments { display: flex; border: 1px solid var(--line-strong); border-radius: var(--r-m); overflow: hidden; }
 .segment {
-  display: inline-flex; align-items: center; height: 32px; padding: 0 var(--s-4);
+  display: inline-flex; align-items: center; height: 38px; padding: 0 var(--s-4);
   border: 0; border-radius: 0; background: transparent; color: var(--text-1);
   font-size: var(--fs-s); font-weight: var(--fw-medium); white-space: nowrap;
   transition: background var(--dur-1) linear, color var(--dur-1) linear;
 }
 .segment:hover { background: var(--hover); }
 .segment + .segment { border-left: 1px solid var(--line-strong); }
-.segment[aria-pressed="true"] { background: var(--sunken); }
+.segment[aria-pressed="true"] { background: var(--sunken); color: var(--text-1); font-weight: var(--fw-bold); }
+.back { color: var(--brand-text); font-size: var(--fs-s); font-weight: var(--fw-medium); text-decoration: none; }
+.back:hover { text-decoration: underline; }
 
 /* ---------- Фильтры ---------- */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-bottom: var(--s-3); }
 .select {
-  height: 36px; max-width: 100%; padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-m);
+  height: 40px; max-width: 100%; padding: 0 var(--s-3); border: 1px solid var(--line); border-radius: var(--r-m);
   background: var(--surface); color: var(--text-1); font-size: var(--fs-s);
 }
 .select:hover { border-color: var(--line-strong); }
@@ -30,7 +32,7 @@
 /* ---------- Таблица ---------- */
 .card { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-card); overflow: hidden; }
 .scroll { overflow-x: auto; }
-.table { width: 100%; min-width: 860px; border-collapse: collapse; }
+.table { width: 100%; min-width: 700px; border-collapse: collapse; }
 .table th {
   height: 36px; padding: 0 var(--s-2); border-bottom: 1px solid var(--line);
   color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-regular); text-align: left; white-space: nowrap;
@@ -39,7 +41,6 @@
 .table tbody tr:last-child td { border-bottom: 0; }
 .cDot { width: 44px; padding-left: var(--s-4) !important; }
 .cPerson { width: 180px; font-weight: var(--fw-medium); }
-.cKind { width: 190px; color: var(--text-2); }
 .cWhen { width: 170px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .cMark { width: 130px; color: var(--text-2); }
 .table td.cDot { vertical-align: middle; }
@@ -105,10 +106,6 @@
 .undoBtn:hover { background: var(--brand-wash); }
 
 /* ---------- Ноутбук ---------- */
-@media (max-width: 1199px) {
-  .cKind { width: 150px; }
-}
-
 /* ---------- Телефон ---------- */
 @media (max-width: 767px) {
   .select { flex: 1 1 calc(50% - var(--s-3)); }

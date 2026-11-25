@@ -1,4 +1,4 @@
-// Уведомление о новой анкете (docs/design/v2.md): карточка в правом нижнем углу,
+// Уведомление о новой анкете (docs/design/v2.md): крупная карточка сверху по центру,
 // кто прислал и за какой месяц, смена статуса пары, если она была, и «Открыть».
 // Исчезает через 8 секунд, пока курсор не над ним и фокус не внутри. Если HR
 // открыл эту пару любым путём, AppShell снимает уведомление сразу.
@@ -8,8 +8,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useOverview } from '../api/queries'
-import { personName, ROLE_LABEL } from '../lib/format'
-import { layoutSpring, useReduced, variants } from '../lib/motion'
+import { personName } from '../lib/format'
+import { ease, layoutSpring, useReduced } from '../lib/motion'
 import { useLive, type LiveNotification } from '../live/useLive'
 import s from './AppShell.module.css'
 import { StatusText } from './status'
@@ -47,6 +47,7 @@ function Toast({ n }: { n: LiveNotification }) {
   const name = personName(n.role === 'intern' ? pair?.intern_name : pair?.mentor_name, n.person_id)
   // Статус после анкеты берём, только когда обзор пришёл позже события.
   const after = pair && overview.dataUpdatedAt >= Date.parse(n.at) ? pair.status : null
+  const status = after ?? pair?.status ?? 'ok'
   const changed = n.before != null && after != null && n.before !== after
 
   return (
@@ -54,10 +55,10 @@ function Toast({ n }: { n: LiveNotification }) {
       layout={!reduce}
       role="status"
       className={s.toast}
-      variants={variants.toast}
-      initial={reduce ? false : 'hidden'}
-      animate="shown"
-      exit={reduce ? undefined : 'gone'}
+      data-status={status}
+      initial={reduce ? false : { opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.32, ease: ease.out } }}
+      exit={reduce ? undefined : { opacity: 0, y: -8, transition: { duration: 0.16 } }}
       transition={{ layout: layoutSpring }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
@@ -73,7 +74,7 @@ function Toast({ n }: { n: LiveNotification }) {
         </Link>
       </div>
       <p className={s.toastWho}>
-        {name}, {ROLE_LABEL[n.role]}, {n.month}-й месяц
+        {name}, {n.month}-й месяц
       </p>
       {changed && (
         <p className={s.change}>
