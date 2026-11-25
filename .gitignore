@@ -13,3 +13,4 @@ dist/
 .ruff_cache/
 docs/design/judging/
 frontend/src/styles/fonts/*.woff2
+.claude/
