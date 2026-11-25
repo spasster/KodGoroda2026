@@ -478,6 +478,13 @@ def _outcome(ds: Dataset, kind: str, pair_id: str, role: str, month: int, review
         if before is not None and after:
             text = f"{head} оценка {WHO[role]['gen']} " + _direction(before, r1(after[-1]), "выросла", "упала", "не изменилась")
     if text is None:
+        # «Не повторялось» честно только после новой анкеты: у разрыва от обеих сторон, у остальных от той же роли.
+        if kind in ("gap_intern_low", "gap_mentor_low"):
+            answered = any(ds.shown_gap(pair_id, m) is not None for m in range(rm + 1, last + 1))
+        else:
+            answered = any(m > rm for m, _ in ds.series(pair_id, role))
+        if not repeated and not answered:
+            return None
         text = f"{head} повторилось в {month}-м" if repeated else f"{head} не повторялось"
     return Outcome(review_month=rm, last_month=last, repeated=repeated, text=text)
 

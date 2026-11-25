@@ -571,6 +571,15 @@ def test_outcome_gap_goes_down(client, post):
                    "text": "После отметки в 2-м месяце разрыв сократился: 1,6 → 0,4"}
 
 
+def test_outcome_gap_waits_for_both_sides(client, post):
+    post.pair("01", 1, 2.8, 4.4)
+    post.pair("01", 2, 2.8, 4.4)
+    key = "gap_intern_low:P-01:both"
+    review(client, key, "confirmed")
+    post("intern", "S-01", 3, 4.0)  # наставник за 3-й месяц ещё не ответил: разрыв посчитать не из чего
+    assert situations(client)[key]["outcome"] is None
+
+
 def test_outcome_repeated_gap(client, post):
     post.pair("01", 1, 3.4, 4.4)
     key = "gap_intern_low:P-01:both"
