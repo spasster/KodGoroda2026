@@ -14,7 +14,7 @@
   transition: background-color var(--dur-2) var(--ease-out);
 }
 .qr:hover { background: var(--brand-hover); }
-.who { color: inherit; font-size: var(--fs-s); text-decoration: underline; text-underline-offset: 3px; }
+.missing { color: inherit; font-size: var(--fs-s); text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Секции ---------- */
 .sections { display: flex; flex-direction: column; gap: 40px; padding-top: 36px; }

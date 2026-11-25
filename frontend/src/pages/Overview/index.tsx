@@ -106,7 +106,7 @@ export function OverviewPage() {
               <div className={h.barFill} style={{ width: `${total ? (got / (total * 2)) * 100 : 0}%` }} />
             </div>
             {got < total * 2 && (
-              <Link to="/analytics#collect" className={h.who}>
+              <Link to="/analytics#collect" className={h.missing}>
                 Кто не заполнил
               </Link>
             )}
