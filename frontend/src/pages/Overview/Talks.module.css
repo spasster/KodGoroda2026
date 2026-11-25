@@ -152,6 +152,7 @@
   .kpis { gap: 32px; }
 }
 @media (max-width: 767px) {
+  .legend { display: none; }
   .heroInner { padding-top: 24px; padding-bottom: 32px; gap: 24px; }
   .heroTitle { font-size: var(--fs-xl); }
   .kpis { flex-direction: column; gap: 18px; }
