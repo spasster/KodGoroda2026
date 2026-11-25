@@ -65,7 +65,7 @@ def load_sets(root: Path = ROOT) -> list[dict]:
 
     return [
         {"id": "sample12", "name": "Тестовый набор: 12 пар, 5 месяцев", "items": items(truth, "S")},
-        {"id": "holdout", "name": "Отложенные комментарии: по ним не настраивали ни словарь, ни промпт",
+        {"id": "holdout", "name": "Отложенные комментарии из настоящих отзывов: по ним не настраивали ни словарь, ни промпт",
          "items": items(hold, "H")},
     ]
 
@@ -193,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--timeout", type=float, default=120.0)
     ap.add_argument("--out", type=Path, default=ROOT / "survey/quality.json")
     ap.add_argument("--no-write", action="store_true", help="не писать quality.json")
+    ap.add_argument("--rules-only", action="store_true", help="только словарь, без модели (quality.json не пишет)")
     ap.add_argument("--only", choices=["sample12", "holdout"], help="один набор (для подбора промпта: только sample12)")
     args = ap.parse_args(argv)
 
@@ -203,13 +204,16 @@ def main(argv: list[str] | None = None) -> int:
     questions = {role: next((q["text"] for q in d["questions"] if q["id"] == "comment"), "")
                  for role, d in survey["roles"].items()}
 
-    llm = LLMAnalyzer(args.base_url, args.model, args.api_key, timeout=args.timeout)
-    analyzers = {"rules": rules_analyzer(min_quote), "model": model_analyzer(llm, min_quote, questions)}
+    analyzers = {"rules": rules_analyzer(min_quote)}
+    if not args.rules_only:
+        llm = LLMAnalyzer(args.base_url, args.model, args.api_key, timeout=args.timeout)
+        analyzers["model"] = model_analyzer(llm, min_quote, questions)
     sets = [s for s in load_sets() if not args.only or s["id"] == args.only]
     result = evaluate(sets, analyzers, max_sentiment)
-    print(f"Модель: {args.model} ({args.base_url})\n")
+    if not args.rules_only:
+        print(f"Модель: {args.model} ({args.base_url})\n")
     print_report(result)
-    if not args.no_write and not args.only:
+    if not args.no_write and not args.only and not args.rules_only:
         quality = to_quality(result, args.model)
         args.out.write_text(json.dumps(quality, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"\nЗаписано: {args.out}")

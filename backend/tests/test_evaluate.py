@@ -68,8 +68,11 @@ def test_to_quality_schema_and_error_limit():
 
 def test_datasets_are_consistent():
     sets = {s["id"]: s["items"] for s in evaluate.load_sets()}
-    assert len(sets["holdout"]) == 40
-    assert sum(i.role == "intern" for i in sets["holdout"]) == 20
+    assert len(sets["holdout"]) == 56
+    assert sum(i.role == "intern" for i in sets["holdout"]) == 34
+    raw = json.loads((evaluate.ROOT / "data/holdout.json").read_text(encoding="utf-8"))["comments"]
+    for r in raw:  # у каждой записи есть ссылка на оригинал
+        assert r["source"].startswith("http") and r["source_ref"] and 0 < len(r["original"]) <= 300, r["id"]
     for items in sets.values():
         for i in items:
             if i.quote:
