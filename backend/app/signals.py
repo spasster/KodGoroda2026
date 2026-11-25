@@ -305,6 +305,8 @@ class _Builder:
             return
         quotes = self.quotes(pair_id, role, month, tuple(topics))
         main = topics[0] if topics else None
+        if role == "mentor" and main == "mentor":
+            main = None  # модель ставит эту тему и на жалобу наставника: тогда это жалоба на стажёра, общий заголовок
         who = WHO[role]
         scale_max = score_str(self.ds.survey.scale_max)
         # Цитату показывает блок доказательств, в объяснении её не повторяем.

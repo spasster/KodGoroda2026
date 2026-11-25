@@ -51,7 +51,7 @@ class Settings:
             sample_dir=_path("SAMPLE_DIR", "../data/sample"),
             llm_provider=(os.environ.get("LLM_PROVIDER") or "rules").strip().lower(),
             llm_base_url=(os.environ.get("LLM_BASE_URL") or "http://localhost:11434/v1").rstrip("/"),
-            llm_model=os.environ.get("LLM_MODEL") or "qwen2.5:7b-instruct",
+            llm_model=os.environ.get("LLM_MODEL") or "qwen3:8b",
             llm_api_key=os.environ.get("LLM_API_KEY") or "",
             gsheet_csv_url_intern=os.environ.get("GSHEET_CSV_URL_INTERN") or "",
             gsheet_csv_url_mentor=os.environ.get("GSHEET_CSV_URL_MENTOR") or "",
