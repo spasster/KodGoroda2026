@@ -178,13 +178,13 @@ try {
     check(same, 'Страница обзора перезагрузилась, а данные должны были прийти через /api/events')
   })
 
-  await step('Карточка Тимура Галиева: «Подтвердилось» сохраняется после перезагрузки', dash, async () => {
+  await step('Карточка Тимура Галиева: «Проблема подтвердилась» сохраняется после перезагрузки', dash, async () => {
     await dash.goto(BASE + '/')
     await pairRow(dash, names.timur).first().click()
     await waitVisible(dash.getByRole('heading', { level: 1, name: names.timur }), `Заголовок «${names.timur}» на карточке пары`)
-    const confirm = (scope) => scope.getByRole('button', { name: 'Подтвердилось', exact: true })
+    const confirm = (scope) => scope.getByRole('button', { name: 'Проблема подтвердилась', exact: true })
     const open = dash.locator('article').filter({ has: confirm(dash) })
-    await waitVisible(open, 'Открытый сигнал с кнопкой «Подтвердилось»')
+    await waitVisible(open, 'Открытый сигнал с кнопкой «Проблема подтвердилась»')
     // В заголовке точка важности со скрытым словом, текст сигнала в последнем span.
     const title = (await open.first().locator('h3 > span').last().innerText()).split(' · ')[0].replace(/\s+/g, ' ').trim()
 

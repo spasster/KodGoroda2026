@@ -149,7 +149,8 @@ def to_quality(result: dict, model: str, updated: str | None = None) -> dict:
     for s in sets:
         for item, kind, note in s["_counts"]["model"].wrong:
             if len(errors) < 4:
-                errors.append(f"{kind}: «{_cut(item.text)}». {note}".strip())
+                said = "ИИ не увидел жалобу" if kind == "пропуск" else "ИИ принял за жалобу"
+                errors.append(f"{said}: «{_cut(item.text)}»")
     return {
         "updated": updated or date.today().isoformat(),
         "model": model,
