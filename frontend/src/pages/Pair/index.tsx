@@ -5,7 +5,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { api, ApiError } from '../../api/client'
@@ -15,13 +15,14 @@ import { PAIR_STATUS_LABEL, personName } from '../../lib/format'
 import { PageHeader, QuestionTable } from '../../components'
 import { useReduced, variants } from '../../lib/motion'
 import { collectMonth } from '../../lib/rules'
-import { BriefCard } from './BriefCard'
 import { Chart } from './Chart'
 import { Comments } from './Comments'
 import { clearFreshMarks } from './freshMarks'
-import { lowTone, neighbours, pairOrder, questionGroups } from './model'
+import { hasData, lowTone, neighbours, openSignals, pairOrder, questionGroups } from './model'
+import { Outcome } from './Outcome'
 import s from './Pair.module.css'
-import { SignalList } from './SignalList'
+import { Questions, Topics } from './Talk'
+import t from './Talk.module.css'
 
 const DEFAULT_SCALE = { min: 1, max: 5 }
 
@@ -82,10 +83,26 @@ export function PairPage() {
 function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview | undefined }) {
   const survey = useSurvey()
   const people = usePeople()
-  const months = survey.data?.months ?? Math.max(p.last_month, ...p.cells.map((c) => c.month))
+  const programMonths = survey.data?.months ?? Math.max(p.last_month, ...p.cells.map((c) => c.month))
   const scale = overview?.scale ?? survey.data?.scale ?? DEFAULT_SCALE
-  const collect = collectMonth(people.data, months)
-  const monthList = Array.from({ length: months }, (_, i) => i + 1)
+  const collect = collectMonth(people.data, programMonths)
+  // На графике и в таблице только месяцы с анкетами: пустой хвост выглядит как обрыв.
+  const dataEnd = Math.max(1, ...p.cells.filter(hasData).map((c) => c.month))
+  const monthList = Array.from({ length: dataEnd }, (_, i) => i + 1)
+  // Отметки на оси: месяцы, с которых тянутся открытые поводы.
+  const marks = openSignals(p.signals).map((sig) => ({ month: sig.since_month, severity: sig.severity }))
+
+  // Ссылка «весь комментарий» прокручивает к месяцу и подсвечивает его.
+  const [flash, setFlash] = useState<number | null>(null)
+  const toComment = (month: number) => {
+    document.getElementById(`month-${month}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setFlash(month)
+    window.setTimeout(() => setFlash(null), 1800)
+  }
+
+  const groups = survey.data ? questionGroups(survey.data, p.series, monthList) : []
+  const tone = survey.data ? lowTone(scale, survey.data.thresholds.low_question.max_score) : null
+  const lowGroups = tone ? groups.map((g) => ({ ...g, rows: g.rows.filter((r) => r.values.some((v) => tone(v) === 'low')) })).filter((g) => g.rows.length) : []
 
   return (
     <>
@@ -96,29 +113,36 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
         aside={<Status status={p.status} />}
       />
       <div className="wrap">
-        <div className={s.page}>
-          <BriefCard pairId={p.pair_id} signals={p.signals} />
-          <div className={s.grid}>
-          <div className={s.main}>
-            <section className={`${s.card} ${s.chartCard}`} aria-labelledby="pair-chart">
-              <h2 id="pair-chart" className={s.cardTitle}>
+        <div className={t.layout}>
+          <div className={t.talk}>
+            <Topics pair={p} onQuote={toComment} />
+            <Questions pairId={p.pair_id} />
+          </div>
+          <aside className={t.aside}>
+            <Outcome pair={p} />
+          </aside>
+          <div className={t.rest}>
+            <section className={t.block} aria-labelledby="pair-chart">
+              <h2 id="pair-chart" className={t.blockTitle}>
                 Оценки по месяцам
               </h2>
-              <Chart cells={p.cells} months={months} scale={scale} />
-              {survey.data && (
-                <div className={s.grades}>
-                  <QuestionTable
-                    compact
-                    months={monthList}
-                    groups={questionGroups(survey.data, p.series, monthList)}
-                    tone={lowTone(scale, survey.data.thresholds.low_question.max_score)}
-                  />
+              <Chart cells={p.cells} months={dataEnd} scale={scale} marks={marks} />
+              {tone && lowGroups.length > 0 && (
+                <div className={t.lowRows}>
+                  <p className="overline">Низкие оценки по вопросам</p>
+                  <QuestionTable compact months={monthList} groups={lowGroups} tone={tone} />
                 </div>
               )}
+              {tone && (
+                <details className={t.allQuestions}>
+                  <summary>Все вопросы</summary>
+                  <div>
+                    <QuestionTable compact months={monthList} groups={groups} tone={tone} />
+                  </div>
+                </details>
+              )}
             </section>
-            <Comments pair={p} collect={collect} className={s.commentsCard} />
-          </div>
-          <SignalList pair={p} className={s.signalsCard} />
+            <Comments pair={p} collect={collect} flash={flash} className={t.block} />
           </div>
         </div>
       </div>
@@ -170,7 +194,7 @@ function Top({ id, overview }: { id: string; overview: Overview | undefined }) {
     <nav className={s.top} aria-label="Навигация по парам">
       <Link to="/" className={s.back}>
         <ArrowLeft aria-hidden="true" size={18} strokeWidth={1.8} />
-        Обзор
+        Разговоры
       </Link>
       {(prev || next) && (
         <div className={s.neigh}>

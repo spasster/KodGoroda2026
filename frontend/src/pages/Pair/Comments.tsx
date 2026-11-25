@@ -11,13 +11,14 @@ import { useLive } from '../../live/useLive'
 import { Marked } from './Marked'
 import { hasData } from './model'
 import s from './Pair.module.css'
+import t from './Talk.module.css'
 
 const ROLES: { role: Role; title: string }[] = [
   { role: 'intern', title: 'Стажёр' },
   { role: 'mentor', title: 'Наставник' },
 ]
 
-export function Comments({ pair, collect, className }: { pair: PairDetail; collect: number | null; className?: string }) {
+export function Comments({ pair, collect, flash, className }: { pair: PairDetail; collect: number | null; flash?: number | null; className?: string }) {
   const { isFreshResponse } = useLive()
   const reduce = useReduced()
   const rows = pair.cells.filter(hasData).sort((a, b) => b.month - a.month)
@@ -27,8 +28,8 @@ export function Comments({ pair, collect, className }: { pair: PairDetail; colle
   if (known.current == null) known.current = new Set(rows.map((c) => c.month))
 
   return (
-    <section className={clsx(s.card, className)} aria-labelledby="pair-comments">
-      <h2 id="pair-comments" className={s.cardTitle}>
+    <section className={className} aria-labelledby="pair-comments">
+      <h2 id="pair-comments" className={t.blockTitle}>
         Комментарии
       </h2>
       {rows.length === 0 ? (
@@ -47,6 +48,8 @@ export function Comments({ pair, collect, className }: { pair: PairDetail; colle
               return (
                 <motion.li
                   key={cell.month}
+                  id={`month-${cell.month}`}
+                  className={clsx(flash === cell.month && s.flash)}
                   initial={!known.current!.has(cell.month) && !reduce ? { opacity: 0, y: 8 } : false}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, ease: ease.out, delay: 0.3 }}

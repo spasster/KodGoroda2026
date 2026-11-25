@@ -102,3 +102,9 @@ export function sentenceAround(text: string, start: number, end: number): { text
   const to = m ? m.index + 1 : text.length
   return { text: text.slice(from, to), start: start - from, end: end - from }
 }
+
+// Жалобу в комментарии увидела только модель: словарь в тех же комментариях её
+// не нашёл. Только тогда интерфейс пишет «ИИ нашёл», иначе это была бы подтасовка.
+export function byModelOnly(s: Signal): boolean {
+  return s.text_check?.by === 'model' && !s.text_check.rules_found
+}

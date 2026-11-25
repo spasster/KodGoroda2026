@@ -1,0 +1,169 @@
+/* «Разговоры»: графитовая лента сверху, карточки «Пора поговорить», строки «Присмотреться». */
+
+.error { margin-top: 24px; }
+.skeleton { padding-block: 32px; gap: 16px; }
+
+/* ---------- Лента ---------- */
+.hero {
+  position: relative;
+  margin-bottom: var(--s-6);
+  background: var(--hero-bg);
+  color: var(--hero-text);
+}
+.heroInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--s-6);
+  padding-top: 36px;
+  padding-bottom: 44px;
+}
+.heroHead { min-width: 0; }
+.heroOver { color: var(--hero-text-2); margin-bottom: 12px; }
+.heroTitle {
+  font-family: var(--font-wide);
+  font-size: var(--fs-2xl);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+.heroCollect { margin-top: 12px; color: var(--hero-text-2); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+.heroCollect a { color: var(--hero-text); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--hero-text) 40%, transparent); }
+.heroQr {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; margin-top: 20px; padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--hero-text) 24%, transparent); border-radius: var(--r-m);
+  color: var(--hero-text); font-weight: var(--fw-medium); text-decoration: none;
+  transition: background var(--dur-1) linear, border-color var(--dur-1) linear;
+}
+.heroQr:hover { background: color-mix(in srgb, var(--hero-text) 8%, transparent); border-color: color-mix(in srgb, var(--hero-text) 40%, transparent); }
+
+.kpis { display: flex; gap: 40px; margin: 0; }
+.kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; width: 176px; }
+.kpiValue {
+  margin: 0;
+  font-family: var(--font-wide); font-size: 44px; font-weight: var(--fw-bold); line-height: 1;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.kpiOf { font-size: var(--fs-l); color: var(--hero-text-2); }
+.kpiLabel { margin-top: 10px; color: var(--hero-text-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
+
+.trace { position: absolute; left: 0; right: 0; bottom: -2px; width: 100%; height: 24px; overflow: visible; pointer-events: none; }
+.traceLine {
+  fill: none; stroke: var(--hero-glow); stroke-width: 2;
+  filter: drop-shadow(0 0 6px var(--hero-glow));
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: draw 900ms var(--ease-io) 150ms forwards;
+}
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+/* ---------- Секции ---------- */
+.section + .section { margin-top: var(--s-6); }
+.sectionHead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: var(--s-4); }
+.sectionHead .sectionTitle { margin-bottom: 0; }
+.legend { display: flex; gap: 18px; color: var(--text-2); font-size: var(--fs-xs); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.keyIntern, .keyMentor { display: inline-block; width: 16px; height: 0; border-top: 3px solid var(--series-intern); border-radius: 2px; }
+.keyMentor { border-top: 2.5px solid var(--series-mentor); }
+.sectionTitle {
+  display: flex; align-items: center; gap: 10px; margin-bottom: var(--s-4);
+  font-family: var(--font-wide); font-size: var(--fs-l);
+}
+
+/* ---------- Карточки «Пора поговорить» ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--s-4);
+  list-style: none;
+}
+.card {
+  border: 1px solid var(--line); border-left: 4px solid var(--risk); border-radius: var(--r-card);
+  background: var(--surface);
+  transition: border-color var(--dur-2) linear, box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+.card[data-status='watch'] { border-left-color: var(--watch); }
+.card:hover { box-shadow: var(--shadow-middle); transform: translateY(-2px); }
+.cardLink {
+  display: flex; flex-direction: column; height: 100%;
+  padding: 20px 22px 18px 20px;
+  color: var(--text-1); text-decoration: none; border-radius: var(--r-card);
+}
+.cardLink:focus-visible { outline-offset: 2px; }
+.cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.cardName { font-family: var(--font-wide); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: 1.2; }
+.cardMentor { margin-top: 4px; color: var(--text-2); font-size: var(--fs-xs); }
+.reason { margin-top: 16px; font-size: var(--fs-m); font-weight: var(--fw-medium); line-height: var(--lh-snug); }
+.reasonLine { margin-top: 6px; color: var(--text-1); font-size: var(--fs-s); line-height: var(--lh-body); }
+.when { color: var(--text-2); white-space: nowrap; }
+
+.quote {
+  display: block; margin-top: 14px; padding: 10px 14px;
+  border-left: 2px solid var(--line-strong); border-radius: 0 var(--r-m) var(--r-m) 0; background: var(--sunken);
+}
+.quoteText { display: block; font-family: var(--font-text); font-size: var(--fs-s); line-height: var(--lh-body); }
+.ai, .aiInline {
+  display: inline-block; color: var(--text-2);
+  font-family: var(--font-wide); font-size: 10px; font-weight: var(--fw-medium); letter-spacing: .1em; text-transform: uppercase;
+}
+.ai { margin-bottom: 4px; }
+.aiInline { margin-left: 10px; }
+
+.cardChart { display: block; margin-top: auto; padding-top: 16px; }
+.cardFoot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);
+}
+.cardMore { color: var(--text-2); font-size: var(--fs-xs); }
+.prepare { display: inline-flex; align-items: center; gap: 6px; color: var(--brand-text); font-weight: var(--fw-medium); white-space: nowrap; }
+.card:hover .prepare svg { transform: translateX(3px); }
+.prepare svg { transition: transform var(--dur-2) var(--ease-out); }
+
+.newTag { flex: none; color: var(--brand-text); font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap; }
+
+/* ---------- Строки «Присмотреться» ---------- */
+.rows { list-style: none; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); overflow: hidden; }
+.rows li + li { border-top: 1px solid var(--line); }
+.row {
+  display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr) auto auto; align-items: center; gap: 16px;
+  padding: 14px 20px; color: var(--text-1); text-decoration: none;
+  transition: background var(--dur-1) linear;
+}
+.row:hover { background: var(--hover); }
+.row:focus-visible { outline-offset: -2px; }
+.rowWho { display: flex; flex-direction: column; min-width: 0; }
+.rowName { font-size: var(--fs-m); font-weight: var(--fw-medium); }
+.rowMentor { color: var(--text-2); font-size: var(--fs-xs); }
+.rowWhat { min-width: 0; font-size: var(--fs-s); line-height: var(--lh-snug); }
+.rowArrow { color: var(--text-3); }
+
+/* ---------- «Всё ровно» ---------- */
+.okLine { font-size: var(--fs-m); line-height: var(--lh-body); }
+.okLine a { color: var(--brand-text); text-decoration: none; font-weight: var(--fw-medium); }
+.okLine a:hover { text-decoration: underline; }
+.okNote { color: var(--text-2); font-size: var(--fs-s); }
+
+.more { margin-top: var(--s-7); }
+.more a { display: inline-flex; align-items: center; gap: 6px; color: var(--brand-text); font-weight: var(--fw-medium); text-decoration: none; }
+.more a:hover { text-decoration: underline; }
+
+/* ---------- Узкие экраны ---------- */
+@media (max-width: 1099px) {
+  .heroInner { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .kpis { gap: 32px; }
+}
+@media (max-width: 767px) {
+  .heroInner { padding-top: 24px; padding-bottom: 32px; gap: 24px; }
+  .heroTitle { font-size: var(--fs-xl); }
+  .kpis { flex-direction: column; gap: 18px; }
+  .kpi { width: auto; }
+  .kpiValue { font-size: 36px; }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px 16px; }
+  .rowWhat { grid-column: 1; }
+  .rowArrow { grid-row: 1 / span 2; grid-column: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .traceLine { animation: none; stroke-dashoffset: 0; }
+  .card:hover { transform: none; }
+}

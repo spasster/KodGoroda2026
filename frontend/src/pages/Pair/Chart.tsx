@@ -5,13 +5,13 @@
 import { motion } from 'motion/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 
-import type { Cell, Role } from '../../api/types'
+import type { Cell, Role, Severity } from '../../api/types'
 import { formatNumber } from '../../lib/format'
 import { ease, useReduced } from '../../lib/motion'
 import type { Scale } from '../../lib/rules'
 import s from './Pair.module.css'
 
-const H = 260
+const H = 220
 const T = 14
 const B = 34
 const L = 28
@@ -30,7 +30,13 @@ function line(cells: readonly Cell[], role: Role): Pt[] {
     .sort((a, b) => a.m - b.m)
 }
 
-export function Chart({ cells, months, scale }: { cells: readonly Cell[]; months: number; scale: Scale }) {
+/** Отметка на оси: месяц, с которого тянется открытый повод. */
+export interface ChartMark {
+  month: number
+  severity: Severity
+}
+
+export function Chart({ cells, months, scale, marks = [] }: { cells: readonly Cell[]; months: number; scale: Scale; marks?: ChartMark[] }) {
   const box = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
 
@@ -55,17 +61,22 @@ export function Chart({ cells, months, scale }: { cells: readonly Cell[]; months
 
   return (
     <div ref={box} className={s.chart} style={{ height: H }} role="img" aria-label={label}>
-      {width > 0 && <Plot I={I} M={M} months={months} scale={scale} W={width} />}
+      {width > 0 && <Plot I={I} M={M} months={months} scale={scale} W={width} marks={marks} />}
     </div>
   )
 }
 
-function Plot({ I, M, months, scale, W }: { I: Pt[]; M: Pt[]; months: number; scale: Scale; W: number }) {
+function Plot({ I, M, months, scale, W, marks }: { I: Pt[]; M: Pt[]; months: number; scale: Scale; W: number; marks: ChartMark[] }) {
   const reduce = useReduced()
-  const R = W < 480 ? 92 : 112
+  // Справа место под «4,8 наставник»: на телефоне подпись не должна вылезать за карточку.
+  const R = W < 480 ? 116 : 112
   const span = Math.max(1, months - 1)
   const xs = (m: number) => L + PX + ((m - 1) / span) * (W - L - PX - R)
-  const range = scale.max - scale.min || 1
+  // Ось снизу от 3 или от наименьшей оценки: весь сюжет живёт в верхней части шкалы,
+  // и низ от 1 до 3 только сжимал разрыв между линиями.
+  const lowest = Math.min(...I.map((p) => p.v), ...M.map((p) => p.v))
+  const yMin = Math.max(scale.min, Math.min(scale.min + 2, Math.floor(Number.isFinite(lowest) ? lowest : scale.min)))
+  const range = scale.max - yMin || 1
   const ys = (v: number) => T + ((scale.max - v) / range) * (H - T - B)
   const d = (list: Pt[]) => list.map((p, i) => `${i ? 'L' : 'M'}${xs(p.m).toFixed(1)},${ys(p.v).toFixed(1)}`).join('')
 
@@ -109,7 +120,8 @@ function Plot({ I, M, months, scale, W }: { I: Pt[]; M: Pt[]; months: number; sc
   const known = useRef<Set<string> | null>(null)
   if (known.current == null) known.current = new Set([...I.map((p) => `i${p.m}`), ...M.map((p) => `m${p.m}`)])
   const draw = !reduce
-  const ticks = Array.from({ length: Math.floor(range) + 1 }, (_, k) => scale.min + k)
+  const ticks = Array.from({ length: Math.floor(range) + 1 }, (_, k) => yMin + k)
+  const markMonths = [...new Map(marks.map((mk) => [mk.month, mk])).values()].filter((mk) => mk.month >= 1 && mk.month <= months)
   const monthsList = Array.from({ length: months }, (_, k) => k + 1)
   const colW = (W - L - PX - R) / span
 
@@ -148,6 +160,17 @@ function Plot({ I, M, months, scale, W }: { I: Pt[]; M: Pt[]; months: number; sc
       ))}
 
       {hv != null && <line className={s.hair} x1={xs(hv)} x2={xs(hv)} y1={T} y2={H - B} />}
+
+      {markMonths.map((mk) => (
+        <path
+          key={mk.month}
+          className={s.axisMark}
+          data-sev={mk.severity}
+          d={`M${xs(mk.month).toFixed(1)},${(H - B + 4).toFixed(1)} l-5,8 h10 z`}
+        >
+          <title>{`Повод тянется с ${mk.month}-го месяца`}</title>
+        </path>
+      ))}
 
       {bands.map((b) => (
         <motion.path

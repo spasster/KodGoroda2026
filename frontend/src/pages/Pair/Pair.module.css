@@ -586,3 +586,13 @@
     padding: 0 var(--s-2);
   }
 }
+
+/* Месяц, к которому перешли из цитаты: короткая подсветка. */
+.flash { animation: flash 1800ms var(--ease-out); border-radius: var(--r-m); }
+@keyframes flash { 0%, 40% { background: var(--brand-wash); } 100% { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; background: var(--brand-wash); } }
+
+/* Треугольник на оси месяцев: отсюда тянется открытый повод. */
+.axisMark { fill: var(--text-3); }
+.axisMark[data-sev='high'] { fill: var(--risk); }
+.axisMark[data-sev='medium'] { fill: var(--watch); }
