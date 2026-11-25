@@ -249,15 +249,18 @@ def compute(data: dict, people: dict, labels: dict, rd: dict, near: Near) -> dic
             for m in months_all:
                 if (pair, role, m) in data:
                     continue
-                if (pair, OTHER[role], m) in data:
-                    add("silence", pair, role, m, "medium", "presence",
-                        f"Анкеты {WHO[role]} за {m}-й месяц нет, а {WHO[OTHER[role]][:-1]} свою заполнил.")
-                    continue
                 has = [any((p, r, m) in data for r in ROLES) for p in others]
                 passed = {"all_pairs": all(has), "any_pair": any(has)}[rd["silence_month_passed"]]
-                if others and passed:
-                    add("silence", pair, role, m, "medium", "presence",
-                        f"Анкеты {WHO[role]} за {m}-й месяц нет, хотя другие пары этот месяц уже заполнили.")
+                if (pair, OTHER[role], m) in data:
+                    why = f"Анкеты {WHO[role]} за {m}-й месяц нет, а {WHO[OTHER[role]][:-1]} свою заполнил."
+                elif others and passed:
+                    why = f"Анкеты {WHO[role]} за {m}-й месяц нет, хотя другие пары этот месяц уже заполнили."
+                else:
+                    continue
+                # high: анкеты нет и в прошлом месяце, или в прошлом месяце у этой роли сработал спад.
+                twice = m > 1 and (pair, role, m - 1) not in data
+                after_drop = f"decline:{pair}:{role}:{m - 1}" in out
+                add("silence", pair, role, m, "high" if twice or after_drop else "low", "presence", why)
 
             lens: list[int] = []
             vecs: dict[int, tuple] = {}
@@ -286,10 +289,20 @@ def compute(data: dict, people: dict, labels: dict, rd: dict, near: Near) -> dic
     return out
 
 
-def status_of(sigs: list[dict]) -> str:
+def cell_status_of(sigs: list[dict]) -> str:
+    """Статус клетки месяца по месячным сигналам."""
     if any(s["severity"] == "high" for s in sigs) or len(sigs) >= 2:
         return "risk"
     return "watch" if sigs else "ok"
+
+
+def status_of(sits: list[dict]) -> str:
+    """Статус пары по активным ситуациям: high, который держится два месяца и больше,
+    или две ситуации с важностью medium и выше дают risk."""
+    if (any(x["severity"] == "high" and x["month"] > x["since_month"] for x in sits)
+            or sum(x["severity"] != "low" for x in sits) >= 2):
+        return "risk"
+    return "watch" if sits else "ok"
 
 
 def statuses(sigs: dict, data: dict, people: dict, rd: dict) -> tuple[dict, dict, dict]:
@@ -317,7 +330,7 @@ def statuses(sigs: dict, data: dict, people: dict, rd: dict) -> tuple[dict, dict
                             "months": months, "since_month": since, "severity": max(pool, key=SEV.get),
                             "active": active})
         pair_status[p] = status_of([x for x in sits[p] if x["active"]])
-        cells[p] = {m: status_of([s for s in mine if s["month"] == m]) for m in range(1, last_all + 1)}
+        cells[p] = {m: cell_status_of([s for s in mine if s["month"] == m]) for m in range(1, last_all + 1)}
     return pair_status, cells, sits
 
 

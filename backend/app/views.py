@@ -19,7 +19,7 @@ from .schemas import (
     Signal,
     Totals,
 )
-from .signals import sort_signals, status_of
+from .signals import cell_status_of, sort_signals, status_of
 
 
 def _last_value(snap: Snapshot, pair_id: str, role: str) -> float | None:
@@ -56,7 +56,7 @@ def pair_summary(snap: Snapshot, pair_id: str) -> PairSummary:
             intern_index=r1(ds.index(pair_id, "intern", m)),
             mentor_index=r1(ds.index(pair_id, "mentor", m)),
             gap=ds.shown_gap(pair_id, m),
-            status=status_of(counted),
+            status=cell_status_of(counted),
             signal_keys=list(dict.fromkeys(s.situation_key for s in month_signals)),
             missing=Missing(intern=ds.response(pair_id, "intern", m) is None,
                             mentor=ds.response(pair_id, "mentor", m) is None),

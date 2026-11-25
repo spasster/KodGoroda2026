@@ -302,7 +302,7 @@
             5
           ],
           "since_month": 3,
-          "severity": "medium",
+          "severity": "high",
           "active": true
         },
         {
@@ -428,7 +428,7 @@
           "type": "silence",
           "role": "intern",
           "month": 5,
-          "severity": "medium",
+          "severity": "high",
           "basis": "presence",
           "text_analysis": false,
           "why": "Анкеты стажёра за 5-й месяц нет, а наставник свою заполнил."
@@ -1129,7 +1129,7 @@
       "type": "silence",
       "role": "intern",
       "month": 5,
-      "severity": "medium",
+      "severity": "high",
       "basis": "presence",
       "text_analysis": false,
       "why": "Анкеты стажёра за 5-й месяц нет, а наставник свою заполнил."
@@ -1980,7 +1980,7 @@
             "type": "silence",
             "role": "mentor",
             "month": 6,
-            "severity": "medium",
+            "severity": "low",
             "basis": "presence",
             "text_analysis": false,
             "why": "Анкеты наставника за 6-й месяц нет, а стажёр свою заполнил.",
@@ -2038,7 +2038,7 @@
             "type": "silence",
             "role": "intern",
             "month": 6,
-            "severity": "medium",
+            "severity": "high",
             "basis": "presence",
             "text_analysis": false,
             "why": "Анкеты стажёра за 6-й месяц нет, а наставник свою заполнил.",
@@ -2091,7 +2091,7 @@
             "type": "silence",
             "role": "mentor",
             "month": 6,
-            "severity": "medium",
+            "severity": "low",
             "basis": "presence",
             "text_analysis": false,
             "why": "Анкеты наставника за 6-й месяц нет, а стажёр свою заполнил.",
@@ -2119,7 +2119,7 @@
             "type": "silence",
             "role": "mentor",
             "month": 6,
-            "severity": "medium",
+            "severity": "low",
             "basis": "presence",
             "text_analysis": false,
             "why": "Анкеты наставника за 6-й месяц нет, а стажёр свою заполнил.",
@@ -2144,7 +2144,7 @@
             "type": "silence",
             "role": "intern",
             "month": 6,
-            "severity": "medium",
+            "severity": "low",
             "basis": "presence",
             "text_analysis": false,
             "why": "Анкеты стажёра за 6-й месяц нет, хотя другие пары этот месяц уже заполнили.",
@@ -2156,7 +2156,7 @@
             "type": "silence",
             "role": "mentor",
             "month": 6,
-            "severity": "medium",
+            "severity": "high",
             "basis": "presence",
             "text_analysis": false,
             "why": "Анкеты наставника за 6-й месяц нет, хотя другие пары этот месяц уже заполнили.",
@@ -2169,7 +2169,7 @@
           "P-01": "risk",
           "P-02": "risk",
           "P-03": "risk",
-          "P-04": "risk",
+          "P-04": "watch",
           "P-05": "risk"
         },
         "pair_status_by_reading": {}
@@ -2211,7 +2211,7 @@
           "P-01": "risk",
           "P-02": "risk",
           "P-03": "risk",
-          "P-04": "risk",
+          "P-04": "watch",
           "P-05": "risk"
         },
         "pair_status_by_reading": {}

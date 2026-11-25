@@ -205,7 +205,7 @@ def test_silence_missing_while_other_side_filled(client, post):
     post.pair("01", 1, 4.0, 4.2)
     post("mentor", "M-01", 2, 4.2)
     s = signals(client)["silence:P-01:intern:2"]
-    assert s["severity"] == "medium"
+    assert s["severity"] == "low"
     # Других пар нет, месяц ещё собирается: стажёр не опоздал, он пока не прислал.
     assert s["title"] == "Стажёр ещё не прислал анкету"
     assert s["explanation"] == "Наставник анкету за 2-й месяц прислал, стажёр пока нет."
@@ -217,7 +217,7 @@ def test_silence_missing_after_month_passed(client, post):
     post("mentor", "M-01", 2, 4.2)
     post.pair("02", 2, 4.0, 4.2)
     s = signals(client)["silence:P-01:intern:2"]
-    assert s["title"] == "Стажёр не заполнил анкету"
+    assert s["title"] == "От стажёра нет анкеты за 2-й месяц"
     assert "Наставник анкету за 2-й месяц заполнил, стажёр нет." in s["explanation"]
 
 
@@ -240,7 +240,7 @@ def test_silence_empty_comment(client, post):
     post.pair("01", 2, 4.0, 4.2, intern_comment="")
     s = signals(client)["silence:P-01:intern:2"]
     assert s["severity"] == "low"
-    assert s["title"] == "Стажёр оставил комментарий пустым"
+    assert s["title"] == "Стажёр не написал комментарий"
     assert s["explanation"].startswith("В 2-м месяце комментарий пустой. Раньше стажёр писал в среднем 41 знак.")
 
 
@@ -282,13 +282,32 @@ def test_active_window_and_pair_status(client, post):
 
 def test_status_watch_and_risk(client, post):
     post.pair("01", 1, 3.4, 4.4)  # один medium → watch
-    post.pair("02", 1, 2.8, 4.4)  # high → risk
+    post.pair("02", 1, 2.8, 4.4)  # high первый месяц → пока watch
     post.pair("03", 1, 4.0, 4.0)  # ничего → ok
+    post.pair("04", 1, 1.0, 1.0)  # high, который держится два месяца → risk
+    post.pair("04", 2, 1.0, 1.0)
+    for n in ("01", "02", "03"):
+        post.pair(n, 2, 4.0, 4.0)
     pairs = {p["pair_id"]: p for p in client.get("/api/overview").json()["pairs"]}
     assert pairs["P-01"]["status"] == "watch"
-    assert pairs["P-02"]["status"] == "risk"
+    assert pairs["P-02"]["status"] == "watch"
     assert pairs["P-03"]["status"] == "ok"
-    assert [p["pair_id"] for p in client.get("/api/overview").json()["pairs"]] == ["P-01", "P-02", "P-03"]
+    assert pairs["P-04"]["status"] == "risk"
+    assert [p["pair_id"] for p in client.get("/api/overview").json()["pairs"]] == ["P-01", "P-02", "P-03", "P-04"]
+
+
+def test_silence_severity_high_after_second_miss_or_decline(client, post):
+    for n in ("01", "02"):
+        post.pair(n, 1, 4.6, 4.6)
+    post.pair("02", 2, 4.6, 4.6)
+    post.pair("02", 3, 4.6, 4.6)
+    post("mentor", "M-01", 2, 4.6)
+    post("mentor", "M-01", 3, 4.6)
+    s = signals(client)
+    assert s["silence:P-01:intern:2"]["severity"] == "low"
+    s3 = s["silence:P-01:intern:3"]
+    assert s3["severity"] == "high"
+    assert s3["explanation"].endswith("Анкеты нет второй месяц подряд.")
 
 
 def test_two_medium_situations_make_risk(client):
@@ -549,7 +568,7 @@ def test_outcome_gap_goes_down(client, post):
     post.pair("01", 3, 4.0, 4.4)
     out = situations(client)[key]["outcome"]
     assert out == {"review_month": 2, "last_month": 3, "repeated": False,
-                   "text": "После отметки в 2-м месяце разрыв: 1,6 → 0,4"}
+                   "text": "После отметки в 2-м месяце разрыв сократился: 1,6 → 0,4"}
 
 
 def test_outcome_repeated_gap(client, post):
@@ -558,7 +577,7 @@ def test_outcome_repeated_gap(client, post):
     review(client, key, "confirmed")
     post.pair("01", 2, 3.0, 4.4)
     out = situations(client)[key]["outcome"]
-    assert out["repeated"] is True and out["text"] == "После отметки в 1-м месяце разрыв: 1,0 → 1,4"
+    assert out["repeated"] is True and out["text"] == "После отметки в 1-м месяце разрыв вырос: 1,0 → 1,4"
 
 
 def test_outcome_decline_shows_index(client, post):
@@ -568,7 +587,7 @@ def test_outcome_decline_shows_index(client, post):
     review(client, key, "confirmed")
     post.pair("01", 4, 4.2, 4.2)
     out = situations(client)[key]["outcome"]
-    assert out["text"] == "После отметки в 3-м месяце оценка стажёра: 3,0 → 4,2" and out["repeated"] is False
+    assert out["text"] == "После отметки в 3-м месяце оценка стажёра выросла: 3,0 → 4,2" and out["repeated"] is False
     assert situations(client)["decline:P-01:mentor"]["outcome"] is None
 
 
@@ -577,7 +596,7 @@ def test_outcome_low_question_shows_index_of_role(client):
     key = "low_question:P-01:mentor"
     review(client, key, "confirmed")
     send(client, "mentor", "M-01", 2, [5, 5, 4, 4])
-    assert situations(client)[key]["outcome"]["text"] == "После отметки в 1-м месяце оценка наставника: 3,5 → 4,5"
+    assert situations(client)[key]["outcome"]["text"] == "После отметки в 1-м месяце оценка наставника выросла: 3,5 → 4,5"
 
 
 def test_outcome_silence_words(client, post):

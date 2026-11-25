@@ -58,7 +58,7 @@ export function afterReview(s: Signal): string[] {
   const prev = s.review.previous
   if (prev?.status === 'rejected') {
     const when = monthIn(prev.month)
-    lines.push(`${when[0].toUpperCase()}${when.slice(1)} отмечено как ложная тревога, после этого повторилось`)
+    lines.push(`${when[0].toUpperCase()}${when.slice(1)} отмечено как «проблемы нет», после этого повторилось`)
   }
   return lines
 }

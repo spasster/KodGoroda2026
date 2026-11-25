@@ -22,7 +22,7 @@ const SEVERITY_WORD: Record<Severity, string> = {
 
 const REVIEW_WORD: Partial<Record<ReviewStatus, string>> = {
   confirmed: 'подтвердилось',
-  rejected: 'ложная тревога',
+  rejected: 'проблемы нет',
 }
 
 const SAVE_ERROR = 'Не сохранилось. Попробуйте ещё раз.'
@@ -52,7 +52,11 @@ export function SignalList({ pair, className }: { pair: PairDetail; className?: 
       <h2 id="pair-signals" className={s.cardTitle}>
         Сигналы
       </h2>
-      {open.length === 0 && <p className={s.none}>Открытых сигналов нет</p>}
+      {!pair.signals.some((x) => x.active) ? (
+        <p className={s.none}>Сигналов нет. Это не значит, что всё в порядке: в именной анкете пишут не обо всём.</p>
+      ) : (
+        open.length === 0 && <p className={s.none}>Открытых сигналов нет</p>
+      )}
       <AnimatePresence initial={false}>
         {open.map((sig, i) => (
           <motion.div
@@ -130,10 +134,10 @@ function SignalCard({
         ))}
         <div className={s.actions}>
           <button type="button" className={s.btn} onClick={() => onMark('confirmed')}>
-            Подтвердилось
+            Проблема подтвердилась
           </button>
           <button type="button" className={s.btn} onClick={() => onMark('rejected')}>
-            Ложная тревога
+            Проблемы нет
           </button>
         </div>
         {error && (

@@ -1,4 +1,4 @@
-// Экран «Как считаем» (/method): принципы, проверка модели и карточка на каждый сигнал.
+// Экран «Как считаем» (/method): принципы, проверка ИИ и карточка на каждый сигнал.
 // Всё берётся из GET /api/method, текстов методики во фронте нет.
 
 import clsx from 'clsx'
@@ -58,13 +58,13 @@ function setLine(x: QualitySet): string {
   const { model: m, rules: r } = x
   return (
     `${x.name}. ${n} ${plural(n, ['комментарий', 'комментария', 'комментариев'])}, ${x.problems} с проблемой. ` +
-    `Модель нашла ${m.found}, пропустила ${m.missed}, ложных ${m.false_alarms}. ` +
-    `Словарь нашёл ${r.found}, пропустил ${r.missed}, ложных ${r.false_alarms}.`
+    `ИИ нашёл ${m.found} из ${x.problems} проблем, ложных тревог ${m.false_alarms}. ` +
+    `Словарь нашёл ${r.found} из ${x.problems}, ложных тревог ${r.false_alarms}.`
   )
 }
 
 function QualityBlock({ quality }: { quality: Quality | null }) {
-  if (!quality) return <p className={s.text}>Проверка модели ещё не запускалась</p>
+  if (!quality) return <p className={s.text}>Проверка ИИ ещё не запускалась</p>
   return (
     <>
       <ul className={s.sets}>
@@ -73,7 +73,7 @@ function QualityBlock({ quality }: { quality: Quality | null }) {
         ))}
       </ul>
       <p className={s.text}>
-        Модель {quality.model}, {formatNumber(quality.seconds_per_comment)} с на комментарий.
+        ИИ {quality.model}, {formatNumber(quality.seconds_per_comment)} с на комментарий.
       </p>
       {quality.errors.length > 0 && (
         <>
@@ -114,7 +114,7 @@ function SignalCard({ signal: x }: { signal: MethodSignal }) {
         </>
       )}
       <p className={s.counts}>
-        Открыто {x.open}, подтвердилось {x.confirmed}, ложных {x.rejected}
+        Открыто {x.open}, подтвердилось {x.confirmed}, проблемы нет {x.rejected}
       </p>
     </section>
   )

@@ -29,8 +29,8 @@ export const KIND_LABEL: Record<Kind, string> = {
   gap: 'Расхождение',
   decline: 'Спад оценок',
   low_question: 'Низкая оценка по вопросу',
-  text: 'Слова против оценок',
-  silence: 'Молчание',
+  text: 'Жалоба при высоких оценках',
+  silence: 'Нет ответа',
 }
 
 export function kindOf(s: Signal): Kind {

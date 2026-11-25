@@ -18,8 +18,8 @@ def by_type(m: dict) -> dict:
 def test_method_texts_on_default_scale(client):
     m = method(client)
     assert set(m) == {"principles", "signals", "baseline", "quality"}
-    assert m["principles"][0] == "Оценки считают формулы. Модель читает только комментарии."
-    assert len(m["principles"]) == 3
+    assert m["principles"][0] == "Оценки считают формулы. ИИ читает только комментарии."
+    assert len(m["principles"]) == 4
     assert [s["type"] for s in m["signals"]] == ["decline", "gap_intern_low", "gap_mentor_low", "low_question",
                                                  "text_vs_score", "silence"]
     s = by_type(m)
@@ -34,10 +34,10 @@ def test_method_texts_on_default_scale(client):
     assert s["text_vs_score"]["how"].startswith("Средняя оценка анкеты 3,6 и выше, а в комментарии той же анкеты жалоба")
     assert "стал короче прошлых на 60% и больше" in s["silence"]["how"]
     assert m["baseline"] == ("Сравниваем с тем, как это видно без дашборда: HR смотрит среднюю оценку за один месяц "
-                             "и реагирует, когда она ниже 3,5.")
+                             "и реагирует, когда она ниже 3,5. Порог выбрали мы сами, его нужно уточнить у HR.")
     for item in m["signals"]:
         assert len(item["why"]) == 3 and item["action"] and item["limit"]
-    assert s["low_question"]["source"] is None and s["text_vs_score"]["source"] is None
+    assert s["low_question"]["source"] is None and s["text_vs_score"]["source"].startswith("Aralikatte")
     assert s["decline"]["source"].startswith("Chen et al., 2011")
     assert s["gap_mentor_low"]["source"] == s["gap_intern_low"]["source"]
 

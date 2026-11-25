@@ -2,10 +2,10 @@
 
 import clsx from 'clsx'
 import { Check, Copy } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
-import { useAnalytics, useOverview, usePeople, useSurvey } from '../../api/queries'
+import { useAnalytics, useMethod, useOverview, usePeople, useSurvey } from '../../api/queries'
 import type { Analytics, People, Role } from '../../api/types'
 import { Avatar, Hero, LoadError, Loading, QuestionTable, Skeleton, type Tone } from '../../components'
 import { ROLE_LABEL, formatNumber, monthIn, personName, plural } from '../../lib/format'
@@ -19,6 +19,12 @@ export function AnalyticsPage() {
   const people = usePeople()
   const survey = useSurvey()
   const a = analytics.data
+  const { hash } = useLocation()
+
+  // Ссылка с якорем: блок появляется после загрузки, поэтому прокручиваем, когда данные есть.
+  useEffect(() => {
+    if (a && hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' })
+  }, [a, hash])
 
   if (analytics.isError && !a) {
     return (
@@ -77,7 +83,7 @@ export function AnalyticsPage() {
           <Heat analytics={a} />
         </section>
 
-        <section className={s.card}>
+        <section className={s.card} id="collect">
           <h2 className={s.title}>Сбор анкет</h2>
           <Collect analytics={a} people={people.data} month={collect} />
         </section>
@@ -210,10 +216,12 @@ function Effect({ analytics: a }: { analytics: Analytics }) {
   const surveysPerMonth = a.pairs * 2
   const saved = Math.max(0, ((manual - withTool) * surveysPerMonth) / 60)
   const months = a.months.length || 1
+  const baseline = useMethod().data?.baseline
   return (
     <div className={s.effect}>
       <div>
         <p className={s.lead}>{leadSummary(a.effect)}</p>
+        {baseline && <p className={s.baseline}>{baseline}</p>}
         <ul className={s.early}>
           {a.early.map((e) => (
             <li key={e.pair_id}>

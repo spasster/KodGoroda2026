@@ -105,6 +105,11 @@ export function OverviewPage() {
             <div className={h.bar}>
               <div className={h.barFill} style={{ width: `${total ? (got / (total * 2)) * 100 : 0}%` }} />
             </div>
+            {got < total * 2 && (
+              <Link to="/analytics#collect" className={h.who}>
+                Кто не заполнил
+              </Link>
+            )}
             <Link to="/form/qr" className={h.qr}>
               <QrCode size={18} aria-hidden="true" />
               QR-код анкеты

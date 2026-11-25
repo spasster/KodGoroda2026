@@ -43,6 +43,8 @@
 /* Эффект */
 .effect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px; }
 .lead { margin: 0 0 14px; font-size: var(--fs-m); }
+.card[id] { scroll-margin-top: 88px; }
+.baseline { margin: -6px 0 14px; color: var(--text-2); font-size: var(--fs-xs); }
 .early { display: flex; flex-direction: column; gap: 10px; list-style: none; font-size: var(--fs-s); }
 .early li { display: flex; flex-direction: column; }
 .early a { color: var(--text-1); font-weight: var(--fw-medium); text-decoration: none; }

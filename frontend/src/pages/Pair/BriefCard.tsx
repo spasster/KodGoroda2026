@@ -48,7 +48,7 @@ export function BriefCard({ pairId }: { pairId: string }) {
       <div className={s.col}>
         <h2 className={s.title}>Заметки HR</h2>
         <form className={s.form} onSubmit={submit}>
-          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Поговорили, договорились о…" rows={2} aria-label="Новая заметка" />
+          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="О чём договорились и когда проверить" rows={2} aria-label="Новая заметка" />
           <button type="submit" disabled={!text.trim() || addNote.isPending}>
             Сохранить
           </button>

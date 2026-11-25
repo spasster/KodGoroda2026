@@ -349,7 +349,7 @@ class _Builder:
                 passed = bool(others) and all(ds.has_month(p, m) for p in others)
                 if not (other_has or passed):
                     continue
-                title = f"{who['Nom']} не заполнил анкету"
+                title = f"От {who['gen']} нет анкеты за {m}-й месяц"
                 if other_has and not passed:
                     # Месяц ещё собирается: вторая сторона не опоздала, она просто не успела.
                     title = f"{who['Nom']} ещё не прислал анкету"
@@ -364,7 +364,15 @@ class _Builder:
                 else:
                     action = "Напомнить наставнику про анкету и спросить, хватает ли ему времени на стажёра."
                 values = [self.value(pair_id, role, k) for k in range(max(1, m - 2), m + 1)]
-                self.out.append(Monthly("silence", pair_id, role, m, "medium", title, explanation, action, values=values))
+                twice = m > 1 and ds.response(pair_id, role, m - 1) is None
+                after_drop = any(x.type == "decline" and x.pair_id == pair_id and x.role == role and x.month == m - 1
+                                 for x in self.out)
+                severity = "high" if twice or after_drop else "low"
+                if twice:
+                    explanation += " Анкеты нет второй месяц подряд."
+                elif after_drop:
+                    explanation += f" Перед этим оценки {who['gen']} падали."
+                self.out.append(Monthly("silence", pair_id, role, m, severity, title, explanation, action, values=values))
                 continue
 
             reasons: list[tuple[str, str, str]] = []  # (title, explanation, action)
@@ -377,7 +385,7 @@ class _Builder:
                 avg = sum(lengths) / len(lengths)
                 if not cur:
                     reasons.append((
-                        f"{who['Nom']} оставил комментарий пустым",
+                        f"{who['Nom']} не написал комментарий",
                         f"{in_month(m).capitalize()} комментарий пустой. Раньше {who['nom']} писал в среднем {chars(round(avg))}.",
                         "Спросить стажёра при встрече, что сейчас мешает в стажировке." if role == "intern"
                         else "Спросить наставника устно, как справляется стажёр.",
@@ -439,6 +447,14 @@ def _review(row, month: int) -> Review:
     return review
 
 
+def _direction(before: float, after: float, up: str, down: str, same: str) -> str:
+    """Слова для «стало больше», «стало меньше», «то же»; значения сравниваются после округления."""
+    b, a = round(before, 1), round(after, 1)
+    if a == b:
+        return f"{same}: {num(b)}"
+    return f"{up if a > b else down}: {num(b)} → {num(a)}"
+
+
 def _outcome(ds: Dataset, kind: str, pair_id: str, role: str, month: int, review: Review) -> Outcome | None:
     """Что изменилось после отметки. Нужна отметка «подтвердилось» (или повтор после ложной тревоги) и новая анкета."""
     if review.month is None or not (review.status == "confirmed" or review.previous):
@@ -454,12 +470,13 @@ def _outcome(ds: Dataset, kind: str, pair_id: str, role: str, month: int, review
         before = ds.shown_gap(pair_id, rm)
         after = [ds.shown_gap(pair_id, m) for m in range(rm + 1, last + 1) if ds.shown_gap(pair_id, m) is not None]
         if before is not None and after:
-            text = f"{head} разрыв: {num(abs(before))} → {num(abs(after[-1]))}"
+            b, a = abs(before), abs(after[-1])
+            text = f"{head} разрыв " + _direction(b, a, "вырос", "сократился", "не изменился")
     elif kind in ("decline", "low_question"):
         before = r1(ds.index(pair_id, role, rm))
         after = [v for m, v in ds.series(pair_id, role) if m > rm]
         if before is not None and after:
-            text = f"{head} оценка {WHO[role]['gen']}: {num(before)} → {num(after[-1])}"
+            text = f"{head} оценка {WHO[role]['gen']} " + _direction(before, r1(after[-1]), "выросла", "упала", "не изменилась")
     if text is None:
         text = f"{head} повторилось в {month}-м" if repeated else f"{head} не повторялось"
     return Outcome(review_month=rm, last_month=last, repeated=repeated, text=text)
@@ -506,8 +523,17 @@ def sort_signals(signals: list[Signal]) -> list[Signal]:
     return sorted(signals, key=lambda s: (SEVERITY_RANK[s.severity], -s.month, s.pair_id, TYPE_RANK[s.type], s.role))
 
 
-def status_of(signals: list) -> str:
-    """risk: активный high или два и больше активных; watch: один; иначе ok."""
+def cell_status_of(signals: list) -> str:
+    """Статус клетки месяца по месячным сигналам: risk: high или два и больше; watch: один; иначе ok."""
     if any(s.severity == "high" for s in signals) or len(signals) >= 2:
         return "risk"
     return "watch" if signals else "ok"
+
+
+def status_of(situations: list[Signal]) -> str:
+    """Статус пары по активным ситуациям. risk: high, который держится два месяца и больше,
+    или две ситуации с важностью medium и выше; watch: любая активная; иначе ok."""
+    if (any(s.severity == "high" and s.month > s.since_month for s in situations)
+            or sum(s.severity != "low" for s in situations) >= 2):
+        return "risk"
+    return "watch" if situations else "ok"

@@ -327,7 +327,7 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
         </section>
 
         <p className={s.note} style={order(1)}>
-          Ответы видит только HR программы.
+          Ответы видит только HR программы. {role === 'intern' ? 'Наставнику' : 'Стажёру'} их не показывают.
         </p>
 
         {def.questions.map((q, i) => {

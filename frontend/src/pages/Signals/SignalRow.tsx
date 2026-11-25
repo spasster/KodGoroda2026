@@ -14,11 +14,11 @@ import s from './Signals.module.css'
 
 export type Mark = Exclude<ReviewStatus, 'open'>
 
-const MARK_LABEL: Record<Mark, string> = { confirmed: 'Подтвердилось', rejected: 'Ложная тревога' }
+const MARK_LABEL: Record<Mark, string> = { confirmed: 'Проблема подтвердилась', rejected: 'Проблемы нет' }
 
 interface Props {
   signal: Signal
-  /** Тип сигнала словами: «Расхождение», «Молчание». */
+  /** Тип сигнала словами: «Расхождение», «Нет ответа». */
   kind: string
   detail?: PairDetail
   open: boolean
@@ -82,10 +82,10 @@ export function SignalRow({ signal: head, kind, detail, open, fresh, reduce, onT
                 {status === 'open' ? (
                   <>
                     <button type="button" className={clsx(s.btn, s.secondary)} onClick={() => onMark('confirmed')}>
-                      Подтвердилось
+                      Проблема подтвердилась
                     </button>
                     <button type="button" className={clsx(s.btn, s.secondary)} onClick={() => onMark('rejected')}>
-                      Ложная тревога
+                      Проблемы нет
                     </button>
                   </>
                 ) : (
