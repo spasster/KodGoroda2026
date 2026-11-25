@@ -42,7 +42,7 @@ def test_request_shape_and_quote_check():
     assert req.headers["Authorization"] == "Bearer secret"
     body = json.loads(req.content)
     assert body["model"] == "qwen-test"
-    assert TEXT in body["messages"][1]["content"]
+    assert TEXT in body["messages"][-1]["content"]
 
     assert insight.sentiment == -0.4
     assert insight.topics == ["mentor", "motivation"]
@@ -105,3 +105,28 @@ def test_after_error_model_is_paused(tmp_path, monkeypatch):
     analyzer._llm_paused_until = 0.0
     analyzer.analyze("Наставник не отвечает неделю.", "intern", "comment")
     assert len(calls) == 2  # пауза прошла, снова зовём модель
+
+
+def test_thinking_block_and_loose_types_are_tolerated():
+    content = ('<think>рассуждаю про наставника</think>{"sentiment": "-0,4", "topics": "mentor", '
+               '"concerns": {"label": "Наставник занят", "quote": "наставник постоянно занят"}, "summary": "null"}')
+    insight = LLMAnalyzer.parse(content, TEXT)
+    assert insight.sentiment == -0.4
+    assert insight.topics == ["mentor"]
+    assert [c.label for c in insight.concerns] == ["other"]  # неизвестный label не ломает разбор
+    assert insight.summary is None
+
+
+def test_fabricated_quote_is_dropped():
+    content = json.dumps({"sentiment": -0.6, "topics": ["mentor"],
+                          "concerns": [{"label": "mentor", "quote": "наставник меня игнорирует совсем"}]},
+                         ensure_ascii=False)
+    assert LLMAnalyzer.parse(content, TEXT).concerns == []
+
+
+def test_prompt_examples_are_not_from_holdout():
+    from pathlib import Path
+
+    from app.analyzer.llm import EXAMPLES
+    holdout = json.loads((Path(__file__).parents[2] / "data/holdout.json").read_text(encoding="utf-8"))
+    assert not {c["text"] for c in holdout["comments"]} & {text for _, text, _ in EXAMPLES}

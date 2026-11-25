@@ -6,7 +6,7 @@ API ?= http://localhost:8000
 # Потоки /api/events бэкенд закрывает сам по Ctrl+C. Таймаут на случай, если что-то ещё держит соединение.
 UVICORN := uv run uvicorn app.main:app --reload --port 8000 --timeout-graceful-shutdown 2
 
-.PHONY: dev api web test data reset up down tunnel demo fonts
+.PHONY: dev api web test data reset up down tunnel demo fonts eval
 
 # Бэкенд и фронт вместе. Ctrl+C гасит оба.
 dev: frontend/node_modules fonts
@@ -32,6 +32,11 @@ data:
 	uv run data/expected.py data/sample
 	uv run data/generate.py --out data/sample-12 --pairs 12 --months 5 --seed 7
 	uv run data/expected.py data/sample-12
+
+# Качество разбора текста: словарь и модель на data/sample-12 и data/holdout.json.
+# Нужна Ollama с моделью из LLM_MODEL (.env). Пишет survey/quality.json, итоги в docs/quality.md.
+eval:
+	cd backend && uv run python -m app.evaluate
 
 # Очистить базу и загрузить data/sample. Через API, чтобы открытые дашборды получили
 # reset и обновились. Для Docker: make reset API=http://localhost:8080. Если бэкенд
