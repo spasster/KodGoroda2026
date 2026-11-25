@@ -1,15 +1,18 @@
 .brief {
   display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 32px;
-  margin-bottom: var(--s-5); padding: 26px 28px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low);
+  margin-bottom: var(--s-5); padding: 20px 24px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface);
 }
 .col { min-width: 0; }
-.title { margin-bottom: 10px; color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: .06em; }
-.summary { font-size: var(--fs-m); line-height: var(--lh-body); }
+.title { margin-bottom: 10px; color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-medium); }
+.situations { display: flex; flex-direction: column; gap: 8px; list-style: none; font-size: var(--fs-s); line-height: var(--lh-snug); }
+.situations li { display: grid; grid-template-columns: 10px minmax(0, 1fr); column-gap: 10px; align-items: baseline; }
+.sev { width: 10px; height: 10px; border-radius: 50%; background: var(--text-3); }
+.sev[data-sev='high'] { background: var(--risk); }
+.sev[data-sev='medium'] { background: var(--watch); }
+.when { color: var(--text-2); }
 .muted { color: var(--text-2); }
 .questions { display: flex; flex-direction: column; gap: 10px; list-style: none; font-size: var(--fs-s); line-height: var(--lh-snug); }
-.questions li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: baseline; }
-.to { justify-self: start; padding: 2px 8px; border-radius: var(--r-pill); background: var(--brand-wash); color: var(--brand-text); font-size: var(--fs-xs); font-weight: var(--fw-medium); }
-.to[data-role="mentor"] { background: var(--sunken); color: var(--text-2); }
+.to { color: var(--text-2); }
 .form { display: flex; flex-direction: column; gap: 8px; }
 .form textarea {
   width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); color: var(--text-1);

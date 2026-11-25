@@ -74,7 +74,7 @@ async function waitVisible(locator, what, timeout = WAIT) {
 const pairRow = (page, intern) => page.locator('main table a[data-status]').filter({ hasText: intern })
 const cardStatus = (page, intern) => pairRow(page, intern).first().getAttribute('data-status')
 
-const liveDot = (page) => page.locator('header').getByText('онлайн', { exact: true })
+const liveDot = (page) => page.locator('header [title="Онлайн"]')
 
 // Путь QR-кода так же, как его строит pages/Form/Qr.tsx.
 function qrPath(value) {

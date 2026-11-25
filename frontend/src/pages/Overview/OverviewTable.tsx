@@ -104,9 +104,7 @@ function Row({ story, months, freshCells }: { story: Story; months: number[]; fr
         </Link>
       </th>
       {months.map((m) => (
-        <td key={m} className={s.monthTd}>
-          <MonthCell cell={pair.cells.find((c) => c.month === m)} fresh={freshCells.has(`${pair.pair_id}:${m}`)} />
-        </td>
+        <MonthCell key={m} cell={pair.cells.find((c) => c.month === m)} fresh={freshCells.has(`${pair.pair_id}:${m}`)} />
       ))}
       <td className={s.main}>
         {main ? (
@@ -127,12 +125,14 @@ function Row({ story, months, freshCells }: { story: Story; months: number[]; fr
 }
 
 function MonthCell({ cell, fresh }: { cell: Cell | undefined; fresh: boolean }) {
-  if (!cell) return <div className={s.cellEmpty} />
+  if (!cell) return <td className={s.monthTd}><div className={s.cellEmpty} /></td>
   const title = `Стажёр ${formatNumber(cell.intern_index)}, наставник ${formatNumber(cell.mentor_index)}`
   return (
-    <div className={clsx(s.cell, cell.status === 'risk' && s.risk, cell.status === 'watch' && s.watch, fresh && s.fresh)} title={title}>
-      <span className={clsx(s.vIntern, cell.missing.intern && s.vNone)}>{cell.missing.intern ? EMPTY : formatNumber(cell.intern_index)}</span>
-      <span className={clsx(s.vMentor, cell.missing.mentor && s.vNone)}>{cell.missing.mentor ? EMPTY : formatNumber(cell.mentor_index)}</span>
-    </div>
+    <td className={clsx(s.monthTd, cell.status === 'risk' && s.risk, cell.status === 'watch' && s.watch, fresh && s.fresh)} title={title}>
+      <div className={s.cell}>
+        <span className={clsx(s.vIntern, cell.missing.intern && s.vNone)}>{cell.missing.intern ? EMPTY : formatNumber(cell.intern_index)}</span>
+        <span className={clsx(s.vMentor, cell.missing.mentor && s.vNone)}>{cell.missing.mentor ? EMPTY : formatNumber(cell.mentor_index)}</span>
+      </div>
+    </td>
   )
 }

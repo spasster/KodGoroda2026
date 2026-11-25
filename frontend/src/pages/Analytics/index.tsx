@@ -1,7 +1,6 @@
 // Аналитика программы: общая динамика, вопросы по месяцам, темы комментариев, сбор анкет, эффект.
 
 import clsx from 'clsx'
-import { Check, Copy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -202,8 +201,7 @@ function CopyLink({ role, id }: { role: Role; id: string }) {
   }
   return (
     <button type="button" className={s.copy} onClick={() => void copy()}>
-      {done ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-      {done ? 'Скопировано' : 'Ссылка на анкету'}
+      {done ? 'скопировано' : 'скопировать ссылку'}
     </button>
   )
 }

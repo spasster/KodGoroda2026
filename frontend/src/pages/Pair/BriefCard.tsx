@@ -1,18 +1,21 @@
-// Сводка по стажёру, вопросы для разговора и заметки HR.
+// Активные ситуации пары, вопросы для разговора и заметки HR.
 
 import { useState, type FormEvent } from 'react'
 
 import { useAddNote, useBrief } from '../../api/queries'
-import { ROLE_LABEL } from '../../lib/format'
+import type { Signal } from '../../api/types'
+import { compareSignals, situationMonths } from '../../lib/rules'
 import s from './Brief.module.css'
 
+const TO_LABEL = { intern: 'Стажёру', mentor: 'Наставнику', both: 'Обоим' } as const
 const DATE = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' })
 
-export function BriefCard({ pairId }: { pairId: string }) {
+export function BriefCard({ pairId, signals }: { pairId: string; signals: readonly Signal[] }) {
   const brief = useBrief(pairId)
   const addNote = useAddNote(pairId)
   const [text, setText] = useState('')
   const b = brief.data
+  const active = signals.filter((x) => x.active).sort(compareSignals)
   if (!b) return null
 
   const submit = (e: FormEvent) => {
@@ -26,7 +29,21 @@ export function BriefCard({ pairId }: { pairId: string }) {
     <section className={s.brief}>
       <div className={s.col}>
         <h2 className={s.title}>Коротко</h2>
-        <p className={s.summary}>{b.summary}</p>
+        {active.length > 0 ? (
+          <ul className={s.situations}>
+            {active.map((sig) => (
+              <li key={sig.key}>
+                <span className={s.sev} data-sev={sig.severity} aria-hidden="true" />
+                <span>
+                  {sig.title}
+                  <span className={s.when}>, {situationMonths(sig)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={s.muted}>Сигналов нет</p>
+        )}
       </div>
       <div className={s.col}>
         <h2 className={s.title}>Что спросить на встрече</h2>
@@ -34,10 +51,7 @@ export function BriefCard({ pairId }: { pairId: string }) {
           <ul className={s.questions}>
             {b.questions.map((q) => (
               <li key={q.text}>
-                <span className={s.to} data-role={q.to}>
-                  {ROLE_LABEL[q.to]}
-                </span>
-                {q.text}
+                <span className={s.to}>{TO_LABEL[q.to]}:</span> {q.text}
               </li>
             ))}
           </ul>

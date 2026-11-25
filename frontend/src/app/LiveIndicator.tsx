@@ -11,9 +11,8 @@ import type { LiveStatus } from '../live/connection'
 import { useLive } from '../live/useLive'
 import s from './AppShell.module.css'
 
-const WORD: Record<LiveStatus, string> = {
+const WORD: Partial<Record<LiveStatus, string>> = {
   connecting: 'подключаемся',
-  connected: 'онлайн',
   reconnecting: 'подключаемся',
   offline: 'нет связи',
 }
@@ -38,11 +37,11 @@ export function LiveIndicator({ updatedAt }: { updatedAt: number }) {
         : `Переподключаемся${time ? `, данные от ${time}` : ''}`
 
   return (
-    <div className={s.live} tabIndex={0} aria-live="polite">
+    <div className={s.live} tabIndex={0} aria-live="polite" title={status === 'connected' ? 'Онлайн' : undefined}>
       <span className={clsx(s.lamp, s[status])} aria-hidden="true">
         {ping > 0 && <span key={ping} className={s.ring} />}
       </span>
-      <span className={s.liveWord}>{WORD[status]}</span>
+      {status !== 'connected' && <span className={s.liveWord}>{WORD[status]}</span>}
       {hint && (
         <span className={s.hint} role="tooltip">
           {hint}

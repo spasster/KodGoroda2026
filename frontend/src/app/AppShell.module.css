@@ -41,7 +41,7 @@
 
 .hint {
   position: absolute; top: calc(100% + 10px); right: 0; z-index: 1;
-  padding: 8px 12px; border-radius: var(--r-m); background: var(--surface); box-shadow: var(--shadow-middle);
+  padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface);
   color: var(--text-1); font-size: var(--fs-xs);
   opacity: 0; visibility: hidden; transform: translateY(-4px);
   transition: opacity var(--dur-1) linear, transform var(--dur-1) var(--ease-out), visibility 0s linear var(--dur-1);
@@ -83,7 +83,7 @@
   pointer-events: none;
 }
 .toast {
-  pointer-events: auto; padding: 16px 20px 18px 24px;
+  pointer-events: auto; padding: 16px 20px 18px 24px; border: 1px solid var(--line);
   border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-high);
 }
 .toastHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -94,12 +94,11 @@
 .toastBtn {
   display: inline-flex; flex: none; align-items: center; justify-content: center;
   height: 40px; padding: 0 18px;
-  border-radius: var(--r-m); background: var(--brand); color: var(--brand-fg);
+  border: 1px solid var(--line-strong); border-radius: var(--r-m); background: transparent; color: var(--text-1);
   font-weight: var(--fw-medium); text-decoration: none; white-space: nowrap;
   transition: background var(--dur-1) linear;
 }
-.toastBtn:hover { background: var(--brand-hover); }
-.toastBtn:active { background: var(--brand-active); }
+.toastBtn:hover { background: var(--hover); }
 
 @media (max-width: 767px) {
   .toasts { bottom: 16px; }

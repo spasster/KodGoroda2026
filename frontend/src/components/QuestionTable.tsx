@@ -51,8 +51,8 @@ export function QuestionTable({ months, groups, tone, compact }: Props) {
                 {months.map((m, i) => {
                   const v = q.values[i] ?? null
                   return (
-                    <td key={m}>
-                      <span className={clsx(s.cell, s[tone(v)])}>{v == null ? '—' : formatNumber(v)}</span>
+                    <td key={m} className={s[tone(v)]}>
+                      <span className={s.cell}>{v == null ? '—' : formatNumber(v)}</span>
                     </td>
                   )
                 })}

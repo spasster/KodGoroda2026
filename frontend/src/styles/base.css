@@ -41,7 +41,7 @@ button:disabled { cursor: default; }
 textarea { resize: vertical; }
 
 /* Фокус только с клавиатуры: кольцо 2px цвета бренда с отступом 2px. Скругление
-   кольца повторяет элемент: карточка 24px, кнопка 12px. */
+   кольца повторяет элемент: карточка 8px, кнопка 6px. */
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 

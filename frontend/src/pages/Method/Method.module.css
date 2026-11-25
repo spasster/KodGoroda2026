@@ -1,7 +1,7 @@
 .page { display: flex; flex-direction: column; gap: var(--s-4); max-width: 1100px; padding-top: var(--s-2); padding-bottom: var(--s-8); }
 .stack { display: flex; flex-direction: column; gap: var(--s-4); }
 .error { margin-top: 24px; }
-.card { padding: var(--s-5) var(--s-6); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low); min-width: 0; }
+.card { padding: var(--s-5) var(--s-6); border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); min-width: 0; }
 .h2 { margin-bottom: var(--s-3); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
 .h3 { margin: var(--s-3) 0 var(--s-1); font-size: var(--fs-s); font-weight: var(--fw-bold); }
 .text, .list, .principles { font-size: var(--fs-m); line-height: var(--lh-body); }

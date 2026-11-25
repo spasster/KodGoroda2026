@@ -3,7 +3,7 @@
 .error { margin-top: 24px; }
 
 /* ---------- Таблица ---------- */
-.card { margin-top: var(--s-2); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-low); overflow: hidden; }
+.card { margin-top: var(--s-2); border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); overflow: hidden; }
 .scroll { overflow-x: auto; }
 .table { width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 
@@ -45,16 +45,16 @@
 /* Клетка месяца: две оценки друг под другом, заливка по статусу месяца. */
 .cell, .cellEmpty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 48px; border-radius: var(--r-s); font-variant-numeric: tabular-nums; line-height: 1.2;
-  transition: background-color var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out);
+  height: 52px; font-variant-numeric: tabular-nums; line-height: 1.2;
 }
-.risk { background: var(--risk-wash); }
-.watch { background: var(--watch-wash); }
+.table tbody td.monthTd { padding: 0; border-left: 1px solid var(--line); transition: background-color var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out); }
+.table tbody td.risk { background: var(--risk-wash); }
+.table tbody td.watch { background: var(--watch-wash); }
 .vIntern, .vMentor { font-size: var(--fs-s); font-weight: var(--fw-medium); }
 .vIntern { color: var(--series-intern); }
 .vMentor { color: var(--series-mentor); }
 .vNone { color: var(--text-3); font-weight: var(--fw-regular); }
-.fresh { box-shadow: 0 0 0 2px var(--brand); }
+.table tbody td.fresh { box-shadow: inset 0 0 0 2px var(--brand); }
 
 /* Главное. */
 .main { padding-left: var(--s-4) !important; }
@@ -87,6 +87,6 @@
 
 /* Проектор 1280×720: строки плотнее, чтобы влезло больше пар. */
 @media (max-height: 800px) and (min-width: 768px) {
-  .cell, .cellEmpty { height: 42px; }
+  .cell, .cellEmpty { height: 44px; }
   .table tbody th, .table tbody td { padding-block: 2px; }
 }

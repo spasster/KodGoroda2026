@@ -1,4 +1,4 @@
-/* Карточка пары. Стиль МГТС: белые карточки на сером, синий только у ссылок и кнопок.
+/* Карточка пары. Стиль МГТС: карточки с рамкой 1px, синий только у ссылок и кнопок.
    docs/design/v2.md, разделы «Стиль» и «Карточка пары». */
 
 .page {
@@ -105,9 +105,9 @@
 
 .card {
   background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
-  box-shadow: var(--shadow-low);
-  padding: var(--s-6);
+  padding: var(--s-5);
   min-width: 0;
 }
 
@@ -235,10 +235,7 @@
 }
 
 .fresh {
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  background: var(--brand);
-  color: var(--brand-fg);
+  color: var(--brand-text);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
 }
@@ -363,7 +360,7 @@
   justify-content: center;
   height: 40px;
   padding: 0 var(--s-4);
-  border: 0;
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-m);
   font-size: var(--fs-s);
   font-weight: var(--fw-medium);
@@ -372,21 +369,23 @@
 }
 
 .btn {
-  background: var(--sunken);
+  background: transparent;
   color: var(--text-1);
 }
 .btn:hover {
-  background: color-mix(in srgb, var(--sunken) 100%, var(--text-1) 6%);
+  background: var(--hover);
 }
 .btn:active {
-  background: color-mix(in srgb, var(--sunken) 100%, var(--text-1) 10%);
+  background: var(--sunken);
 }
 
 .btnBrand {
+  border-color: var(--brand);
   background: var(--brand);
   color: var(--brand-fg);
 }
 .btnBrand:hover {
+  border-color: var(--brand-hover);
   background: var(--brand-hover);
 }
 
@@ -485,8 +484,8 @@
   margin-top: var(--s-6);
   padding: var(--s-6);
   background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
-  box-shadow: var(--shadow-low);
   font-size: var(--fs-l);
   font-weight: var(--fw-medium);
 }
@@ -536,8 +535,7 @@
     gap: var(--s-4);
   }
   .card {
-    padding: var(--s-5) 20px;
-    border-radius: 20px;
+    padding: var(--s-4);
   }
   .head {
     flex-direction: column;

@@ -1,9 +1,9 @@
-/* Кнопки по v2: основная синяя, второстепенная на --sunken без рамки. */
+/* Кнопки: основная синяя заливка (одна на экран), остальные с рамкой 1px. */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   height: 44px; padding: 0 20px;
-  border: 0; border-radius: var(--r-m);
-  background: var(--sunken); color: var(--text-1);
+  border: 1px solid var(--line-strong); border-radius: var(--r-m);
+  background: transparent; color: var(--text-1);
   font: inherit; font-size: var(--fs-s); font-weight: var(--fw-medium); line-height: 1;
   text-decoration: none; white-space: nowrap; cursor: pointer;
   transition: background var(--dur-1) linear;
@@ -13,5 +13,5 @@
 .btn[aria-busy="true"] { cursor: progress; }
 .btn:disabled { opacity: .55; }
 
-.brand { background: var(--brand); color: var(--brand-fg); }
-.brand:hover { background: var(--brand-hover); }
+.brand { border-color: var(--brand); background: var(--brand); color: var(--brand-fg); }
+.brand:hover { border-color: var(--brand-hover); background: var(--brand-hover); }

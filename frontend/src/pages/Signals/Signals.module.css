@@ -3,15 +3,16 @@
 .page { padding-bottom: 120px; }
 
 /* ---------- Сегменты в шапке ---------- */
-.segments { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-m); background: var(--sunken); }
+.segments { display: flex; border: 1px solid var(--line-strong); border-radius: var(--r-m); overflow: hidden; }
 .segment {
   display: inline-flex; align-items: center; height: 32px; padding: 0 var(--s-4);
-  border: 0; border-radius: var(--r-s); background: transparent; color: var(--text-1);
+  border: 0; border-radius: 0; background: transparent; color: var(--text-1);
   font-size: var(--fs-s); font-weight: var(--fw-medium); white-space: nowrap;
   transition: background var(--dur-1) linear, color var(--dur-1) linear;
 }
 .segment:hover { background: var(--hover); }
-.segment[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow-low); }
+.segment + .segment { border-left: 1px solid var(--line-strong); }
+.segment[aria-pressed="true"] { background: var(--sunken); }
 
 /* ---------- Фильтры ---------- */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-bottom: var(--s-3); }
@@ -27,7 +28,7 @@
 .reset:hover { text-decoration: underline; }
 
 /* ---------- Таблица ---------- */
-.card { background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-low); overflow: hidden; }
+.card { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-card); overflow: hidden; }
 .scroll { overflow-x: auto; }
 .table { width: 100%; min-width: 860px; border-collapse: collapse; }
 .table th {
@@ -72,12 +73,10 @@
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 var(--s-4);
-  border: 0; border-radius: var(--r-m); font-size: var(--fs-s); font-weight: var(--fw-medium); white-space: nowrap;
+  border: 1px solid var(--line-strong); border-radius: var(--r-m); background: transparent; color: var(--text-1); font-size: var(--fs-s); font-weight: var(--fw-medium); white-space: nowrap;
   transition: background var(--dur-1) linear;
 }
-.secondary { background: var(--surface); color: var(--text-1); box-shadow: inset 0 0 0 1px var(--line); }
 .secondary:hover { background: var(--hover); }
-.empty .secondary { background: var(--sunken); box-shadow: none; }
 .pairLink { margin-left: var(--s-2); color: var(--brand-text); font-weight: var(--fw-medium); text-decoration: none; }
 .pairLink:hover { text-decoration: underline; }
 
@@ -96,8 +95,8 @@
 }
 .undo {
   pointer-events: auto; display: flex; align-items: center; gap: var(--s-4);
-  min-height: 52px; padding: 6px 6px 6px 20px; border-radius: 16px;
-  background: var(--surface); box-shadow: var(--shadow-high), inset 0 0 0 1px var(--line); font-weight: var(--fw-medium);
+  min-height: 52px; padding: 6px 6px 6px 20px; border: 1px solid var(--line-strong); border-radius: var(--r-card);
+  background: var(--surface); font-weight: var(--fw-medium);
 }
 .undoBtn {
   height: 40px; padding: 0 14px; border: 0; border-radius: var(--r-m); background: transparent;
@@ -112,7 +111,6 @@
 
 /* ---------- Телефон ---------- */
 @media (max-width: 767px) {
-  .card { border-radius: 20px; }
   .select { flex: 1 1 calc(50% - var(--s-3)); }
   .segment { flex: 1; justify-content: center; padding: 0 var(--s-2); }
   .segments { width: 100%; }

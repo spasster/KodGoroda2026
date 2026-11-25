@@ -94,9 +94,9 @@
   --s-8: 64px;
 
   /* Радиусы Granat */
-  --r-s: 8px;
-  --r-m: 12px;
-  --r-card: 24px;
+  --r-s: 4px;
+  --r-m: 6px;
+  --r-card: 8px;
   --r-pill: 999px;
 
   /* Сетка */

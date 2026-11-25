@@ -97,7 +97,7 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
       />
       <div className="wrap">
         <div className={s.page}>
-          <BriefCard pairId={p.pair_id} />
+          <BriefCard pairId={p.pair_id} signals={p.signals} />
           <div className={s.grid}>
           <div className={s.main}>
             <section className={`${s.card} ${s.chartCard}`} aria-labelledby="pair-chart">
