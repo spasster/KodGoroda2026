@@ -17,7 +17,7 @@ from fastapi.concurrency import run_in_threadpool
 from ..adapters.gsheet import sync_gsheet
 from ..adapters.yandex import ingest_yandex
 from ..context import Context
-from ..importer import read_bytes
+from ..importer import read_tables
 from ..ingest import import_tables, ingest_one, load_sample
 from ..schemas import IngestResult
 from .deps import get_ctx
@@ -65,7 +65,7 @@ async def import_excel(request: Request, interns: UploadFile | None = File(None)
         if len(data) > MAX_UPLOAD:
             raise HTTPException(422, f"Файл {upload.filename} больше 5 МБ, это не похоже на выгрузку анкет")
         if data:
-            tables.append((read_bytes(data, upload.filename), role))
+            tables += [(t, r or role) for t, r in read_tables(data, upload.filename)]
     if not tables:
         raise HTTPException(422, "Загрузите файл в поле interns или mentors")
     do_replace = _truthy(replace if replace is not None else request.query_params.get("replace"))

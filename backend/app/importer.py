@@ -3,6 +3,8 @@
 Колонка находится так: сначала по survey/import_map.json, потом по тексту
 вопроса (без регистра, пробелов, пунктуации, ё = е), потом по подписи поля ID
 из survey.json. Нераспознанные колонки попадают в отчёт, импорт не падает.
+Книга с листами «Стажёры» и «Наставники» читается целиком, лист «Пары» задаёт пары.
+Длинный формат (строка на ответ) и колонки «Месяц N. вопрос» приводятся к обычной таблице.
 Запись в базу делает ingest.store_records.
 """
 
@@ -17,6 +19,8 @@ from typing import Any
 from .survey import ROLES, Survey, normalize_header
 
 META_FIELDS = ("submitted_at", "intern_id", "mentor_id", "month")
+LONG_FIELDS = ("question", "answer")  # длинный формат: колонки с текстом вопроса и ответом
+DEFAULT_MAP = {"month": "month"}  # заголовок, который подставляют сами преобразования
 MSK = timezone(timedelta(hours=3))  # выгрузки Tabs и Google Форм пишут московское время без зоны
 HEADER_SCAN_ROWS = 10
 
@@ -97,6 +101,66 @@ def read_file(path: Path, sheet: str | None = None) -> Table:
     return read_bytes(data, path.name, sheet)
 
 
+def _sheet_role(name: str) -> str | None:
+    n = normalize_header(name)
+    if n.startswith(("пары", "pairs")):
+        return "pairs"
+    if "стаж" in n or "intern" in n:
+        return "intern"
+    if "настав" in n or "mentor" in n:
+        return "mentor"
+    return None
+
+
+def read_tables(data: bytes, filename: str) -> list[tuple[Table, str | None]]:
+    """Таблицы файла с ролью (intern, mentor, pairs или None, если по файлу не понять).
+
+    Книга с листами «Стажёры» и «Наставники» даёт две таблицы, лист «Пары» даёт таблицу пар.
+    Обычный файл с одним листом даёт одну таблицу без роли."""
+    first = read_bytes(data, filename)
+    if Path(filename).suffix.lower() not in (".xlsx", ".xlsm") and data[:2] != b"PK":
+        return [(first, None)]
+    from openpyxl import load_workbook
+
+    wb = load_workbook(io.BytesIO(data), read_only=True)
+    names = wb.sheetnames
+    wb.close()
+    roles = {n: _sheet_role(n) for n in names}
+    if not any(roles.values()):
+        return [(first, None)]
+    out = [(_read_xlsx(data, filename, n), r) for n, r in roles.items() if r]
+    if not any(r in ("intern", "mentor") for _, r in out) and not _sheet_role(first.sheet or ""):
+        out.append((first, None))
+    return out
+
+
+def read_tables_file(path: Path) -> list[tuple[Table, str | None]]:
+    try:
+        data = path.read_bytes()
+    except OSError as exc:
+        raise ImportFileError(f"Не удалось открыть файл {path}: {exc.strerror or exc}") from None
+    return read_tables(data, path.name)
+
+
+def parse_pairs(table: Table) -> dict[str, str]:
+    """Лист «Пары»: стажёр → наставник. Колонки по заголовкам «стажёр» и «наставник», иначе первые две."""
+    rows = [r for r in table.rows if any(v is not None and str(v).strip() for v in r)]
+    if not rows:
+        return {}
+    heads = [normalize_header(v) for v in rows[0]]
+    i = next((k for k, h in enumerate(heads) if "стаж" in h or "intern" in h), None)
+    m = next((k for k, h in enumerate(heads) if "настав" in h or "mentor" in h), None)
+    start = 1
+    if i is None or m is None:
+        i, m, start = 0, 1, 0
+    pairs = {}
+    for r in rows[start:]:
+        a, b = (parse_id(r[k]) if k < len(r) else None for k in (i, m))
+        if a and b:
+            pairs[a] = b
+    return pairs
+
+
 # Выгрузка анкет: строка на анкету, колонка на вопрос. Больше этого не бывает, а без
 # предела файл в пару килобайт с размером листа XFD1048576 съест всю память.
 MAX_ROWS = 5000
@@ -175,10 +239,10 @@ def _map_for(import_map: dict, role: str) -> dict[str, str | None]:
 
 
 def match_columns(headers: list[Any], role: str, survey: Survey, import_map: dict) -> tuple[list[ColumnMatch], list[str]]:
-    by_map = _map_for(import_map, role)
+    by_map = {**DEFAULT_MAP, **_map_for(import_map, role)}
     by_text = {normalize_header(q.text): q.id for q in survey.questions(role)}
     by_label = {normalize_header(survey.person_label(r)): f"{r}_id" for r in ROLES if survey.person_label(r)}
-    known = {q.id for q in survey.questions(role)} | set(META_FIELDS)
+    known = {q.id for q in survey.questions(role)} | set(META_FIELDS) | set(LONG_FIELDS)
 
     matches: list[ColumnMatch] = []
     unrecognized: list[str] = []
@@ -245,7 +309,7 @@ def detect_role(table: Table, survey: Survey, import_map: dict) -> str:
     for role in ROLES:
         h = pick_header(table.rows, role, survey, import_map)
         matches, _ = match_columns(table.rows[h] if table.rows else [], role, survey, import_map)
-        scores[role] = sum(1 for m in matches if m.field and m.field not in META_FIELDS and m.by != "label")
+        scores[role] = sum(1 for m in matches if m.field and m.field not in META_FIELDS + LONG_FIELDS and m.by != "label")
     return max(ROLES, key=lambda r: (scores[r], r == "intern"))
 
 
@@ -267,6 +331,27 @@ def parse_month(value: Any) -> int | None:
         return int(value) if float(value).is_integer() else None
     m = re.search(r"\d+", str(value))
     return int(m.group()) if m else None
+
+
+MONTH_NAMES = ("янв", "фев", "мар", "апр", "ма[йя]", "июн", "июл", "авг", "сен", "окт", "ноя", "дек")
+
+
+def month_key(value: Any) -> int | None:
+    """Календарный месяц как год*12+месяц-1 из даты, «Июнь 2026», «06.2026», «2026-06».
+    Название без года тоже годится (год 0). Номер вроде 2 или «3 месяц» даёт None."""
+    if isinstance(value, (datetime, date)):
+        return value.year * 12 + value.month - 1
+    if not isinstance(value, str):
+        return None
+    text = value.lower().strip()
+    year = re.search(r"\b(20\d\d)\b", text)
+    mon = next((i for i, p in enumerate(MONTH_NAMES, 1) if re.search(r"\b" + p, text)), None)
+    if mon is None:
+        m = re.search(r"\b(\d{1,2})[./-]20\d\d\b", text) or re.search(r"\b20\d\d[./-](\d{1,2})\b", text)
+        mon = int(m.group(1)) if m else None
+    if mon is None or not 1 <= mon <= 12:
+        return None
+    return (int(year.group(1)) if year else 0) * 12 + mon - 1
 
 
 NUMBER = re.compile(r"-?\d+(?:[.,]\d+)?")
@@ -327,6 +412,51 @@ def iso(dt: datetime | None) -> str | None:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ") if dt else None
 
 
+# Приведение длинного и «широкого по месяцам» форматов к обычной таблице.
+
+MONTH_PREFIX = re.compile(r"^\s*(?:месяц\s*(\d+)|(\d+)\s*-?\s*(?:й\s*)?месяц)\s*[.:)\-–—|/]*\s*(.+)$", re.I | re.S)
+
+
+def reshape(rows: list[list[Any]], role: str, survey: Survey, import_map: dict) -> list[list[Any]]:
+    """rows[0] — заголовки. Длинный формат (колонки question и answer в import_map): одна строка на человека
+    и месяц, вопросы становятся колонками. Колонки «Месяц N. вопрос»: одна строка на человека и месяц.
+    Номера строк в отчёте после этого условные. Обычная таблица возвращается как есть."""
+    header = rows[0]
+    fields = {m.field: m.index for m in match_columns(header, role, survey, import_map)[0] if m.field}
+
+    def get(row: list[Any], i: int) -> Any:
+        return row[i] if i < len(row) else None
+
+    if "question" in fields and "answer" in fields:
+        q, a = fields["question"], fields["answer"]
+        keep = [i for i, h in enumerate(header) if h not in (None, "") and i not in (q, a)]
+        # Время заполнения у каждого ответа своё, в ключ анкеты оно не входит.
+        key_cols = [i for i in keep if i != fields.get("submitted_at")]
+        questions: dict[str, None] = {}
+        forms: dict[tuple, tuple[list[Any], dict[str, Any]]] = {}
+        for row in rows[1:]:
+            text = parse_text(get(row, q))
+            if text is None:
+                continue
+            questions[text] = None
+            key = tuple(str(get(row, i)) for i in key_cols)
+            forms.setdefault(key, ([get(row, i) for i in keep], {}))[1][text] = get(row, a)
+        return [[header[i] for i in keep] + list(questions)] + [cells + [ans.get(t) for t in questions] for cells, ans in forms.values()]
+
+    month_cols = {i: (int(m[1] or m[2]), m[3].strip()) for i, h in enumerate(header) if h not in (None, "") and (m := MONTH_PREFIX.match(str(h)))}
+    if len(month_cols) < 2:
+        return rows
+    base = [i for i, h in enumerate(header) if h not in (None, "") and i not in month_cols]
+    questions = list(dict.fromkeys(t for _, t in month_cols.values()))
+    out = [[header[i] for i in base] + ["month"] + questions]
+    for row in rows[1:]:
+        for mo in sorted({m for m, _ in month_cols.values()}):
+            cells = {t: get(row, i) for i, (m, t) in month_cols.items() if m == mo}
+            if any(parse_text(v) is not None for v in cells.values()):
+                out.append([get(row, i) for i in base] + [mo] + [cells[t] for t in questions])
+    return out
+
+
 # Таблица → записи.
 
 def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tuple[list[Record], FileReport]:
@@ -335,7 +465,8 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
         report.warnings.append("Файл пустой")
         return [], report
     h = pick_header(table.rows, role, survey, import_map)
-    matches, report.unrecognized = match_columns(table.rows[h], role, survey, import_map)
+    rows = reshape(table.rows[h:], role, survey, import_map)
+    matches, report.unrecognized = match_columns(rows[0], role, survey, import_map)
     report.columns = [{"header": m.header, "field": m.field, "by": m.by} for m in matches]
     fields = {m.field: m.index for m in matches if m.field}
     questions = {q.id: q for q in survey.questions(role)}
@@ -358,8 +489,8 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
         return row[i] if i is not None and i < len(row) else None
 
     records: list[Record] = []
-    dates: list[datetime | None] = []
-    for offset, row in enumerate(table.rows[h + 1:], start=h + 2):
+    keys: list[int | None] = []  # календарный месяц записи, если месяц не номером, а датой или названием
+    for offset, row in enumerate(rows[1:], start=h + 2):
         if not any(v is not None and str(v).strip() for v in row):
             continue
         report.rows += 1
@@ -368,10 +499,16 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
             report.error(offset, "пустой ID, строка пропущена")
             continue
         dt = parse_datetime(cell(row, "submitted_at"))
-        month = parse_month(cell(row, "month")) if "month" in fields else None
-        if "month" in fields and month is None:
-            report.error(offset, f"не удалось разобрать месяц «{cell(row, 'month')}», строка пропущена")
-            continue
+        month = key = None
+        if "month" in fields:
+            raw_month = cell(row, "month")
+            key = month_key(raw_month)
+            month = None if key is not None else parse_month(raw_month)
+            if key is None and month is None:
+                report.error(offset, f"не удалось разобрать месяц «{raw_month}», строка пропущена")
+                continue
+        elif dt is not None:
+            key = dt.year * 12 + dt.month - 1
         answers: dict[str, tuple[float | None, str | None]] = {}
         for qid, q in questions.items():
             if qid not in fields:
@@ -393,17 +530,20 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict) -> tu
             mentor_id=person if role == "mentor" else parse_id(cell(row, "mentor_id")),
             month=month, submitted_at=iso(dt), answers=answers,
         ))
-        dates.append(dt)
+        keys.append(key)
 
-    if "month" not in fields:
-        stamps = [d for d in dates if d]
-        base = min((d.year * 12 + d.month for d in stamps), default=None)
+    if any(k is not None for k in keys) or "month" not in fields:
+        base = survey.first_month if survey.first_month is not None else min((k for k in keys if k is not None), default=0)
+        if survey.first_month is None and "month" in fields:
+            report.warnings.append("Месяц задан датой или названием. Первый месяц в файле = 1: если в других файлах он другой, "
+                                   "задайте first_month в survey.json")
         kept = []
-        for rec, d in zip(records, dates):
-            if d is None or base is None:
+        for rec, k in zip(records, keys):
+            if k is not None:
+                rec.month = k - base + 1
+            elif rec.month is None:
                 report.error(rec.row, "нет даты заполнения, месяц не определён")
                 continue
-            rec.month = d.year * 12 + d.month - base + 1
             kept.append(rec)
         records = kept
     return records, report

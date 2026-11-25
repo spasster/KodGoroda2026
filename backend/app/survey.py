@@ -34,6 +34,9 @@ class Survey:
         scale = raw.get("scale") or {}
         self.scale_min: float = float(scale.get("min", 1))
         self.scale_max: float = float(scale.get("max", 5))
+        # Первый месяц программы, "2026-06": от него считаются месяцы, заданные датой или названием.
+        m = re.match(r"\s*(\d{4})-(\d{1,2})", str(raw.get("first_month") or ""))
+        self.first_month: int | None = int(m[1]) * 12 + int(m[2]) - 1 if m else None
         self.roles: dict[str, dict] = raw.get("roles") or {}
         self.paired: list[dict] = raw.get("paired_questions") or []
 
