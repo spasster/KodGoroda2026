@@ -39,7 +39,10 @@ def _template(survey: Survey, role: str) -> dict:
             ]
         fields.append(field)
     for field in fields:
-        field["id"] = hashlib.sha256(f"{role}:{field['key']}".encode()).hexdigest()[:8]
+        # Google принимает свой questionId только как положительное 32-битное число в hex:
+        # на «adb1c10e» Forms API отвечает 400 Invalid ID. Старший бит гасим, ведущий ноль исключаем.
+        raw = int(hashlib.sha256(f"{role}:{field['key']}".encode()).hexdigest()[:8], 16)
+        field["id"] = format(raw & 0x7FFFFFFF | 0x10000000, "08x")
     return {"title": survey.roles[role]["title"], "fields": fields}
 
 
