@@ -15,7 +15,8 @@ from app.main import create_app
 
 REPO = Path(__file__).resolve().parents[2]
 DATA = REPO / "data"
-SURVEY = REPO / "survey"
+# Тестовые наборы data/sample* собраны под учебную анкету; анкета МГТС лежит в survey/.
+SURVEY = REPO / "data" / "survey-sample"
 DATASETS = ["sample", "sample-12"]
 LOUD = {"medium", "high"}
 

@@ -50,7 +50,7 @@ class Settings:
         return cls(
             db_path=_path("DB_PATH", "var/app.sqlite"),
             survey_dir=_path("SURVEY_DIR", "../survey"),
-            sample_dir=_path("SAMPLE_DIR", "../data/sample"),
+            sample_dir=_path("SAMPLE_DIR", "../data/mgts"),
             llm_provider=(os.environ.get("LLM_PROVIDER") or "rules").strip().lower(),
             llm_base_url=(os.environ.get("LLM_BASE_URL") or "http://localhost:11434/v1").rstrip("/"),
             llm_model=os.environ.get("LLM_MODEL") or "qwen3:8b",

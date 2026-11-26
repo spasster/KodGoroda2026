@@ -1,0 +1,33 @@
+{
+  "title": "Ежемесячная анкета стажировки",
+  "months": 6,
+  "scale": { "min": 1, "max": 5, "min_label": "очень плохо", "max_label": "отлично" },
+  "roles": {
+    "intern": {
+      "title": "Анкета стажёра",
+      "person_label": "ID стажёра",
+      "questions": [
+        { "id": "overall", "type": "scale", "text": "Как в целом проходит стажировка?" },
+        { "id": "tasks_interest", "type": "scale", "text": "Насколько вам интересны задачи?" },
+        { "id": "tasks_clarity", "type": "scale", "text": "Насколько понятно, что от вас ждут в задачах?" },
+        { "id": "mentor_support", "type": "scale", "text": "Хватает ли вам помощи наставника?" },
+        { "id": "load", "type": "scale", "text": "Насколько вам комфортна текущая нагрузка?" },
+        { "id": "comment", "type": "text", "text": "Что сейчас мешает или помогает в стажировке?" }
+      ]
+    },
+    "mentor": {
+      "title": "Анкета наставника",
+      "person_label": "ID наставника",
+      "questions": [
+        { "id": "overall", "type": "scale", "text": "Как стажёр справляется в целом?" },
+        { "id": "speed", "type": "scale", "text": "Насколько оперативно стажёр выполняет задачи?" },
+        { "id": "independence", "type": "scale", "text": "Насколько стажёр самостоятелен?" },
+        { "id": "engagement", "type": "scale", "text": "Насколько стажёр вовлечён в работу команды?" },
+        { "id": "comment", "type": "text", "text": "Комментарий о работе стажёра за месяц" }
+      ]
+    }
+  },
+  "paired_questions": [
+    { "intern": "overall", "mentor": "overall", "label": "Общая оценка" }
+  ]
+}

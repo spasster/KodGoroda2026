@@ -49,7 +49,7 @@ def snapshot(c: TestClient) -> dict[int, list]:
 @pytest.fixture(scope="module")
 def baseline(tmp_path_factory):
     tmp = tmp_path_factory.mktemp("base")
-    with make_client(tmp, "base", REPO / "survey", REPO / "data" / "sample") as c:
+    with make_client(tmp, "base", REPO / "data" / "survey-sample", REPO / "data" / "sample") as c:
         yield snapshot(c)
 
 

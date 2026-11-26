@@ -1,0 +1,11 @@
+{
+  "_comment": "Пороги сигналов. Доли от размаха шкалы: на шкале 1–5 размах 4, значит 0.25 = 1 балл. Править здесь, код не трогать.",
+  "active_months": 2,
+  "decline": { "two_month_drop": 0.12, "single_drop": 0.25 },
+  "gap": { "min_gap": 0.25, "high_gap": 0.4 },
+  "text_vs_score": { "min_index": 0.65, "max_sentiment": -0.2 },
+  "low_question": { "max_score": 0.25 },
+  "silence": { "length_drop": 0.6, "min_prev_length": 40 },
+  "baseline": { "index_below": 0.625 },
+  "quote_min_length": 12
+}

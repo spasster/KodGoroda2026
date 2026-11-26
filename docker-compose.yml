@@ -12,7 +12,7 @@ services:
       DB_PATH: /data/app.sqlite
     volumes:
       - ./survey:/survey:ro
-      - ./data/sample:/sample:ro
+      - ./data/mgts:/sample:ro
       - api-data:/data
     # Ollama на этой машине: LLM_BASE_URL=http://host.docker.internal:11434/v1
     extra_hosts:
