@@ -38,7 +38,9 @@ export function Outcome({ pair }: { pair: PairDetail }) {
   const reduce = useReduced()
   // Заметка из комментария (важность low) — не проблема: подтверждать её не предлагаем.
   const open = openSignals(pair.signals).filter((sig) => sig.severity !== 'low')
-  const done = doneSignals(pair.signals)
+  // «Разобрано» — только то, что отметил HR: «подтвердилось» или «проблемы нет». Прошлые сигналы без отметки
+  // показывает блок «Сигналы» слева.
+  const done = doneSignals(pair.signals).filter((sig) => sig.review.status !== 'open')
 
   const [choices, setChoices] = useState<Record<string, Choice>>({})
   const [text, setText] = useState('')
