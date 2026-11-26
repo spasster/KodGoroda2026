@@ -20,5 +20,5 @@ HR-дашборд для кейса МГТС: ежемесячные анкет�
 - `make dev` — бэкенд на :8000 и фронт на :5173.
 - `make test` — тесты бэкенда и проверка типов фронта.
 - `make data` — пересобрать `data/sample`.
-- `make reset` — очистить базу и загрузить `data/sample`.
+- `make reset` — очистить базу и загрузить историю МГТС из `data/mgts` (для Docker: `make reset API=http://localhost:8080`). Учебный набор `data/sample` и его анкета `data/survey-sample` нужны только тестам.
 - `make up` — всё в Docker на :8080.
