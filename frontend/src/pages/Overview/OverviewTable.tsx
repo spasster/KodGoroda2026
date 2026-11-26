@@ -10,7 +10,7 @@ import type { Cell, PairStatus } from '../../api/types'
 import { Dot } from '../../app/status'
 import { StatusPill } from '../../ds/components/data-display/StatusPill'
 import { PAIR_STATUS_LABEL, formatNumber, monthsPhrase, personName } from '../../lib/format'
-import { situationMonths } from '../../lib/rules'
+import { dueMonths, situationMonths } from '../../lib/rules'
 import type { Story } from './model'
 import s from './Overview.module.css'
 
@@ -110,7 +110,7 @@ function Row({
         </Link>
       </th>
       {months.map((m) => (
-        <MonthCell key={m} cell={pair.cells.find((c) => c.month === m)} month={m} fresh={freshCells.has(`${pair.pair_id}:${m}`)} />
+        <MonthCell key={m} cell={pair.cells.find((c) => c.month === m)} month={m} due={m <= dueMonths(pair)} fresh={freshCells.has(`${pair.pair_id}:${m}`)} />
       ))}
       <td className={s.main}>
         {main ? (
@@ -127,7 +127,7 @@ function Row({
             <span className={s.mainSub}>{monthsPhrase(past.months)} · выправилось</span>
           </>
         ) : (
-          <span className={s.mainTitle}>Сигналов не было</span>
+          <span className={s.mainTitle}>{pair.last_month === 0 ? 'Ждём первую анкету' : 'Сигналов не было'}</span>
         )}
       </td>
       {showDone && <td className={s.done}>{active > 0 ? `${reviewed} из ${active}` : ''}</td>}
@@ -137,8 +137,10 @@ function Row({
 
 const CELL_CLASS: Record<PairStatus, string | undefined> = { ok: s.ok, watch: s.watch, risk: s.risk }
 
-function MonthCell({ cell, month, fresh }: { cell: Cell | undefined; month: number; fresh: boolean }) {
+function MonthCell({ cell, month, due, fresh }: { cell: Cell | undefined; month: number; due: boolean; fresh: boolean }) {
   const none = !cell || (cell.missing.intern && cell.missing.mentor)
+  // Пара до этого месяца ещё не дошла: клетка пустая, это не пропуск.
+  if (none && !due) return <td className={s.monthTd} />
   if (!cell || none) {
     return (
       <td className={clsx(s.monthTd, s.none, fresh && s.fresh)} title={`${month}-й месяц: анкет нет`}>

@@ -15,7 +15,7 @@ DEFAULTS = {
     # confirm: важность от второй стороны. Только один текст — low (заметка), обе стороны в том же месяце — medium.
     "text_vs_score": {"min_index": 0.65, "max_sentiment": -0.2, "confirm": False},
     "low_question": {"max_score": 0.25},
-    "silence": {"length_drop": 0.6, "min_prev_length": 40},
+    "silence": {"length_drop": 0.6, "min_prev_length": 40, "own_timeline": False},
     "baseline": {"index_below": 0.625},
     "quote_min_length": 12,
     # Как сигналы красят клетку месяца и пару. Все False — старое поведение.
@@ -374,12 +374,19 @@ class _Builder:
         ds = self.ds
         who, other = WHO[role], WHO[OTHER[role]]
         others = [p for p in ds.pairs if p != pair_id]
+        # Свой отсчёт месяцев: пара, которая начала позже остальных, не опаздывает с месяцами,
+        # до которых ещё не дошла. Пропуском считается только месяц не позже её последней анкеты.
+        own = bool(th.get("own_timeline"))
+        own_last = ds.pair_last_month(pair_id)
         for m in ds.months:
+            if own and m > own_last:
+                continue
             resp = ds.response(pair_id, role, m)
             if resp is None:
                 other_has = ds.response(pair_id, OTHER[role], m) is not None
                 # Месяц прошёл, когда по нему ответили все остальные пары, хотя бы одна сторона в каждой.
-                passed = bool(others) and all(ds.has_month(p, m) for p in others)
+                # При своём отсчёте: когда сама пара уже ответила за более поздний месяц.
+                passed = m < own_last if own else bool(others) and all(ds.has_month(p, m) for p in others)
                 if not (other_has or passed):
                     continue
                 title = f"От {who['gen']} нет анкеты за {m}-й месяц"

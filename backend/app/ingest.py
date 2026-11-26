@@ -237,7 +237,8 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
     survey, import_map = ctx.survey, ctx.files.import_map
     parsed = []
     sources = []
-    pair_map = {parse_id(k): parse_id(v) for k, v in (import_map.get("pairs") or {}).items() if parse_id(k) and parse_id(v)}
+    pair_map = {parse_id(k): parse_id(v) for k, v in (import_map.get("pairs") or {}).items()
+                if not str(k).startswith("_") and parse_id(k) and parse_id(v)}
     for table, role in tables:
         if role == "pairs":
             pair_map.update(parse_pairs(table))
@@ -267,6 +268,11 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
                 db.clear(conn)
             for _role, records, report in parsed:
                 changed += store_records(conn, survey, records, report, source, skip_unchanged)
+            # Пары из ключа pairs в import_map.json заводим, даже если анкет от них ещё нет:
+            # новый стажёр виден в статусе опросов до первой анкеты.
+            for intern_id, mentor_id in pair_map.items():
+                if db.get_pair_by_intern(conn, intern_id) is None:
+                    db.create_pair(conn, intern_id, mentor_id)
             pairs, responses = db.count(conn, "pairs"), db.count(conn, "responses")
         new_keys = [s.key for s in fresh(before, ctx.snapshot().signals)] if before is not None and changed else []
     if replace:

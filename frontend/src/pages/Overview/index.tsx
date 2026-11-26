@@ -111,6 +111,7 @@ export function OverviewPage() {
         got={got}
         expected={total * 2}
         collecting={collect != null}
+        mixed={collect != null && collect < dataEnd}
         analytics={analytics.data}
       />
       <div className="wrap">
@@ -194,10 +195,12 @@ interface HeroProps {
   got: number
   expected: number
   collecting: boolean
+  /** Новая пара собирает месяц, который остальные давно прошли. */
+  mixed: boolean
   analytics: Analytics | undefined
 }
 
-function Hero({ total, risk, watch, history, month, calendar, got, expected, collecting, analytics }: HeroProps) {
+function Hero({ total, risk, watch, history, month, calendar, got, expected, collecting, mixed, analytics }: HeroProps) {
   const ofTotal = `из ${total} ${total === 1 ? 'стажёра' : 'стажёров'}`
   const title =
     risk > 0
@@ -211,7 +214,8 @@ function Hero({ total, risk, watch, history, month, calendar, got, expected, col
     history.watchOnly > 0 ? `зона внимания у ${history.watchOnly} из ${total}` : null,
   ].filter(Boolean)
   const historyLine = past.length ? `За программу ${past.join(', ')}` : null
-  const over = [calendar, month > 0 ? `${month}-й месяц` : null].filter(Boolean).join(' · ')
+  // Пары идут по своему отсчёту месяцев: когда собираем месяц раньше последнего в данных, общий «текущий месяц» назвать нельзя.
+  const over = mixed ? 'Программа стажировок' : [calendar, month > 0 ? `${month}-й месяц` : null].filter(Boolean).join(' · ')
 
   // Средняя по программе: то, на что HR смотрит без дашборда. Берём последний
   // месяц, где собраны все анкеты: средняя по одной анкете из десяти врёт.
@@ -232,7 +236,15 @@ function Hero({ total, risk, watch, history, month, calendar, got, expected, col
           </h1>
           {historyLine && <p className={s.heroHistory}>{historyLine}</p>}
           <p className={s.heroCollect}>
-            {collecting ? (
+            {mixed && history.collected < history.expected ? (
+              <>
+                Анкеты: {history.collected} из {history.expected}
+                {' · '}
+                <Link to="/analytics#collect">кто не заполнил</Link>
+              </>
+            ) : mixed ? (
+              'Все анкеты собраны'
+            ) : collecting ? (
               <>
                 Анкеты за {month}-й месяц: {got} из {expected}
                 {got < expected && (

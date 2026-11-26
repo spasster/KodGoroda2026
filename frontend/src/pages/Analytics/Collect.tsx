@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Overview, Role } from '../../api/types'
 import { formLink } from '../../lib/formLink'
 import { ROLE_LABEL, personName, plural } from '../../lib/format'
+import { dueMonths } from '../../lib/rules'
 import s from './Collect.module.css'
 
 export function Collect({ overview, months, fallback }: { overview: Overview | undefined; months: number[]; fallback: number | null }) {
@@ -15,8 +16,8 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
   const answered = (month: number) => overview.pairs.some((p) => p.cells.some((c) => c.month === month && (!c.missing.intern || !c.missing.mentor)))
   const current = months.find((m) => !answered(m)) ?? fallback
   const rows = [
-    ...overview.pairs.map((p) => ({ role: 'intern' as Role, id: p.intern_id, name: personName(p.intern_name, p.intern_id), cells: p.cells })),
-    ...overview.pairs.map((p) => ({ role: 'mentor' as Role, id: p.mentor_id, name: personName(p.mentor_name, p.mentor_id), cells: p.cells })),
+    ...overview.pairs.map((p) => ({ role: 'intern' as Role, id: p.intern_id, name: personName(p.intern_name, p.intern_id), cells: p.cells, due: dueMonths(p) })),
+    ...overview.pairs.map((p) => ({ role: 'mentor' as Role, id: p.mentor_id, name: personName(p.mentor_name, p.mentor_id), cells: p.cells, due: dueMonths(p) })),
   ]
   const has = (role: Role, cells: Overview['pairs'][number]['cells'], m: number) => {
     const c = cells.find((x) => x.month === m)
@@ -24,7 +25,8 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
   }
   // Итог за месяцы программы: каждая сторона пары заполняет одну анкету в месяц.
   const got = (role: Role) => rows.filter((r) => r.role === role).reduce((n, r) => n + months.filter((m) => has(role, r.cells, m)).length, 0)
-  const need = overview.pairs.length * months.length
+  // Ждём анкету за каждый месяц, до которого пара дошла: новая пара не должна за месяцы остальных.
+  const need = overview.pairs.reduce((n, p) => n + Math.min(dueMonths(p), months.length), 0)
   const interns = got('intern')
   const mentors = got('mentor')
   return (
@@ -66,17 +68,19 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
                   {r.name} <span className={s.role}>{ROLE_LABEL[r.role]}</span>
                 </th>
                 {months.map((m) => (
-                  <td key={m} className={clsx(s.month, m === current && s.current, !filled(m) && s.missing)}>
+                  <td key={m} className={clsx(s.month, m === current && s.current, !filled(m) && m <= r.due && s.missing)}>
                     {filled(m) ? (
                       <Check className={s.yes} role="img" aria-label="анкета есть" size={16} strokeWidth={2.2} />
-                    ) : (
+                    ) : m > r.due ? null : (
                       <span className={s.no} title="Нет анкеты" aria-label="нет анкеты">
                         нет
                       </span>
                     )}
                   </td>
                 ))}
-                <td className={s.act}>{current != null && !filled(current) && <CopyLink role={r.role} id={r.id} name={r.name} />}</td>
+                <td className={s.act}>
+                  {((current != null && !filled(current)) || months.some((m) => m <= r.due && !filled(m))) && <CopyLink role={r.role} id={r.id} name={r.name} />}
+                </td>
               </tr>
             )
           })}

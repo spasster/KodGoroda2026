@@ -1,12 +1,30 @@
 {
   "_comment": "Пороги сигналов. Доли от размаха шкалы: на шкале 1–5 размах 4, значит 0.25 = 1 балл. Править здесь, код не трогать.",
   "active_months": 2,
-  "decline": { "two_month_drop": 0.12, "single_drop": 0.25 },
-  "gap": { "min_gap": 0.25, "high_gap": 0.4 },
-  "text_vs_score": { "min_index": 0.65, "max_sentiment": -0.2, "confirm": true },
-  "low_question": { "max_score": 0.25 },
-  "silence": { "length_drop": 0.6, "min_prev_length": 40 },
-  "baseline": { "index_below": 0.625 },
+  "decline": {
+    "two_month_drop": 0.12,
+    "single_drop": 0.25
+  },
+  "gap": {
+    "min_gap": 0.25,
+    "high_gap": 0.4
+  },
+  "text_vs_score": {
+    "min_index": 0.65,
+    "max_sentiment": -0.2,
+    "confirm": true
+  },
+  "low_question": {
+    "max_score": 0.25
+  },
+  "silence": {
+    "length_drop": 0.6,
+    "min_prev_length": 40,
+    "own_timeline": true
+  },
+  "baseline": {
+    "index_below": 0.625
+  },
   "quote_min_length": 12,
   "status": {
     "_comment": "notes_neutral: заметки (low) не красят клетку и пару. low_index: средняя ниже baseline.index_below считается ещё одним подтверждением. one_text_finding: стажёр и наставник пишут о проблеме в одном месяце — одна находка.",

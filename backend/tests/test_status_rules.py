@@ -78,5 +78,7 @@ def test_mgts_matrix_with_rules(settings_factory):
         "P-003": ["watch", "risk", "risk", "ok", "ok", "ok"],
         "P-004": ["ok", "ok", "ok", "risk", "ok", "ok"],
         "P-005": ["risk", "risk", "risk", "ok", "ok", "ok"],
+        # Тестовая пара из import_map.json: анкет ещё нет, все клетки пустые и без сигналов.
+        "P-006": ["ok"] * 6,
     }
     assert {p["status"] for p in ov["pairs"]} == {"ok"}

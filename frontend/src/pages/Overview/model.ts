@@ -1,7 +1,7 @@
 // Расчёты обзора поверх API: история каждого стажёра на выбранный месяц.
 
 import type { PairStatus, PairSummary, Signal } from '../../api/types'
-import { compareSignals, isActive, isOpen } from '../../lib/rules'
+import { compareSignals, dueMonths, isActive, isOpen } from '../../lib/rules'
 
 export interface Story {
   pair: PairSummary
@@ -71,5 +71,7 @@ export function historyOf(pairs: PairSummary[], months: number): History {
     else if (p.cells.some((c) => c.status === 'watch')) watchOnly++
     for (const c of p.cells) collected += Number(!c.missing.intern) + Number(!c.missing.mentor)
   }
-  return { riskEver, watchOnly, collected, expected: pairs.length * months * 2 }
+  // Ждём по две анкеты за каждый месяц, до которого пара дошла.
+  const expected = pairs.reduce((n, p) => n + Math.min(dueMonths(p), months) * 2, 0)
+  return { riskEver, watchOnly, collected, expected }
 }

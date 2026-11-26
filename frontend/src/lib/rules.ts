@@ -108,3 +108,9 @@ export function sentenceAround(text: string, start: number, end: number): { text
 export function byModelOnly(s: Signal): boolean {
   return s.text_check?.by === 'model' && !s.text_check.rules_found
 }
+
+// Месяцы, за которые пара уже должна была ответить: до её последней анкеты, у новой пары — первый.
+// Пара, начавшая позже остальных, не опаздывает с месяцами, до которых ещё не дошла.
+export function dueMonths(pair: { last_month: number }): number {
+  return Math.max(pair.last_month, 1)
+}
