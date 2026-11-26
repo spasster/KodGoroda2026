@@ -142,6 +142,7 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
               {paired.length > 0 && (
                 <div className={t.lowRows}>
                   <h3 className={t.subTitle}>Стажёр и наставник об одном и том же</h3>
+                  <p className={t.subNote}>Разница показывает, где стажёр и наставник видят одно и то же по-разному.</p>
                   <QuestionTable compact months={monthList} groups={paired} tone={scoreTone} />
                 </div>
               )}

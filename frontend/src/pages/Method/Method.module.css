@@ -60,3 +60,6 @@
   .bar { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
   .text, .list, .principles { font-size: var(--fs-s); }
 }
+
+/* Сравнение сигналов со средней оценкой: обычный абзац. */
+.compare { max-width: 90ch; margin-top: var(--s-2); line-height: var(--lh-body); }

@@ -150,3 +150,6 @@
   .block, .outcome { padding: 18px 16px 20px; }
   .segBtn { min-height: 44px; }
 }
+
+/* Пояснение под подзаголовком таблицы сравнения сторон. */
+.subNote { margin: 4px 0 var(--s-3); color: var(--text-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }

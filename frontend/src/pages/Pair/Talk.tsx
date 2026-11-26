@@ -47,7 +47,7 @@ export function Topics({ pair, onQuote }: { pair: PairDetail; onQuote: (month: n
   return (
     <section className={s.block} aria-labelledby="talk-topics">
       <h2 id="talk-topics" className={s.blockTitle}>
-        О чём говорить
+        Сигналы
         {open.length > 0 && <span className={s.count}>{open.length}</span>}
       </h2>
       {open.length === 0 ? (

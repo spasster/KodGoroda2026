@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import { ChevronRight } from 'lucide-react'
 import { Fragment, useState } from 'react'
 
-import { useMethod } from '../../api/queries'
+import { useAnalytics, useMethod } from '../../api/queries'
 import type { Quality, QualitySet } from '../../api/types'
 import { LoadError, Loading, PageHeader, Skeleton } from '../../components'
 import { formatNumber, plural } from '../../lib/format'
@@ -14,6 +14,8 @@ import s from './Method.module.css'
 export function MethodPage() {
   const method = useMethod()
   const m = method.data
+  // Сравнение сигналов со средней оценкой считает бэкенд по текущим данным.
+  const compare = useAnalytics().data?.effect.conclusion
   // Раскрыта одна строка, по умолчанию первая.
   const [openType, setOpenType] = useState<string | null | undefined>(undefined)
   const current = openType === undefined ? (m?.signals[0]?.type ?? null) : openType
@@ -118,6 +120,14 @@ export function MethodPage() {
               </div>
             </section>
 
+            {compare && (
+              <section className={s.card} aria-labelledby="method-compare">
+                <h2 id="method-compare" className={s.h2}>
+                  Что средняя оценка не показывает
+                </h2>
+                <p className={s.compare}>{compare}</p>
+              </section>
+            )}
             <p className={s.baseline}>{m.baseline}</p>
           </>
         )}

@@ -36,7 +36,8 @@ export function Outcome({ pair }: { pair: PairDetail }) {
   const addNote = useAddNote(pair.pair_id)
   const review = useReview()
   const reduce = useReduced()
-  const open = openSignals(pair.signals)
+  // Заметка из комментария (важность low) — не проблема: подтверждать её не предлагаем.
+  const open = openSignals(pair.signals).filter((sig) => sig.severity !== 'low')
   const done = doneSignals(pair.signals)
 
   const [choices, setChoices] = useState<Record<string, Choice>>({})

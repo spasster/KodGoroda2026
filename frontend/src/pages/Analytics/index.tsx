@@ -10,7 +10,6 @@ import { LoadError, Loading, PageHeader, QuestionTable, Skeleton, type Tone } fr
 import { formatNumber, plural } from '../../lib/format'
 import { collectMonth } from '../../lib/rules'
 import { Collect } from './Collect'
-import { Effect } from './Effect'
 import { storyOf } from './model'
 import { ProgramChart } from './ProgramChart'
 import { ProgramTable } from './ProgramTable'
@@ -77,8 +76,6 @@ export function AnalyticsPage() {
           .join(' · ')}
       />
       <div className={clsx('wrap', s.page)}>
-        <Effect analytics={a} />
-
         <section className={clsx(s.card, s.full)}>
           <span className="overline">Все пары</span>
           <h2 className={s.title}>Стажёр × месяц</h2>
