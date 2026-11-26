@@ -1,7 +1,6 @@
-# Проверки на каждый PR и на main. С main после всех проверок образы уходят в GHCR,
-# затем стенд https://lexminor.ru обновляется сам и откатывается, если не поднялся.
+# Проверки на каждый PR и на main: тесты, сборка, секреты в истории git, уязвимости в образах.
 # Сторонние actions закреплены по SHA коммита: тег можно перевесить, коммит нельзя.
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -15,9 +14,6 @@ permissions:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
-env:
-  IMAGE: ghcr.io/spasster/kodgoroda2026
 
 jobs:
   backend:
@@ -97,83 +93,13 @@ jobs:
         with:
           context: ${{ matrix.context }}
           load: true
-          tags: ${{ env.IMAGE }}-${{ matrix.name }}:${{ github.sha }}
+          tags: kodgoroda-${{ matrix.name }}:ci
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
       # Падаем только на уязвимостях, для которых уже есть исправление: их можно закрыть обновлением.
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ env.IMAGE }}-${{ matrix.name }}:${{ github.sha }}
+          image-ref: kodgoroda-${{ matrix.name }}:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
-
-  publish:
-    name: Образ ${{ matrix.name }} · в GHCR
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: [backend, frontend, secrets, images]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      matrix:
-        include:
-          - { name: api, context: backend }
-          - { name: web, context: frontend }
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      # Слои берутся из кэша задачи images: в реестр уходит то же, что прошло проверку.
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: ${{ matrix.context }}
-          push: true
-          tags: |
-            ${{ env.IMAGE }}-${{ matrix.name }}:${{ github.sha }}
-            ${{ env.IMAGE }}-${{ matrix.name }}:latest
-          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          cache-from: type=gha,scope=${{ matrix.name }}
-
-  deploy:
-    name: Стенд lexminor.ru
-    needs: publish
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    # Секреты стенда лежат в окружении stand: задачи из PR их не видят.
-    environment:
-      name: stand
-      url: https://lexminor.ru
-    concurrency:
-      group: stand
-      cancel-in-progress: false
-    permissions:
-      packages: read
-    steps:
-      - name: Ключ и отпечаток сервера
-        env:
-          SSH_KEY: ${{ secrets.STAND_SSH_KEY }}
-          KNOWN_HOSTS: ${{ secrets.STAND_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
-          chmod 600 ~/.ssh/deploy
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-      # С этим ключом сервер запускает только deploy/deploy.sh. Ему уходит SHA коммита
-      # и токен этой задачи, чтобы скачать образы; токен перестаёт работать после задачи.
-      - name: Выкатить
-        env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STAND: ${{ secrets.STAND_USER }}@${{ secrets.STAND_HOST }}
-        run: |
-          printf '%s\n' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$STAND" "$GITHUB_SHA"
-      - name: Проверить стенд снаружи
-        run: curl -fsS --retry 5 --retry-delay 3 --max-time 15 https://lexminor.ru/api/health
