@@ -1,0 +1,30 @@
+# Стенд на сервере. Образы собирает и кладёт в GHCR .github/workflows/ci-cd.yml, тег — SHA коммита.
+# Запускает deploy/deploy.sh с --project-directory в корне репозитория, пути ниже считаются от него.
+services:
+  api:
+    image: ghcr.io/spasster/kodgoroda2026-api:${TAG:?нужен тег образа}
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SURVEY_DIR: /survey
+      SAMPLE_DIR: /sample
+      DB_PATH: /data/app.sqlite
+    volumes:
+      - ./survey:/survey:ro
+      - ./data/mgts:/sample:ro
+      - api-data:/data
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/spasster/kodgoroda2026-web:${TAG:?нужен тег образа}
+    # Наружу стенд отдаёт nginx сервера, поэтому порт открыт только для него.
+    ports:
+      - "127.0.0.1:8090:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  api-data:

@@ -1,0 +1,8 @@
+# Actions закреплены по SHA, сами они не обновятся: раз в неделю Dependabot приносит PR с новыми версиями.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
