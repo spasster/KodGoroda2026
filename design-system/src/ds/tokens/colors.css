@@ -1,0 +1,210 @@
+/* ============================================================
+   МГТС Colors — based on MTS Granat 2, rebranded blue (#008ae0)
+   MGTS replaces the MTS red (#e30611 / #ff0032) with МГТС Blue
+   in every accent role. Use semantic tokens, never raw hex.
+
+   Значения сверены с Base 2.0.fig (набор Brand в режиме MGTS).
+   Одно осознанное расхождение: negative у МГТС — оранжевый #f95721
+   (Granat/F95721), а не малиновый #ea1f49 из Accent/Negative.
+   Поэтому в паре к --color-accent-negative-bg идёт
+   --color-text-negative-strong (#ad3400) из оранжевого семейства,
+   а --color-text-negative (#ea1f49) оставлен для полноты и
+   в компонентах не используется.
+   ============================================================ */
+
+:root {
+  /* ---- Base palette (Granat primitives) ---- */
+  --granat-white:      #ffffff;
+  --granat-bg-grey:    #f2f3f7;  /* secondary surface */
+  --granat-lower-grey: #e9ecf0;  /* page background */
+  --granat-line-grey:  #e2e5eb;  /* hairline borders */
+  --granat-grey-100:   #d8dce5;
+  --granat-grey-200:   #bbc1c9;
+  --granat-grey-400:   #969fa8;  /* tertiary text / disabled */
+  --granat-grey-500:   #8d969f;  /* secondary icons */
+  --granat-grey-600:   #626c77;  /* secondary text */
+  --granat-grey-800:   #2c3135;
+  --granat-graphite:   #1d2023;  /* primary text / inverted bg */
+  --granat-near-white: #fafafa;
+
+  /* ---- МГТС brand blue (the rebrand accent) ---- */
+  --mgts-blue-50:   #e6f4fc;
+  --mgts-blue-100:  #b3ddf5;
+  --mgts-blue-300:  #45b6fc;
+  --mgts-blue-500:  #008ae0;  /* primary brand */
+  --mgts-blue-600:  #0072bd;  /* hover */
+  --mgts-blue-700:  #005c99;  /* active / pressed */
+
+  /* ---- Semantic accents (Granat) ---- */
+  --granat-green:   #26cd58;  /* positive  */
+  --granat-yellow:  #fac031;  /* warning   */
+  --granat-orange:  #f95721;  /* negative  */
+  --granat-violet:  #7b61ff;  /* secondary brand / decorative */
+
+  /* ============================================================
+     SEMANTIC TOKENS — light theme (default)
+     ============================================================ */
+
+  /* Brand */
+  --brand-blue:                  #008ae0;
+  --color-brand:                 var(--mgts-blue-500);
+  --color-brand-hover:           var(--mgts-blue-600);
+  --color-brand-active:          var(--mgts-blue-700);
+  --color-brand-subtle:          var(--mgts-blue-50);
+
+  /* Backgrounds */
+  --color-background-primary:    var(--granat-white);
+  --color-background-secondary:  var(--granat-bg-grey);
+  --color-background-lower:      var(--granat-lower-grey);
+  --color-background-inverted:   var(--granat-graphite);
+
+  /* Text */
+  --color-text-primary:          var(--granat-graphite);
+  --color-text-secondary:        var(--granat-grey-600);
+  --color-text-tertiary:         var(--granat-grey-400);
+  --color-text-inverted:         var(--granat-near-white);
+  --color-text-brand:            var(--mgts-blue-500);
+
+  /* Icons */
+  --color-icons-primary:         var(--granat-graphite);
+  --color-icons-secondary:       var(--granat-grey-500);
+  --color-icons-tertiary:        var(--granat-grey-400);
+  --color-icons-inverted:        var(--granat-near-white);
+  --color-icons-brand:           var(--mgts-blue-500);
+
+  /* Borders / control lines */
+  --color-control-stroke:        var(--granat-grey-400);
+  --color-control-stroke-hover:  var(--granat-grey-600);
+  --color-line:                  var(--granat-line-grey);
+
+  /* Accents */
+  --color-accent-positive:       var(--granat-green);
+  --color-accent-warning:        var(--granat-yellow);
+  --color-accent-negative:       var(--granat-orange);
+
+  /* Accent backgrounds (light fills for badges/banners) */
+  --color-accent-positive-bg:    #e3f9ea;
+  --color-accent-warning-bg:     #fff4d6;
+  --color-accent-negative-bg:    #ffe5dc;
+  --color-accent-brand-bg:       var(--mgts-blue-50);
+
+  /* ---- Text on tinted surfaces (Granat *Strong* — пара к *-bg подложкам) ---- */
+  --color-text-positive:         #12b23f;
+  --color-text-positive-strong:  #007502;
+  --color-text-warning-strong:   #806000;
+  --color-text-negative-strong:  #ad3400;
+  /* Granat Text/Negative — малиновый; в МГТС negative оранжевый, см. шапку файла */
+  --color-text-negative:         #ea1f49;
+  --color-text-highlight-strong: #7936c9;
+
+  /* ---- Links (в Granat цвет ссылки не брендовый) ---- */
+  --color-text-link:             #0070e5;
+  --color-text-link-visited:     #883888;
+  /* Ссылка на инвертированной поверхности — Snackbar, StickyBanner neutral. */
+  --color-text-link-inverted:    #45b6fc;
+
+  /* ---- Surfaces: уровни и состояния ---- */
+  --color-background-elevated:           #ffffff;
+  --color-background-secondary-elevated: #ffffff;
+  --color-background-modal:              #ffffff;
+  --color-background-bar:                rgba(255, 255, 255, 0.88);
+  --color-background-disabled:           #f8f8fb;
+  --color-background-hover:              rgba(188, 195, 208, 0.25);
+  --color-background-highlight:          #e3ccff;
+
+  /* ---- Strokes и состояния контролов (полупрозрачный серый) ---- */
+  --color-stroke-soft:           rgba(188, 195, 208, 0.5);
+  --color-stroke-soft-disabled:  rgba(188, 195, 208, 0.25);
+  --color-control-hover:         rgba(188, 195, 208, 0.4);
+  --color-control-inactive:      rgba(188, 195, 208, 0.5);
+
+  /* ---- Accent hover / active (оранжевое семейство Granat) ---- */
+  --color-accent-negative-hover:  #d8400c;
+  --color-accent-negative-active: #ba360a;
+
+  /* ---- Accents на тёмной подложке ---- */
+  --color-accent-positive-inverted: #74df8b;
+  --color-accent-warning-inverted:  #fad67d;
+  --color-accent-negative-inverted: #f55f7e;
+  --color-accent-notification:      var(--color-brand);
+
+  /* ---- Роли, которые раньше брались из примитивов --granat-* напрямую ----
+     Светлые значения оставлены прежними — меняется только то, что теперь
+     у них появился тёмный вариант. */
+  --color-control-track:         var(--granat-grey-100);
+  --color-control-disabled:      var(--granat-grey-200);
+  --color-surface-disabled:      var(--granat-grey-100);
+  --color-surface-hover-strong:  var(--granat-grey-100);
+
+  /* Overlays */
+  --color-overlay:               rgba(29, 32, 35, 0.5);
+  --color-overlay-light:         rgba(29, 32, 35, 0.08);
+}
+
+/* ============================================================
+   DARK THEME — .dark on <html> inverts surfaces & text.
+   Brand blue stays unchanged in both themes.
+   ============================================================ */
+.dark {
+  --color-background-primary:    #1d2023;
+  --color-background-secondary:  #26292c;
+  --color-background-lower:      #141719;
+  --color-background-inverted:   #fafafa;
+
+  --color-text-primary:          #fafafa;
+  --color-text-secondary:        #969fa8;
+  --color-text-tertiary:         #626c77;
+  --color-text-inverted:         #1d2023;
+  --color-text-brand:            #45b6fc;
+
+  --color-icons-primary:         #fafafa;
+  --color-icons-secondary:       #8d969f;
+  --color-icons-tertiary:        #626c77;
+  --color-icons-inverted:        #1d2023;
+  --color-icons-brand:           #45b6fc;
+
+  --color-control-stroke:        #3a4045;
+  --color-control-stroke-hover:  #626c77;
+  --color-line:                  #2c3135;
+
+  --color-brand-subtle:          rgba(0, 138, 224, 0.16);
+  --color-accent-positive-bg:    rgba(38, 205, 88, 0.16);
+  --color-accent-warning-bg:     rgba(250, 192, 49, 0.16);
+  --color-accent-negative-bg:    rgba(249, 87, 33, 0.16);
+  --color-accent-brand-bg:       rgba(0, 138, 224, 0.16);
+
+  --color-text-positive:         #74df8b;
+  --color-text-positive-strong:  #8cf2a2;
+  --color-text-warning-strong:   #faee9e;
+  --color-text-negative-strong:  #ffb79e;
+  --color-text-negative:         #f55f7e;
+  --color-text-highlight-strong: #e1c1ff;
+
+  --color-text-link:             #45b6fc;
+  --color-text-link-visited:     #b767b7;
+  --color-text-link-inverted:    #0070e5;
+
+  --color-background-elevated:           #1d2023;
+  --color-background-secondary-elevated: rgba(98, 108, 119, 0.25);
+  --color-background-modal:              #2c3135;
+  --color-background-bar:                rgba(0, 0, 0, 0.7);
+  --color-background-disabled:           rgba(98, 108, 119, 0.15);
+  --color-background-hover:              rgba(242, 243, 247, 0.2);
+  --color-background-highlight:          #523654;
+
+  --color-stroke-soft:           rgba(127, 140, 153, 0.35);
+  --color-stroke-soft-disabled:  rgba(127, 140, 153, 0.1);
+  --color-control-hover:         rgba(188, 195, 208, 0.4);
+  --color-control-inactive:      rgba(127, 140, 153, 0.35);
+
+  --color-accent-positive-inverted: #26cd58;
+  --color-accent-warning-inverted:  #fac031;
+  --color-accent-negative-inverted: #ea1f49;
+  --color-control-track:         rgba(127, 140, 153, 0.35);
+  --color-control-disabled:      rgba(127, 140, 153, 0.35);
+  --color-surface-disabled:      rgba(127, 140, 153, 0.25);
+  --color-surface-hover-strong:  rgba(242, 243, 247, 0.2);
+
+  --color-overlay:               rgba(0, 0, 0, 0.6);
+  --color-overlay-light:         rgba(255, 255, 255, 0.08);
+}

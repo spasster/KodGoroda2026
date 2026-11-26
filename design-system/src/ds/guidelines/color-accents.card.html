@@ -1,0 +1,20 @@
+<!-- @dsCard group="Colors" viewport="700x180" name="Semantic accents" subtitle="Positive · warning · negative · violet" -->
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;padding:20px;background:var(--color-background-primary);font-family:var(--font-compact)}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .sw{display:flex;flex-direction:column;gap:8px}
+  .chip{width:130px;height:60px;border-radius:var(--radius-m)}
+  .meta{font-size:12px;line-height:1.4}
+  .name{color:var(--color-text-primary);font-weight:500}
+  .hex{color:var(--color-text-secondary)}
+</style></head>
+<body>
+  <div class="row">
+    <div class="sw"><div class="chip" style="background:var(--color-accent-positive)"></div><div class="meta"><div class="name">positive</div><div class="hex">#26cd58</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-accent-warning)"></div><div class="meta"><div class="name">warning</div><div class="hex">#fac031</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-accent-negative)"></div><div class="meta"><div class="name">negative</div><div class="hex">#f95721</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--granat-violet)"></div><div class="meta"><div class="name">violet</div><div class="hex">#7b61ff</div></div></div>
+  </div>
+</body></html>

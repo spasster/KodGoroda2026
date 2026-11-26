@@ -1,0 +1,58 @@
+<!-- @dsCard group="Components" viewport="700x460" name="ListItem · Menu · Steps · TextList" subtitle="Lists, context menu, wizard steps, content lists" -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--color-background-primary); font-family: var(--font-compact); }
+  .label { font-size: 12px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 8px; }
+  .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: start; }
+  .block { margin-bottom: 22px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+  const { ListItem, Menu, Steps, TextList, Badge, Switch } = window.DesignSystemMGTS_656a78;
+  function Demo() {
+    const [sw, setSw] = React.useState(true);
+    return (
+      <div>
+        <div className="block">
+          <p className="label">Steps</p>
+          <Steps current={1} steps={[{label:'Данные'},{label:'Документы'},{label:'Проверка'},{label:'Готово'}]} />
+        </div>
+        <div className="grid">
+          <div>
+            <p className="label">ListItem (Control list)</p>
+            <ListItem icon="DocumentSize24StyleOutline" title="Договор №2024-118" description="ООО «Ростелеком»"
+              trailing={<Badge tone="positive">Согласован</Badge>} onClick={()=>{}} />
+            <ListItem icon="BellSize24StyleOutline" title="Push-уведомления" description="О сроках согласования"
+              trailing={<Switch checked={sw} onChange={setSw} />} />
+            <ListItem icon="ArchiveSize24StyleOutline" title="Архив" description="284 документа" selected onClick={()=>{}} />
+          </div>
+          <div>
+            <p className="label">Menu (Droplist)</p>
+            <Menu items={[
+              { label:'Открыть', icon:'DocumentSize24StyleOutline' },
+              { label:'Дублировать', icon:'CopySize24StyleOutline' },
+              { label:'Поделиться', icon:'ShareSize24StyleOutline' },
+              { divider:true },
+              { label:'Удалить', icon:'DeleteSize24StyleOutline', tone:'negative' },
+            ]} />
+            <p className="label" style={{marginTop:18}}>TextList</p>
+            <TextList type="number" items={['Загрузите документ','Назначьте проверяющего','Отправьте на согласование']} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>
