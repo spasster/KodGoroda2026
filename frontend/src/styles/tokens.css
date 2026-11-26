@@ -60,10 +60,10 @@
   --watch-gap: color-mix(in srgb, var(--color-accent-warning) 22%, transparent);
 
   /* Графитовая лента наверху страницы: инвертированная поверхность системы, без свечения */
-  --hero-bg: var(--color-background-inverted);
-  --hero-text: var(--color-text-inverted);
-  --hero-text-2: var(--color-control-disabled);
-  --hero-line: color-mix(in srgb, var(--hero-text) 12%, var(--hero-bg));
+  --hero-bg: var(--color-background-lower);
+  --hero-text: var(--color-text-primary);
+  --hero-text-2: var(--color-text-secondary);
+  --hero-line: var(--color-line);
   --hero-glow: var(--color-brand);
 
   /* Подсветка цитаты */

@@ -174,7 +174,7 @@ export function OverviewPage() {
 
         <p className={s.more}>
           <Link to="/analytics">
-            Все стажёры по месяцам и эффект
+            Вся программа: статус опросов, динамика, вопросы по месяцам
             <ArrowRight aria-hidden="true" size={16} strokeWidth={1.8} />
           </Link>
         </p>

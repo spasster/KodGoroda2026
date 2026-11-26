@@ -1,12 +1,12 @@
-/* «Разговоры»: графитовая лента сверху, карточки «Пора поговорить», строки «Присмотреться». */
+/* «Разговоры»: шапка с итогом программы на фоне страницы, карточки «Пора поговорить», строки «Присмотреться». */
 
 .error { margin-top: 24px; }
 .skeleton { padding-block: 32px; gap: 16px; }
 
-/* ---------- Лента ---------- */
+/* ---------- Шапка: заголовок и три числа на фоне страницы, как у остальных экранов ---------- */
 .hero {
   position: relative;
-  margin-bottom: var(--s-6);
+  margin-bottom: var(--s-5);
   background: var(--hero-bg);
   color: var(--hero-text);
 }
@@ -15,8 +15,8 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: var(--s-6);
-  padding-top: 36px;
-  padding-bottom: 44px;
+  padding-top: 28px;
+  padding-bottom: 4px;
 }
 .heroHead { min-width: 0; }
 .heroOver { color: var(--hero-text-2); margin-bottom: 12px; }
@@ -38,8 +38,9 @@
 }
 .heroQr:hover { background: color-mix(in srgb, var(--hero-text) 8%, transparent); border-color: color-mix(in srgb, var(--hero-text) 40%, transparent); }
 
-.kpis { display: flex; gap: 40px; margin: 0; }
-.kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; width: 176px; }
+.kpis { display: flex; gap: 0; margin: 0; }
+.kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; width: 208px; padding: 0 20px 0 24px; border-left: 1px solid var(--hero-line); }
+.kpi:last-child { padding-right: 0; width: 188px; }
 .kpiValue {
   margin: 0;
   font-family: var(--font-wide); font-size: 44px; font-weight: var(--fw-bold); line-height: 1;
@@ -48,7 +49,8 @@
 .kpiOf { font-size: var(--fs-l); color: var(--hero-text-2); }
 .kpiLabel { margin-top: 10px; color: var(--hero-text-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
 
-.trace { position: absolute; left: 0; right: 0; bottom: -2px; width: 100%; height: 24px; overflow: visible; pointer-events: none; }
+/* Линии под шапкой больше нет: шапка стоит на фоне страницы. */
+.trace { display: none; }
 .traceLine {
   fill: none; stroke: var(--hero-glow); stroke-width: 2;
   stroke-dasharray: 1; stroke-dashoffset: 1;
