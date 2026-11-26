@@ -248,8 +248,9 @@ try {
     await waitVisible(person, `Кнопка «${names.olga}» в списке наставников`)
     await person.click()
     await waitText(form.locator('h1'), names.olga, 'Имя наставника на втором шаге')
-    const chosen = await form.getByLabel('Месяц', { exact: true }).inputValue()
+    const chosen = await form.getByLabel('Контрольный период', { exact: true }).inputValue()
     check(Number(chosen) === month, `Месяц в форме ${chosen}, ждали ${month}`)
+    await form.getByLabel('Подразделение / направление стажировки').fill('IT')
 
     const groups = form.locator('[role="radiogroup"][aria-labelledby^="form-qt-"]')
     const n = await groups.count()

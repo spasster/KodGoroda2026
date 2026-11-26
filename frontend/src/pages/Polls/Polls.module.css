@@ -1,0 +1,10 @@
+.page { display: grid; gap: 16px; padding-block: 24px 48px; }
+.panel { display: grid; justify-items: start; gap: 12px; padding: clamp(16px, 3vw, 28px); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); min-width: 0; }
+.panel h2 { font-size: var(--fs-l); }
+.panel label { display: grid; gap: 6px; width: min(100%, 740px); }
+.panel input, .panel textarea { width: 100%; padding: 8px 10px; color: var(--text-1); background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-s); }
+.panel textarea { resize: vertical; }
+.panel details { width: 100%; }
+.panel summary { cursor: pointer; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.fields { display: grid; gap: 12px; margin-top: 12px; }

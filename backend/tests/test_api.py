@@ -7,7 +7,6 @@ import httpx
 from fastapi.testclient import TestClient
 
 from app.adapters.gsheet import sync_gsheet
-from app.adapters.yandex import ingest_yandex
 from app.main import create_app
 
 from .conftest import INTERN_HEADERS, MENTOR_HEADERS, write_xlsx
@@ -139,71 +138,6 @@ def test_new_pair_from_mentor_side(client):
     assert client.post("/api/ingest", json=body).json()["pair_id"] == "P-07"
     body = {"role": "mentor", "person_id": "M-07", "month": 2, "answers": {"overall": 4}}
     assert client.post("/api/ingest", json=body).json()["pair_id"] == "P-07"
-
-
-def test_yandex_webhook_strings_and_question_texts(client, post):
-    post.pair("03", 1, 4.0, 4.2)
-    body = {
-        "role": "Стажёр",
-        "ID стажёра": "S-03",
-        "Месяц стажировки": "2",
-        "Как в целом проходит стажировка?": "4",
-        "Насколько вам интересны задачи?": "5 — очень",
-        "tasks_clarity": "4",
-        "Хватает ли вам помощи наставника?": "2",
-        "Насколько вам комфортна текущая нагрузка?": "",
-        "Что сейчас мешает или помогает в стажировке?": "Наставник постоянно занят и отвечает через день.",
-        "answer_id": "123",
-    }
-    r = client.post("/api/ingest/yandex", json=body)
-    assert r.status_code == 200, r.text
-    assert r.json()["pair_id"] == "P-03"
-    d = client.get("/api/pairs/P-03").json()
-    point = d["series"][1]["intern"]
-    assert point == {"overall": 4, "tasks_interest": 5, "tasks_clarity": 4, "mentor_support": 2, "load": None}
-    assert client.get("/api/overview").json()["recent"][0]["source"] == "yandex"
-
-
-def test_yandex_webhook_mentor_with_ids(client, post):
-    post.pair("04", 1, 4.0, 4.2)
-    body = {"role": "mentor", "person_id": "M-04", "month": 2, "overall": "3", "speed": "3",
-            "Насколько стажёр самостоятелен?": "4", "engagement": "4", "comment": "Старается"}
-    r = client.post("/api/ingest/yandex", json=body)
-    assert r.status_code == 200, r.text
-    r = client.post("/api/ingest/yandex", content=b"role=intern&person_id=S-04&month=2&overall=4",
-                    headers={"content-type": "application/x-www-form-urlencoded"})
-    assert r.status_code == 200, r.text
-    r = client.post("/api/ingest/yandex", json={"person_id": "S-04", "month": 2})
-    assert r.status_code == 422 and "role" in r.json()["detail"]
-
-
-def test_yandex_defers_analysis_after_saving(ctx, post, monkeypatch):
-    post.pair("03", 1, 4.0, 4.2)
-    callbacks = []
-    calls = []
-    snapshot = ctx.snapshot
-
-    def refresh():
-        calls.append("snapshot")
-        return snapshot()
-
-    monkeypatch.setattr(ctx, "snapshot", refresh)
-    monkeypatch.setattr(ctx.bus, "publish", lambda kind, event: calls.append((kind, event["pair_id"])))
-
-    result = ingest_yandex(
-        ctx, {"role": "intern", "person_id": "S-03", "month": 2, "overall": 5,
-              "comment": "Третью неделю сижу без задач."}, defer=callbacks.append,
-    )
-
-    assert result.pair_id == "P-03"
-    assert result.new_signals == []
-    with ctx.connect() as conn:
-        saved = conn.execute("SELECT month, source FROM responses WHERE id = ?", (result.response_id,)).fetchone()
-    assert tuple(saved) == (2, "yandex")
-    assert calls == []
-    assert len(callbacks) == 1
-    callbacks[0]()
-    assert calls == ["snapshot", ("response", "P-03")]
 
 
 def test_review_flow_and_filters(client, post):

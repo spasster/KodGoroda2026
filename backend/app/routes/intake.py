@@ -1,10 +1,7 @@
-import json
 from typing import Any
-from urllib.parse import parse_qsl
 
 from fastapi import (
     APIRouter,
-    BackgroundTasks,
     Body,
     Depends,
     File,
@@ -16,7 +13,6 @@ from fastapi import (
 from fastapi.concurrency import run_in_threadpool
 
 from ..adapters.gsheet import sync_gsheet
-from ..adapters.yandex import ingest_yandex
 from ..context import Context
 from ..importer import read_bytes
 from ..ingest import import_tables, ingest_one, load_sample
@@ -31,21 +27,6 @@ MAX_UPLOAD = 5 * 1024 * 1024
 @router.post("/ingest", response_model=IngestResult)
 def ingest(payload: Any = Body(...), ctx: Context = Depends(get_ctx)) -> IngestResult:
     return ingest_one(ctx, payload)
-
-
-@router.post("/ingest/yandex", response_model=IngestResult)
-async def ingest_from_yandex(request: Request, background: BackgroundTasks,
-                             ctx: Context = Depends(get_ctx)) -> IngestResult:
-    raw = (await request.body()).decode("utf-8", errors="replace").strip()
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError:
-        # Тело формы вида a=1&b=2: на случай, если в интеграции не выбран JSON.
-        payload = dict(parse_qsl(raw)) if "=" in raw else None
-        if not payload:
-            raise HTTPException(422, "Тело запроса не JSON. Проверьте шаблон тела в интеграции формы") from None
-    defer = background.add_task if ctx.analyzer.llm else None
-    return await run_in_threadpool(ingest_yandex, ctx, payload, defer=defer)
 
 
 @router.post("/sync/gsheet")

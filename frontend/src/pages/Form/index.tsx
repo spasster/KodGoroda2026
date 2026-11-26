@@ -36,11 +36,12 @@ interface Draft {
   // свежий /api/people после отправки его не сдвигает.
   month: number | null
   answers: Answers
+  department: string
 }
 
 const ROLES: readonly Role[] = ['intern', 'mentor']
 const OTHER: Record<Role, Role> = { intern: 'mentor', mentor: 'intern' }
-const EMPTY_DRAFT: Draft = { personKey: '', month: null, answers: {} }
+const EMPTY_DRAFT: Draft = { personKey: '', month: null, answers: {}, department: '' }
 
 function range(from: number, to: number): number[] {
   return Array.from({ length: Math.max(0, to - from + 1) }, (_, i) => from + i)
@@ -271,6 +272,10 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
     e.preventDefault()
     if (ingest.isPending) return
     setTried(true)
+    if (survey.technical_fields?.department && !draft.department.trim()) {
+      document.getElementById('form-department')?.focus()
+      return
+    }
     if (missing.length) {
       const el = document.getElementById(`form-q-${missing[0].id}`)
       if (el) {
@@ -292,6 +297,7 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
         person_id: person.id,
         ...(role === 'intern' ? { mentor_id: person.other } : { intern_id: person.other }),
         month,
+        department: draft.department.trim() || undefined,
         answers,
         source: 'form',
       },
@@ -315,7 +321,7 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
             {ROLE_LABEL[OTHER[role]]} {person.otherName}
           </p>
           <div className={s.select}>
-            <select aria-label="Месяц" value={month} onChange={(e) => patch((d) => ({ ...d, month: Number(e.target.value) }))}>
+            <select aria-label={survey.technical_fields?.month ?? 'Месяц'} value={month} onChange={(e) => patch((d) => ({ ...d, month: Number(e.target.value) }))}>
               {range(1, survey.months).map((m) => (
                 <option key={m} value={m}>
                   {m}-й месяц{alreadySent(person, m) ? ', анкета уже есть' : ''}
@@ -324,6 +330,15 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
             </select>
             <ChevronDown aria-hidden="true" strokeWidth={1.8} />
           </div>
+          {survey.technical_fields?.department && (
+            <label className={s.department}>
+              {survey.technical_fields.department}
+              <input id="form-department" className={s.text} value={draft.department} required
+                aria-invalid={tried && !draft.department.trim() || undefined}
+                onChange={(e) => patch((d) => ({ ...d, department: e.target.value }))} />
+              {tried && !draft.department.trim() && <span role="alert">Укажите подразделение</span>}
+            </label>
+          )}
         </section>
 
         <p className={s.note} style={order(1)}>
@@ -373,16 +388,22 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
                       name={`${role}-${q.id}`}
                       checked={draft.answers[q.id] === v}
                       onChange={() => patch((d) => ({ ...d, answers: { ...d.answers, [q.id]: v } }))}
-                      aria-label={`${v} из ${survey.scale.max}${v === survey.scale.min ? `, ${survey.scale.min_label}` : v === survey.scale.max ? `, ${survey.scale.max_label}` : ''}`}
+                      aria-label={q.score_labels?.[v] ? `${v} из ${survey.scale.max}, ${q.score_labels[v]}` : `${v} из ${survey.scale.max}`}
                     />
                     <span>{v}</span>
                   </label>
                 ))}
               </div>
-              <div className={s.edges} aria-hidden="true">
-                <span>{survey.scale.min_label}</span>
-                <span>{survey.scale.max_label}</span>
-              </div>
+              {q.score_labels ? (
+                <ul className={s.rubric} aria-label="Расшифровка шкалы">
+                  {Object.entries(q.score_labels).map(([score, label]) => <li key={score}><strong>{score}</strong> {label}</li>)}
+                </ul>
+              ) : (
+                <div className={s.edges} aria-hidden="true">
+                  <span>{survey.scale.min_label}</span>
+                  <span>{survey.scale.max_label}</span>
+                </div>
+              )}
             </section>
           )
         })}

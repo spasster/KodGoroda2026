@@ -24,6 +24,7 @@ docker-compose.yml, Makefile, .env.example
 - Вопрос: `id`, `type` (`scale` или `text`), `text`.
 - `scale`: общая шкала для всех вопросов типа `scale` (`min`, `max`, подписи краёв).
 - `paired_questions`: какие вопросы стажёра и наставника сравниваются напрямую.
+- `technical_fields`: подписи служебных полей периода и подразделения. `score_labels` у вопроса задаёт расшифровку баллов. `legacy_questions` сохраняют чтение прежних анкет.
 - `months`: длительность программы.
 
 ## Формат Excel (`data/sample`, имитация выгрузки из Tabs)
@@ -49,7 +50,7 @@ docker-compose.yml, Makefile, .env.example
 ## Хранение (SQLite)
 
 - `pairs(pair_id, intern_id, mentor_id)`. `pair_id` строится из ID стажёра: `S-03` → `P-03`. Пара один к одному.
-- `responses(id, pair_id, role, person_id, month, source, submitted_at, created_at)`. `source`: `excel`, `form`, `yandex`, `gsheet`. Уникальность по `(pair_id, role, month)`, повторная анкета заменяет прежнюю.
+- `responses(id, pair_id, role, person_id, month, source, submitted_at, created_at)`. `source`: `excel`, `form`, `google_forms`, `gsheet`. Уникальность по `(pair_id, role, month)`, повторная анкета заменяет прежнюю.
 - `answers(response_id, question_id, score, text)`.
 - `reviews(signal_key, status, note, updated_at)`.
 - `text_cache(text_hash, analyzer, result_json)`.
@@ -176,7 +177,11 @@ interface PairDetail extends PairSummary {
 | `GET /api/signals?status=open\|confirmed\|rejected\|all&active=true` | `Signal[]`, сначала `high`, потом свежие |
 | `POST /api/signals/{key}/review` | тело `{status, note?}`, ответ — обновлённый `Signal` |
 | `POST /api/ingest` | приём анкеты, см. ниже |
-| `POST /api/ingest/yandex` | вебхук Яндекс Форм, см. ниже |
+| `GET /api/hr/google-forms` | две формы и статус последней доставки по каждой роли |
+| `POST /api/hr/google-forms` | создать или продолжить публикацию двух форм. Тело `{"cohort": "Название потока"}` |
+| `POST /api/hr/google-forms/prefill` | сохранить ссылку-заготовку. Тело `{"role": "intern", "url": "https://docs.google.com/forms/..."}` |
+| `POST /api/hr/google-forms/sync` | вручную синхронизировать ответы и получить состояние подключения |
+| `POST /api/hr/google-forms/link` | выдать подписанную ссылку на первый незаполненный период. Тело `{"pair_id": "P-01", "role": "intern"}` |
 | `POST /api/sync/gsheet` | забрать новые строки из опубликованных CSV Google Таблиц (`GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`) |
 | `POST /api/import/excel` | multipart: `interns`, `mentors` (любой из двух), `replace=true\|false`; ответ — отчёт импорта. Файл до 5 МБ, лист до 5000 строк и 200 колонок. `replace=true` с файлом без единой распознанной анкеты отвечает 422 и базу не трогает |
 | `POST /api/admin/reset` | очистить базу и загрузить `data/sample` |
@@ -195,7 +200,9 @@ interface PairDetail extends PairSummary {
 - Ответ: `{ response_id, pair_id, replaced: bool, new_signals: Signal[] }`, где `new_signals` — сигналы, которых не было до этой анкеты.
 - Ошибки: 422 с `{detail}` на русском.
 
-Вебхук Яндекс Форм `POST /api/ingest/yandex` принимает плоский JSON: `role`, `person_id`, `month` и ответы, где ключ — `id` вопроса или его текст. Значения могут быть строками. В Яндекс Формах в разделе «Интеграции» настраивается HTTP POST на `<адрес>/api/ingest/yandex` с телом-шаблоном из переменных ответов. Пример тела лежит в `docs/integrations.md`.
+Для маршрутов `/api/hr/google-forms` используйте `Authorization: Bearer <GOOGLE_FORMS_HR_KEY>`.
+
+Ответы Google Forms API привязываются по коду приглашения к роли, паре и первому незаполненному месяцу. Уникальность входящего события определяется парой formId и responseId. После анализа сервер публикует событие в `/api/events`.
 
 События `GET /api/events` (SSE), каждые 15 секунд комментарий `: ping`:
 - `event: response`, `data: {pair_id, role, person_id, month, source, new_signal_keys}`
@@ -206,7 +213,7 @@ interface PairDetail extends PairSummary {
 
 - Бэкенд `:8000`, фронт в разработке `:5173` с прокси `/api` на бэкенд.
 - Docker: `web` на `:8080` (nginx отдаёт сборку фронта и проксирует `/api` в `api:8000`, включая SSE без буферизации), `api` внутри сети.
-- `make dev`, `make test`, `make data`, `make reset`, `make up`, `make tunnel` (cloudflared на `:8081`, чтобы форму можно было открыть с телефона). На `:8081` nginx отдаёт только `/form`, `/assets/`, `GET /api/survey`, `GET /api/people` и `POST /api/ingest`, дашборд и `/api/admin/*` через туннель не видны.
+- `make dev`, `make test`, `make data`, `make reset`, `make up`, `make tunnel` (cloudflared на `:8081`). На `:8081` Nginx пропускает только маршруты демоформы. Дашборд и административные маршруты доступны через основной порт.
 
 Переменные окружения (`.env.example`): `DB_PATH`, `SURVEY_DIR`, `SAMPLE_DIR`, `LLM_PROVIDER` (`rules`|`openai`), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`, `GSHEET_POLL_SECONDS` (0 — не опрашивать).
 

@@ -59,9 +59,9 @@ up-ai: fonts
 down-ai:
 	$(AI_COMPOSE) down
 
-# Наружу уходит порт 8081: на нём nginx отдаёт только форму и три её запроса к API.
+# Наружу уходит порт 8081: Nginx пропускает только маршруты демоформы.
 tunnel:
-	@echo "Ссылку https://….trycloudflare.com из вывода ниже откройте с телефона и допишите /form"
+	@echo "Добавьте /form к адресу туннеля для демоформы"
 	cloudflared tunnel --url http://localhost:8081
 
 # Анкета живого демо. Для Docker: make demo API=http://localhost:8080

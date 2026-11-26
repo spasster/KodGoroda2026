@@ -2,7 +2,6 @@
 
 import logging
 import sqlite3
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -127,33 +126,26 @@ def validate(survey: Survey, payload: Any) -> dict:
         "role": role, "person_id": person_id, "month": month, "answers": clean, "source": source,
         "intern_id": parse_id(payload.get("intern_id")), "mentor_id": parse_id(payload.get("mentor_id")),
         "submitted_at": submitted_iso or db.now_iso(),
+        "department": parse_text(payload.get("department")),
     }
 
 
-def ingest_one(ctx: Context, payload: Any, *,
-               defer: Callable[[Callable[[], None]], None] | None = None) -> IngestResult:
+def ingest_one(ctx: Context, payload: Any) -> IngestResult:
     data = validate(ctx.survey, payload)
     with ctx.write_lock:
-        before = {s.key for s in ctx.snapshot().signals} if defer is None else None
+        before = {s.key for s in ctx.snapshot().signals}
         with ctx.connect() as conn:
             pair_id, _ = resolve_pair(conn, data["role"], data["person_id"], data["intern_id"], data["mentor_id"])
             response_id, replaced, _ = db.upsert_response(
                 conn, pair_id=pair_id, role=data["role"], person_id=data["person_id"], month=data["month"],
                 source=data["source"], submitted_at=data["submitted_at"], answers=data["answers"],
+                department=data["department"],
             )
-        new_signals = [s for s in ctx.snapshot().signals if s.key not in before] if before is not None else []
-    event = {
+        new_signals = [s for s in ctx.snapshot().signals if s.key not in before]
+    ctx.bus.publish("response", {
         "pair_id": pair_id, "role": data["role"], "person_id": data["person_id"], "month": data["month"],
         "source": data["source"], "new_signal_keys": [s.key for s in new_signals],
-    }
-    if defer is None:
-        ctx.bus.publish("response", event)
-    else:
-        def refresh() -> None:
-            ctx.snapshot()
-            ctx.bus.publish("response", event)
-
-        defer(refresh)
+    })
     return IngestResult(response_id=response_id, pair_id=pair_id, replaced=replaced, new_signals=new_signals)
 
 
@@ -177,6 +169,7 @@ def store_records(conn: sqlite3.Connection, survey: Survey, records: list[Record
         _, replaced, was_changed = db.upsert_response(
             conn, pair_id=pair_id, role=rec.role, person_id=rec.person_id, month=rec.month, source=source,
             submitted_at=rec.submitted_at, answers=rec.answers, skip_unchanged=skip_unchanged,
+            department=rec.department,
         )
         if not was_changed:
             report.unchanged += 1
@@ -196,6 +189,18 @@ def import_tables(ctx: Context, tables: list[tuple[Table, str | None]], *, repla
     for table, role in tables:
         role = role or detect_role(table, survey, import_map)
         parsed.append((role, *parse_table(table, role, survey, import_map)))
+    mentors_by_intern: dict[str, set[str]] = {}
+    for role, records, _ in parsed:
+        if role == "mentor":
+            for record in records:
+                if record.intern_id:
+                    mentors_by_intern.setdefault(record.intern_id, set()).add(record.person_id)
+    for role, records, _ in parsed:
+        if role == "intern":
+            for record in records:
+                mentors = mentors_by_intern.get(record.person_id, set())
+                if record.mentor_id is None and len(mentors) == 1:
+                    record.mentor_id = next(iter(mentors))
     parsed.sort(key=lambda x: ROLES.index(x[0]))  # стажёры раньше: их строки создают пары
     # Полная замена стирает базу. Если в файлах ни одной анкеты, стирать нечем заменять.
     if replace and not any(records for _, records, _ in parsed):

@@ -54,6 +54,11 @@
   background: var(--brand-wash); color: var(--brand-text); font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap;
 }
 .copy:hover { background: color-mix(in srgb, var(--brand-wash) 80%, var(--brand)); }
+.copy:disabled { opacity: .55; cursor: default; }
+.copyAction { display: grid; justify-items: end; gap: 4px; flex: 0 1 auto; }
+.copyError { color: var(--risk); max-width: 240px; }
+.missingRow { flex-wrap: wrap; }
+.status { scroll-margin-top: calc(var(--header-h) + 16px); }
 
 /* Эффект */
 .effect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px; }

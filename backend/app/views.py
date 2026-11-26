@@ -20,6 +20,7 @@ from .schemas import (
     Totals,
 )
 from .signals import sort_signals, status_of
+from .survey import next_unanswered_month
 
 
 def _last_value(snap: Snapshot, pair_id: str, role: str) -> float | None:
@@ -138,7 +139,7 @@ def people(snap: Snapshot) -> People:
     months = ds.survey.months
 
     def next_month(pair_id: str, role: str) -> int | None:
-        return next((m for m in range(1, months + 1) if ds.response(pair_id, role, m) is None), None)
+        return next_unanswered_month(months, (m for m in ds.months if ds.response(pair_id, role, m)))
 
     pairs = sorted(ds.pairs.values(), key=lambda p: p.intern_id)
     return People(

@@ -2,14 +2,14 @@
 
 import clsx from 'clsx'
 import { Check, Copy } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
+import { api, HR_KEY_STORAGE } from '../../api/client'
 import { useAnalytics, useOverview, usePeople, useSurvey } from '../../api/queries'
 import type { Analytics, People, Role } from '../../api/types'
 import { Avatar, Hero, LoadError, Loading, Skeleton } from '../../components'
 import { ROLE_LABEL, formatNumber, personName, plural } from '../../lib/format'
-import { collectMonth } from '../../lib/rules'
 import { StoryChart } from '../Overview/StoryChart'
 import s from './Analytics.module.css'
 
@@ -19,6 +19,12 @@ export function AnalyticsPage() {
   const people = usePeople()
   const survey = useSurvey()
   const a = analytics.data
+  const analyticsLoaded = Boolean(a)
+  const { hash } = useLocation()
+
+  useEffect(() => {
+    if (analyticsLoaded && hash === '#survey-status') document.getElementById('survey-status')?.scrollIntoView()
+  }, [analyticsLoaded, hash])
 
   if (analytics.isError && !a) {
     return (
@@ -40,7 +46,6 @@ export function AnalyticsPage() {
 
   const last = a.program[a.program.length - 1]
   const months = Array.from({ length: Math.max(survey.data?.months ?? 0, a.months.length) }, (_, i) => i + 1)
-  const collect = collectMonth(people.data, survey.data?.months ?? months.length)
 
   return (
     <>
@@ -77,9 +82,9 @@ export function AnalyticsPage() {
           <Heat analytics={a} />
         </section>
 
-        <section className={s.card}>
-          <h2 className={s.title}>Сбор анкет</h2>
-          <Collect analytics={a} people={people.data} month={collect} />
+        <section className={clsx(s.card, s.full, s.status)} id="survey-status">
+          <h2 className={s.title}>Статус прохождения опросов</h2>
+          <Collect analytics={a} people={people.data} />
         </section>
 
         <section className={clsx(s.card, s.wide)}>
@@ -174,13 +179,12 @@ function Heat({ analytics: a }: { analytics: Analytics }) {
 }
 
 // Сколько анкет пришло по месяцам и кто ещё не заполнил текущий.
-function Collect({ analytics: a, people, month }: { analytics: Analytics; people: People | undefined; month: number | null }) {
-  const missing = month
-    ? [
-        ...(people?.interns ?? []).filter((p) => p.next_month != null && p.next_month <= month).map((p) => ({ ...p, role: 'intern' as Role })),
-        ...(people?.mentors ?? []).filter((p) => p.next_month != null && p.next_month <= month).map((p) => ({ ...p, role: 'mentor' as Role })),
-      ]
-    : []
+function Collect({ analytics: a, people }: { analytics: Analytics; people: People | undefined }) {
+  const missing = [
+    ...(people?.interns ?? []).map((p) => ({ ...p, role: 'intern' as const })),
+    ...(people?.mentors ?? []).map((p) => ({ ...p, role: 'mentor' as const })),
+  ].filter((p) => p.next_month != null)
+  const needsKey = !sessionStorage.getItem(HR_KEY_STORAGE)
   return (
     <>
       <div className={s.rates}>
@@ -193,47 +197,65 @@ function Collect({ analytics: a, people, month }: { analytics: Analytics; people
           </div>
         ))}
       </div>
-      {month && missing.length > 0 && (
+      {missing.length > 0 && (
         <>
-          <p className={s.sub}>
-            Не заполнили за {month}-й месяц: {missing.length}
-          </p>
+          <p className={s.sub}>Ожидают ответа · {missing.length}</p>
+          {needsKey && <p><Link to="/polls">Откройте опросы с ключом HR</Link>, чтобы выдавать личные ссылки.</p>}
           <ul className={s.missing}>
             {missing.map((p) => (
-              <li key={`${p.role}-${p.id}`}>
+              <li key={`${p.role}-${p.pair_id}`} className={s.missingRow}>
                 <Avatar name={personName(p.name, p.id)} id={p.id} size={32} />
                 <span className={s.missName}>
                   {personName(p.name, p.id)}
-                  <small>{ROLE_LABEL[p.role]}</small>
+                  <small>{ROLE_LABEL[p.role]} · месяц {p.next_month}
+                    {p.role === 'mentor' && ` · стажёр ${p.intern_id}`}
+                  </small>
                 </span>
-                <CopyLink role={p.role} id={p.id} />
+                <CopyLink role={p.role} pairId={p.pair_id} disabled={needsKey} />
               </li>
             ))}
           </ul>
         </>
       )}
-      {month && missing.length === 0 && <p className={s.sub}>За {month}-й месяц заполнили все</p>}
+      {people && missing.length === 0 && <p className={s.sub}>
+        {people.interns.length ? 'Все анкеты получены' : 'В программе пока нет участников'}
+      </p>}
     </>
   )
 }
 
-function CopyLink({ role, id }: { role: Role; id: string }) {
+function CopyLink({ role, pairId, disabled }: { role: Role; pairId: string; disabled: boolean }) {
   const [done, setDone] = useState(false)
-  const url = `${location.origin}/form?role=${role}&id=${encodeURIComponent(id)}`
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const copy = async () => {
+    const key = sessionStorage.getItem(HR_KEY_STORAGE)
+    if (!key) return
+    setBusy(true)
+    setError('')
     try {
-      await navigator.clipboard.writeText(url)
-      setDone(true)
-      setTimeout(() => setDone(false), 2000)
-    } catch {
-      window.prompt('Ссылка на анкету', url)
+      const { url } = await api.googleFormLink(key, pairId, role)
+      try {
+        await navigator.clipboard.writeText(url)
+        setDone(true)
+        setTimeout(() => setDone(false), 2000)
+      } catch {
+        window.prompt('Личная ссылка на анкету', url)
+      }
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Ссылку не удалось получить.')
+    } finally {
+      setBusy(false)
     }
   }
   return (
-    <button type="button" className={s.copy} onClick={() => void copy()}>
-      {done ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-      {done ? 'Скопировано' : 'Ссылка на анкету'}
-    </button>
+    <div className={s.copyAction}>
+      <button type="button" className={s.copy} disabled={disabled || busy} onClick={() => void copy()}>
+        {done ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+        {done ? 'Скопировано' : 'Скопировать ссылку'}
+      </button>
+      {error && <small className={s.copyError} role="alert">{error}</small>}
+    </div>
   )
 }
 

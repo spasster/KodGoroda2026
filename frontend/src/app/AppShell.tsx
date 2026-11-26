@@ -60,6 +60,9 @@ export function AppShell() {
             <Link to="/analytics" aria-current={section === 'analytics' ? 'page' : undefined}>
               Аналитика
             </Link>
+            <Link to="/polls" aria-current={pathname === '/polls' ? 'page' : undefined}>
+              Опросы
+            </Link>
             <a href="/form" target="_blank" rel="noopener" className={s.formLink}>
               Форма
               <ArrowUpRight aria-hidden="true" strokeWidth={1.8} />

@@ -22,7 +22,9 @@ def test_env_example_lists_every_setting():
     names = {line.split("=", 1)[0] for line in (REPO / ".env.example").read_text(encoding="utf-8").splitlines()
              if "=" in line and not line.startswith("#")}
     assert names == {"DB_PATH", "SURVEY_DIR", "SAMPLE_DIR", "LLM_PROVIDER", "LLM_BASE_URL", "LLM_MODEL", "LLM_API_KEY",
-                     "GSHEET_CSV_URL_INTERN", "GSHEET_CSV_URL_MENTOR", "GSHEET_POLL_SECONDS"}
+                     "GSHEET_CSV_URL_INTERN", "GSHEET_CSV_URL_MENTOR", "GSHEET_POLL_SECONDS", "GOOGLE_FORMS_CLIENT_ID",
+                     "GOOGLE_FORMS_CLIENT_SECRET", "GOOGLE_FORMS_REFRESH_TOKEN", "GOOGLE_FORMS_HR_KEY",
+                     "GOOGLE_FORMS_LINK_SECRET", "GOOGLE_FORMS_POLL_SECONDS"}
 
 
 def test_relative_paths_are_from_backend(monkeypatch):
