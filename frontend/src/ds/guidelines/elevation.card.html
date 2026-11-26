@@ -1,0 +1,19 @@
+<!-- @dsCard group="Spacing" viewport="700x160" name="Elevation" subtitle="shadow-low · middle · high" -->
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;padding:28px;background:var(--color-background-lower);font-family:var(--font-compact)}
+  .row{display:flex;gap:28px;flex-wrap:wrap}
+  .sw{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .box{width:150px;height:72px;background:var(--color-background-primary);border-radius:var(--radius-m)}
+  .meta{font-size:12px;text-align:center}
+  .name{color:var(--color-text-primary);font-weight:500}
+  .val{color:var(--color-text-secondary)}
+</style></head>
+<body>
+  <div class="row">
+    <div class="sw"><div class="box" style="box-shadow:var(--shadow-low)"></div><div class="meta"><div class="name">shadow-low</div><div class="val">карточки</div></div></div>
+    <div class="sw"><div class="box" style="box-shadow:var(--shadow-middle)"></div><div class="meta"><div class="name">shadow-middle</div><div class="val">дропдауны, тултипы</div></div></div>
+    <div class="sw"><div class="box" style="box-shadow:var(--shadow-high)"></div><div class="meta"><div class="name">shadow-high</div><div class="val">модальные окна</div></div></div>
+  </div>
+</body></html>

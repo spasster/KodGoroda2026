@@ -1,0 +1,111 @@
+<!-- @dsCard group="Brand" viewport="700x560" name="Icon set — поиск" subtitle="179 интерфейс-иконок Granat · поиск, outline/fill, размер" -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;padding:20px;background:var(--color-background-primary);font-family:var(--font-compact);color:var(--color-text-primary)}
+  .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .field{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid var(--color-control-stroke);border-radius:var(--radius-m);flex:1;min-width:200px}
+  .field input{border:none;outline:none;background:transparent;font-family:var(--font-compact);font-size:15px;width:100%;color:var(--color-text-primary)}
+  .seg{display:inline-flex;background:var(--color-background-secondary);border-radius:var(--radius-s);padding:3px}
+  .seg button{border:none;background:transparent;font-family:var(--font-compact);font-size:14px;padding:6px 14px;border-radius:6px;cursor:pointer;color:var(--color-text-secondary)}
+  .seg button.on{background:var(--color-background-primary);color:var(--color-text-brand);box-shadow:var(--shadow-low);font-weight:500}
+  .count{font-size:13px;color:var(--color-text-tertiary);margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:var(--radius-m);border:1px solid var(--color-line);cursor:pointer;transition:background var(--duration-fast) var(--ease-standard),border-color var(--duration-fast)}
+  .cell:hover{background:var(--color-brand-subtle);border-color:var(--color-brand)}
+  .cell svg{color:var(--color-icons-primary)}
+  .cell.copied{background:var(--color-accent-positive-bg);border-color:var(--color-accent-positive)}
+  .cap{font-size:10px;color:var(--color-text-tertiary);text-align:center;line-height:1.25;word-break:break-word}
+  .empty{padding:40px;text-align:center;color:var(--color-text-tertiary)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+  const { Icon } = window.DesignSystemMGTS_656a78;
+  const ALL = Object.keys(window.__MGTS_ICONS || {});
+
+  // Group keys by base name (strip SizeNN…StyleXxx); track which styles exist.
+  const bases = {};
+  for (const key of ALL) {
+    const m = key.match(/^(.*?)Size(\d+)(MediaOnly)?Style(.*)$/);
+    if (!m) continue;
+    const base = m[1], size = m[2], style = (m[4] || '').toLowerCase();
+    if (!bases[base]) bases[base] = { base, sizes: new Set(), outline: false, fill: false };
+    bases[base].sizes.add(size);
+    if (style.includes('outline')) bases[base].outline = true;
+    if (style.includes('fill')) bases[base].fill = true;
+  }
+  const LIST = Object.values(bases).sort((a, b) => a.base.localeCompare(b.base));
+  const spaced = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+
+  function pickName(b, style, size) {
+    // prefer requested style+size, then fall back gracefully
+    const want = (st, sz) => ALL.find(k => k.startsWith(b.base + 'Size' + sz) && k.toLowerCase().includes(st));
+    const sizes = [size, '24', '16', '32', '28', '44'];
+    const styles = style === 'fill' ? ['fill', 'outline'] : ['outline', 'fill'];
+    for (const st of styles) for (const sz of sizes) { const n = want(st, sz); if (n) return n; }
+    return ALL.find(k => k.startsWith(b.base + 'Size'));
+  }
+
+  function Gallery() {
+    const [q, setQ] = React.useState('');
+    const [style, setStyle] = React.useState('outline');
+    const [size, setSize] = React.useState(24);
+    const [copied, setCopied] = React.useState(null);
+    const norm = q.trim().toLowerCase().replace(/\s+/g, '');
+    const shown = LIST.filter(b => !norm || b.base.toLowerCase().includes(norm));
+
+    function copy(name) {
+      const tag = '<Icon name="' + name + '" size={' + size + '} />';
+      navigator.clipboard && navigator.clipboard.writeText(tag);
+      setCopied(name); setTimeout(() => setCopied(null), 900);
+    }
+
+    return (
+      <div>
+        <div className="controls">
+          <label className="field">
+            <Icon name="SearchSize24StyleOutline" size={20} style={{ color: 'var(--color-icons-secondary)', flexShrink: 0 }} />
+            <input placeholder="Поиск иконки — search, document, gavel…" value={q} onChange={(e) => setQ(e.target.value)} />
+          </label>
+          <div className="seg">
+            <button className={style === 'outline' ? 'on' : ''} onClick={() => setStyle('outline')}>Outline</button>
+            <button className={style === 'fill' ? 'on' : ''} onClick={() => setStyle('fill')}>Fill</button>
+          </div>
+          <div className="seg">
+            {[16, 24, 32].map(s => (
+              <button key={s} className={size === s ? 'on' : ''} onClick={() => setSize(s)}>{s}</button>
+            ))}
+          </div>
+        </div>
+        <div className="count">{shown.length} из {LIST.length} иконок · клик — скопировать &lt;Icon&gt;</div>
+        {shown.length === 0
+          ? <div className="empty">Ничего не найдено по запросу «{q}»</div>
+          : (
+            <div className="grid">
+              {shown.map(b => {
+                const name = pickName(b, style, String(size));
+                return (
+                  <div key={b.base} className={'cell' + (copied === name ? ' copied' : '')} onClick={() => copy(name)} title={name}>
+                    <Icon name={name} size={size} />
+                    <span className="cap">{copied === name ? 'Скопировано' : spaced(b.base)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Gallery />);
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
-// Шрифты и токены МГТС первыми: от них зависят все стили ниже (docs/design/v2.md).
-import './styles/fonts.css'
+// Дизайн-система МГТС первой (шрифты и токены), поверх неё имена приложения (docs/design/v2.md).
+import './ds/styles.css'
 import './styles/tokens.css'
 import './styles/base.css'
 

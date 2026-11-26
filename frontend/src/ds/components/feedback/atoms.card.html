@@ -1,0 +1,53 @@
+<!-- @dsCard group="Components" viewport="700x440" name="Link · Spinner · Progress · Banner · Divider · Counter · Code" subtitle="Atoms — links, loaders, banners, code input" -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--color-background-primary); font-family: var(--font-compact); }
+  .row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .label { font-size: 12px; color: var(--color-text-tertiary); width: 100%; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .col { max-width: 440px; flex-direction: column; align-items: stretch; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+  const { Link, Spinner, ProgressBar, Banner, Divider, Counter, CodeInput } = window.DesignSystemMGTS_656a78;
+  function Demo() {
+    const [code, setCode] = React.useState('12');
+    return (
+      <div>
+        <div className="row">
+          <span className="label">Link · Spinner · Counter</span>
+          <Link href="#" iconRight="DownloadSize24StyleOutline">Скачать отчёт</Link>
+          <Spinner size="s" /><Spinner size="m" />
+          <Counter value={5} /><Counter value={128} max={99} tone="brand" />
+        </div>
+        <div className="row col">
+          <span className="label">Progress</span>
+          <ProgressBar value={65} showValue />
+        </div>
+        <div className="row col">
+          <span className="label">Banner</span>
+          <Banner tone="warning" title="Срок согласования истекает" description="По документу №2024-117 осталось 2 дня"
+            action={<Link href="#">Открыть документ</Link>} />
+        </div>
+        <div className="row"><span className="label">Divider</span></div>
+        <Divider label="или" />
+        <div className="row" style={{marginTop:18}}>
+          <span className="label">Code input</span>
+          <CodeInput length={4} value={code} onChange={setCode} />
+        </div>
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

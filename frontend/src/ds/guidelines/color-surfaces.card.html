@@ -1,0 +1,23 @@
+<!-- @dsCard group="Colors" viewport="700x180" name="Surfaces & Text" subtitle="Background and text semantic tokens" -->
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;padding:20px;background:var(--color-background-primary);font-family:var(--font-compact)}
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .sw{display:flex;flex-direction:column;gap:8px}
+  .chip{width:108px;height:60px;border-radius:var(--radius-m);border:1px solid var(--color-line)}
+  .meta{font-size:12px;line-height:1.4}
+  .name{color:var(--color-text-primary);font-weight:500}
+  .hex{color:var(--color-text-secondary)}
+</style></head>
+<body>
+  <div class="row">
+    <div class="sw"><div class="chip" style="background:var(--color-background-primary)"></div><div class="meta"><div class="name">bg primary</div><div class="hex">#ffffff</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-background-secondary)"></div><div class="meta"><div class="name">bg secondary</div><div class="hex">#f2f3f7</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-background-lower)"></div><div class="meta"><div class="name">bg lower</div><div class="hex">#e9ecf0</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-background-inverted)"></div><div class="meta"><div class="name">inverted</div><div class="hex">#1d2023</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-text-primary)"></div><div class="meta"><div class="name">text primary</div><div class="hex">#1d2023</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-text-secondary)"></div><div class="meta"><div class="name">text secondary</div><div class="hex">#626c77</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--color-text-tertiary)"></div><div class="meta"><div class="name">text tertiary</div><div class="hex">#969fa8</div></div></div>
+  </div>
+</body></html>

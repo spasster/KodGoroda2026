@@ -1,0 +1,20 @@
+<!-- @dsCard group="Spacing" viewport="700x180" name="Radii" subtitle="8 / 12 / 32 / 80 — the Granat radius grid" -->
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;padding:24px;background:var(--color-background-primary);font-family:var(--font-compact)}
+  .row{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
+  .sw{display:flex;flex-direction:column;gap:8px;align-items:center}
+  .box{width:84px;height:84px;background:var(--color-brand-subtle);border:1px solid var(--color-brand)}
+  .meta{font-size:12px;text-align:center}
+  .name{color:var(--color-text-primary);font-weight:500}
+  .val{color:var(--color-text-secondary)}
+</style></head>
+<body>
+  <div class="row">
+    <div class="sw"><div class="box" style="border-radius:var(--radius-s)"></div><div class="meta"><div class="name">radius-s</div><div class="val">8px</div></div></div>
+    <div class="sw"><div class="box" style="border-radius:var(--radius-m)"></div><div class="meta"><div class="name">radius-m</div><div class="val">12px</div></div></div>
+    <div class="sw"><div class="box" style="border-radius:var(--radius-l)"></div><div class="meta"><div class="name">radius-l</div><div class="val">32px</div></div></div>
+    <div class="sw"><div class="box" style="border-radius:var(--radius-xl)"></div><div class="meta"><div class="name">radius-xl</div><div class="val">80px</div></div></div>
+  </div>
+</body></html>

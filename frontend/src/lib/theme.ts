@@ -2,6 +2,7 @@
 // theme. Для явного выбора на <html> ставится data-theme, для системной атрибута
 // нет и работает prefers-color-scheme (так устроен src/styles/tokens.css).
 // Тот же выбор до загрузки React применяет скрипт в index.html.
+// Дизайн-система МГТС переключает тему классом dark на <html>: его ставит applyClass.
 
 import { useCallback, useSyncExternalStore } from 'react'
 import { flushSync } from 'react-dom'
@@ -25,6 +26,13 @@ function readStored(): ThemePref {
 let current: ThemePref = readStored()
 const listeners = new Set<() => void>()
 
+function applyClass() {
+  const dark = current === 'dark' || (current === 'system' && window.matchMedia(DARK_QUERY).matches)
+  document.documentElement.classList.toggle('dark', dark)
+}
+applyClass()
+window.matchMedia(DARK_QUERY).addEventListener('change', applyClass)
+
 export function getThemePref(): ThemePref {
   return current
 }
@@ -35,6 +43,7 @@ export function setThemePref(pref: ThemePref) {
   const root = document.documentElement
   if (pref === 'system') delete root.dataset.theme
   else root.dataset.theme = pref
+  applyClass()
   try {
     if (pref === 'system') localStorage.removeItem(STORAGE_KEY)
     else localStorage.setItem(STORAGE_KEY, pref)

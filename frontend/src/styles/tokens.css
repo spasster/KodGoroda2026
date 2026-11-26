@@ -1,61 +1,65 @@
 /*
-  Токены в стиле МГТС. Палитра, шрифты, радиусы и тени взяты с сайта чемпионата studchamp.mgts.ru
-  (дизайн-система Granat группы МТС, синий МГТС #008AE0).
-  Правило: синий — только то, на что нажимают. Статус — точка и мягкая заливка, текст всегда графитовый.
+  Токены приложения поверх дизайн-системы МГТС (src/ds, выдана на финале 26.11).
+  Значения берём из её семантических токенов --color-*, --radius-*, --font-*; здесь только короткие
+  имена, которыми пользуются стили страниц, и то, чего в системе нет (графики, лента, подсветка цитаты).
+  Правило: синий — только то, на что нажимают. Светофор: positive / warning / negative из системы.
   Описание и запреты: docs/design/v2.md.
 */
 :root {
   color-scheme: light;
 
-  /* Палитра МГТС */
-  --mgts-blue: #008AE0;
-  --mgts-blue-hover: #0072BD;
-  --mgts-blue-active: #005C99;
-  --mgts-blue-wash: #E6F4FC;
+  /* Бренд */
+  --mgts-blue: var(--color-brand);
+  --mgts-blue-hover: var(--color-brand-hover);
+  --mgts-blue-active: var(--color-brand-active);
+  --mgts-blue-wash: var(--color-brand-subtle);
 
-  /* Поверхности */
-  --bg: #F2F3F7;
-  --surface: #FFFFFF;
-  --sunken: #F2F3F7;
-  --hover: #F7F8FA;
+  /* Поверхности: страница на lower, карточки на primary, утопленное на secondary */
+  --bg: var(--color-background-lower);
+  --surface: var(--color-background-primary);
+  --sunken: var(--color-background-secondary);
+  --hover: var(--color-background-hover);
 
   /* Текст */
-  --text-1: #1D2023;
-  --text-2: #626C77;
-  --text-3: #969FA8;
-  --text-inverse: #FAFAFA;
+  --text-1: var(--color-text-primary);
+  --text-2: var(--color-text-secondary);
+  --text-3: var(--color-text-tertiary);
+  --text-inverse: var(--color-text-inverted);
 
   /* Линии */
-  --line: #E2E5EB;
-  --line-strong: #BBC1C9;
+  --line: var(--color-line);
+  --line-strong: var(--color-control-disabled);
 
   /* Интерактив */
-  --brand: var(--mgts-blue);
-  --brand-hover: var(--mgts-blue-hover);
-  --brand-active: var(--mgts-blue-active);
-  --brand-fg: #FFFFFF;
-  --brand-text: #0072BD;
-  --brand-wash: var(--mgts-blue-wash);
-  --focus: var(--mgts-blue);
+  --brand: var(--color-brand);
+  --brand-hover: var(--color-brand-hover);
+  --brand-active: var(--color-brand-active);
+  --brand-fg: #fff;
+  --brand-text: var(--color-brand-hover);
+  --brand-wash: var(--color-brand-subtle);
+  --focus: var(--color-brand);
 
-  /* Статусы: точка + мягкая заливка ячейки */
-  --risk: #F95721;
-  --risk-wash: #FDD9CC;
-  --watch: #E8A400;
-  --watch-wash: #FDEBBF;
-  --ok: #26CD58;
-  --ok-wash: #E3F8E9;
-  --empty-wash: #F2F3F7;
+  /* Светофор: акцент для точки и линии, *-bg для заливки ячейки, *-strong для текста на заливке */
+  --risk: var(--color-accent-negative);
+  --risk-wash: var(--color-accent-negative-bg);
+  --risk-text: var(--color-text-negative-strong);
+  --watch: var(--color-accent-warning);
+  --watch-wash: var(--color-accent-warning-bg);
+  --watch-text: var(--color-text-warning-strong);
+  --ok: var(--color-accent-positive);
+  --ok-wash: var(--color-accent-positive-bg);
+  --ok-text: var(--color-text-positive-strong);
+  --empty-wash: var(--color-background-secondary);
 
   /* Графики: стажёр графит, наставник серый. Синий только у того, на что нажимают. */
-  --series-intern: #1D2023;
-  --series-mentor: #969FA8;
+  --series-intern: var(--color-text-primary);
+  --series-mentor: var(--color-text-tertiary);
   --series-gap: rgb(249 87 33 / .12);
-  --chart-grid: #E2E5EB;
+  --chart-grid: var(--color-line);
   --risk-gap: rgb(249 87 33 / .16);
   --watch-gap: rgb(250 192 49 / .22);
 
-  /* Графитовая лента наверху страницы, как герой studchamp.mgts.ru */
+  /* Графитовая лента наверху страницы */
   --hero-bg: #1D2023;
   --hero-text: #FAFAFA;
   --hero-text-2: #BBC1C9;
@@ -65,46 +69,38 @@
   /* Подсветка цитаты */
   --mark-bg: rgb(250 192 49 / .28);
 
-  /* Тени Granat */
-  --shadow-low: 0 2px 8px rgb(29 32 35 / .08), 0 0 1px rgb(29 32 35 / .12);
-  --shadow-middle: 0 4px 16px rgb(29 32 35 / .12), 0 0 1px rgb(29 32 35 / .12);
-  --shadow-high: 0 12px 40px rgb(29 32 35 / .18), 0 0 1px rgb(29 32 35 / .12);
+  /* Тени: --shadow-low / middle / high приходят из системы */
   --shadow-pop: var(--shadow-high);
 
-  /* Шрифты МГТС */
-  --font: 'MTS Compact', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-text: 'MTS Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-wide: 'MTS Wide', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  /* Шрифты: семейства из системы. Размеры по её шкале: 12 / 14 / 15 / 17 / 20 / 24 / 32 */
+  --font: var(--font-compact);
   --fs-xs: 13px;
-  --fs-s: 15px;
-  --fs-m: 17px;
-  --fs-l: 20px;
-  --fs-xl: 24px;
-  --fs-page: 28px;
+  --fs-s: var(--type-body-size);
+  --fs-m: var(--type-body-lg-size);
+  --fs-l: var(--type-h3-size);
+  --fs-xl: var(--type-h2-size);
+  --fs-page: var(--type-h1-size);
   --fs-2xl: 32px;
   --fs-3xl: 44px;
   --lh-tight: 1.15;
   --lh-snug: 1.3;
   --lh-body: 1.45;
-  --fw-regular: 400;
-  --fw-medium: 500;
-  --fw-bold: 700;
 
   /* Отступы, шаг 4 */
-  --s-1: 4px;
-  --s-2: 8px;
-  --s-3: 12px;
-  --s-4: 16px;
-  --s-5: 24px;
-  --s-6: 32px;
-  --s-7: 48px;
-  --s-8: 64px;
+  --s-1: var(--space-4);
+  --s-2: var(--space-8);
+  --s-3: var(--space-12);
+  --s-4: var(--space-16);
+  --s-5: var(--space-24);
+  --s-6: var(--space-32);
+  --s-7: var(--space-48);
+  --s-8: var(--space-64);
 
-  /* Радиусы Granat */
-  --r-s: 4px;
-  --r-m: 6px;
-  --r-card: 8px;
-  --r-pill: 999px;
+  /* Радиусы: сетка системы 8 / 12 / 32 / 80 */
+  --r-s: var(--radius-s);
+  --r-m: var(--radius-m);
+  --r-card: var(--radius-m);
+  --r-pill: var(--radius-xl);
 
   /* Сетка */
   --content-max: 1280px;
@@ -112,8 +108,8 @@
   --header-h: 64px;
 
   /* Движение */
-  --dur-1: 120ms;
-  --dur-2: 200ms;
+  --dur-1: var(--duration-fast);
+  --dur-2: var(--duration-base);
   --dur-3: 320ms;
   --dur-4: 480ms;
   --ease-out: cubic-bezier(.2, .8, .2, 1);
@@ -123,74 +119,16 @@
 @media (max-width: 1199px) { :root { --gutter: 24px; } }
 @media (max-width: 767px) { :root { --gutter: 16px; --header-h: 56px; } }
 
-/* Тёмная тема: графит Granat, синий МГТС посветлее */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #141618;
-    --surface: #1D2023;
-    --sunken: #26292D;
-    --hover: #24272B;
-    --text-1: #FAFAFA;
-    --text-2: #BBC1C9;
-    --text-3: #8D969F;
-    --text-inverse: #1D2023;
-    --line: #2C3135;
-    --line-strong: #4A5157;
-    --brand: #45B6FC;
-    --brand-hover: #6CC5FD;
-    --brand-active: #B3DDF5;
-    --brand-fg: #0B1A24;
-    --brand-text: #45B6FC;
-    --brand-wash: rgb(69 182 252 / .14);
-    --focus: #45B6FC;
-    --risk-wash: rgb(249 87 33 / .18);
-    --watch-wash: rgb(232 164 0 / .14);
-    --ok-wash: rgb(38 205 88 / .16);
-    --empty-wash: #26292D;
-    --series-intern: #FAFAFA;
-    --series-mentor: #8D969F;
-    --series-gap: rgb(249 87 33 / .16);
-    --watch: #FAC031;
-    --hero-bg: #0E1012;
-    --hero-line: #26292D;
-    --chart-grid: #2C3135;
-    --mark-bg: rgb(250 192 49 / .30);
-    --shadow-low: 0 2px 8px rgb(0 0 0 / .4);
-    --shadow-middle: 0 4px 16px rgb(0 0 0 / .45);
-    --shadow-high: 0 12px 40px rgb(0 0 0 / .55);
-  }
-}
-:root[data-theme="dark"] {
+/* Тёмная тема: класс dark на <html>, как в дизайн-системе (ставит lib/theme.ts и скрипт в index.html).
+   Поверхности, текст, линии и светофор переключает сама система, здесь только своё. */
+.dark {
   color-scheme: dark;
-  --bg: #141618;
-  --surface: #1D2023;
-  --sunken: #26292D;
-  --hover: #24272B;
-  --text-1: #FAFAFA;
-  --text-2: #BBC1C9;
-  --text-3: #8D969F;
-  --text-inverse: #1D2023;
-  --line: #2C3135;
-  --line-strong: #4A5157;
-  --brand: #45B6FC;
-  --brand-hover: #6CC5FD;
-  --brand-active: #B3DDF5;
-  --brand-fg: #0B1A24;
-  --brand-text: #45B6FC;
-  --brand-wash: rgb(69 182 252 / .14);
-  --focus: #45B6FC;
-  --risk-wash: rgb(249 87 33 / .18);
-  --watch-wash: rgb(232 164 0 / .14);
-  --ok-wash: rgb(38 205 88 / .16);
-  --empty-wash: #26292D;
-  --series-intern: #FAFAFA;
-  --series-mentor: #8D969F;
+  --line-strong: var(--color-control-stroke-hover);
+  --brand-text: var(--color-text-brand);
+  --focus: var(--color-text-brand);
   --series-gap: rgb(249 87 33 / .16);
-  --watch: #FAC031;
   --hero-bg: #0E1012;
   --hero-line: #26292D;
-  --chart-grid: #2C3135;
   --mark-bg: rgb(250 192 49 / .30);
   --shadow-low: 0 2px 8px rgb(0 0 0 / .4);
   --shadow-middle: 0 4px 16px rgb(0 0 0 / .45);

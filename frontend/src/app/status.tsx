@@ -1,9 +1,11 @@
-// Статус пары и месяца по v2: цветная точка и слово. Текст всегда --text-1.
-// Подписи в lib/format.ts, PAIR_STATUS_LABEL (docs/design/v2.md, «Стиль»).
+// Статус пары и месяца, светофор из ТЗ: positive / warning / negative дизайн-системы МГТС.
+// Dot — точка в строках и легендах, StatusText — пилюля StatusPill со словом.
+// Подписи в lib/format.ts, PAIR_STATUS_LABEL.
 
 import clsx from 'clsx'
 
 import type { PairStatus } from '../api/types'
+import { StatusPill } from '../ds/components/data-display/StatusPill'
 import { PAIR_STATUS_LABEL } from '../lib/format'
 import s from './status.module.css'
 
@@ -11,11 +13,8 @@ export function Dot({ status, className }: { status: PairStatus; className?: str
   return <i aria-hidden="true" className={clsx(s.dot, s[status], className)} />
 }
 
-export function StatusText({ status, className }: { status: PairStatus; className?: string }) {
-  return (
-    <span className={clsx(s.label, className)}>
-      <Dot status={status} />
-      {PAIR_STATUS_LABEL[status]}
-    </span>
-  )
+const TONE = { risk: 'negative', watch: 'warning', ok: 'positive' } as const
+
+export function StatusText({ status }: { status: PairStatus }) {
+  return <StatusPill tone={TONE[status]}>{PAIR_STATUS_LABEL[status]}</StatusPill>
 }

@@ -1,5 +1,5 @@
 // Оболочка дашборда (docs/design/v2.md, «Шапка»): белая полоса 64px со знаком
-// МГТС, меню, точкой связи и кнопкой темы. Ниже страница, уведомления о новых
+// МГТС из дизайн-системы, меню, точкой связи и кнопкой темы. Ниже страница, уведомления о новых
 // анкетах и демо-пульт. Форма живёт без оболочки, см. router.tsx.
 
 import { ArrowUpRight, Moon, Sun } from 'lucide-react'
@@ -8,6 +8,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 
 import { useOverview } from '../api/queries'
 import { DemoPanel } from '../demo/DemoPanel'
+import { Logo } from '../ds/components/brand/Logo'
 import { useProjector } from '../lib/projector'
 import { useTheme } from '../lib/theme'
 import { useLive } from '../live/useLive'
@@ -45,7 +46,7 @@ export function AppShell() {
       <header className={s.appbar}>
         <div className={`wrap ${s.bar}`}>
           <Link to="/" className={s.logo} aria-label="МГТС, стажировки">
-            <Mark />
+            <Logo variant="mark" size={40} />
             <span className={s.name}>Стажировки</span>
           </Link>
           <nav className={s.nav} aria-label="Разделы">
@@ -79,18 +80,6 @@ export function AppShell() {
       <Toasts />
       <DemoPanel />
     </>
-  )
-}
-
-// Знак МГТС: синий квадрат, «МГТС» шрифтом MTS Wide у нижнего края, как на studchamp.mgts.ru.
-function Mark() {
-  return (
-    <svg className={s.mark} viewBox="0 0 100 100" aria-hidden="true">
-      <rect width="100" height="100" rx="20" fill="var(--mgts-blue)" />
-      <text x="10" y="84" textLength="78" lengthAdjust="spacingAndGlyphs" fill="#fff" fontFamily="MTS Wide, sans-serif" fontWeight="700" fontSize="22">
-        МГТС
-      </text>
-    </svg>
   )
 }
 

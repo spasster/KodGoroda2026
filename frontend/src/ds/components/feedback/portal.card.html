@@ -1,0 +1,71 @@
+<!-- @dsCard group="Components" viewport="700x520" name="RangeSlider · FormChip · ButtonPrice · StickyBanner · CookieBanner · ActionBar" subtitle="Portal-specific web molecules" -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--color-background-primary); font-family: var(--font-compact); }
+  .label { font-size: 12px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 8px; }
+  .block { margin-bottom: 22px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+  const { RangeSlider, FormChip, ButtonPrice, StickyBanner, CookieBanner, ActionBar, Button } = window.DesignSystemMGTS_656a78;
+  function Demo() {
+    const [range, setRange] = React.useState([200, 700]);
+    const [chips, setChips] = React.useState(['petrov@mgts.ru','ivanova@mgts.ru']);
+    return (
+      <div>
+        <div className="block">
+          <p className="label">StickyBanner</p>
+          <StickyBanner tone="brand" icon="InformationSize24StyleOutline"
+            message="Плановые работы 28 июня с 02:00 до 04:00" actionLabel="Подробнее" onAction={()=>{}} onClose={()=>{}}
+            style={{borderRadius:'var(--radius-m)'}} />
+        </div>
+        <div className="block" style={{maxWidth:420}}>
+          <p className="label">RangeSlider</p>
+          <RangeSlider value={range} onChange={setRange} min={0} max={1000} step={50} showValues format={v=>v+' ₽'} />
+        </div>
+        <div className="block">
+          <p className="label">FormChip (input tokens)</p>
+          <div className="row">
+            {chips.map((c,i)=>(
+              <FormChip key={c} icon="MailSize24StyleOutline" onRemove={()=>setChips(chips.filter((_,j)=>j!==i))}>{c}</FormChip>
+            ))}
+          </div>
+        </div>
+        <div className="block">
+          <p className="label">ButtonPrice</p>
+          <div className="row">
+            <ButtonPrice label="Подключить" price="500 ₽" period="/мес" />
+            <ButtonPrice variant="secondary" label="Тариф «Базовый»" price="300 ₽" period="/мес" />
+          </div>
+        </div>
+        <div className="block">
+          <p className="label">ActionBar (Bottom-Button)</p>
+          <div style={{border:'1px solid var(--color-line)', borderRadius:'var(--radius-m)', overflow:'hidden'}}>
+            <ActionBar align="between">
+              <Button variant="ghost">Назад</Button>
+              <Button variant="primary">Продолжить</Button>
+            </ActionBar>
+          </div>
+        </div>
+        <div className="block">
+          <p className="label">CookieBanner</p>
+          <CookieBanner onAccept={()=>{}} onSettings={()=>{}} />
+        </div>
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>
