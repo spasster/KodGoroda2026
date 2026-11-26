@@ -25,6 +25,7 @@ docker-compose.yml, Makefile, .env.example
 - Вопрос: `id`, `type` (`scale`, `text` или `choice`), `text`. Текстовых вопросов на роль может быть несколько. `choice` (да/нет, выбор из списка) сохраняется как текст и не входит ни в индекс, ни в разбор текста. Варианты лежат в `options` вопроса; без них форма `/form` показывает «Да» и «Нет». Ответ уходит в `answers` под `id` вопроса, ответ необязательный.
 - `scale`: общая шкала для всех вопросов типа `scale` (`min`, `max`, подписи краёв).
 - `paired_questions`: какие вопросы стажёра и наставника сравниваются напрямую.
+- `technical_fields`: подписи служебных полей периода и подразделения. `score_labels` у вопроса задаёт расшифровку баллов. `legacy_questions` сохраняют чтение прежних анкет.
 - `months`: длительность программы.
 - `first_month` (необязательно, `"2026-06"`): первый месяц программы. Нужен, если в выгрузке месяц задан датой или названием, а в файле нет самой первой анкеты.
 
@@ -62,7 +63,7 @@ docker-compose.yml, Makefile, .env.example
 ## Хранение (SQLite)
 
 - `pairs(pair_id, intern_id, mentor_id)`. `pair_id` строится из ID стажёра: `S-03` → `P-03`. Если такой `pair_id` занят другим стажёром (`A-1` и `B-1`), берётся `P-` и ID стажёра целиком. Символы `/`, `:` и пробел в `pair_id` заменяются на `-`. Пара один к одному.
-- `responses(id, pair_id, role, person_id, month, source, submitted_at, created_at)`. `source`: `excel`, `form`, `yandex`, `gsheet`. Уникальность по `(pair_id, role, month)`, повторная анкета заменяет прежнюю.
+- `responses(id, pair_id, role, person_id, month, source, submitted_at, created_at)`. `source`: `excel`, `form`, `yandex`, `gsheet`, `google_forms`. Уникальность по `(pair_id, role, month)`, повторная анкета заменяет прежнюю.
 - `answers(response_id, question_id, score, text)`.
 - `reviews(signal_key, status, note, updated_at, month)`. Ключ — ситуация. `month` — последний месяц самой ситуации (`signal.month`) на момент отметки. В старой базе колонку добавляет `ALTER TABLE` при запуске.
 - `text_cache(text_hash, analyzer, result_json)`.
@@ -245,7 +246,11 @@ interface PairDetail extends PairSummary {
 | `POST /api/signals/{key}/review` | `key` — ключ ситуации. Тело `{status, note?}`, запоминает `review.month`, ответ — обновлённый `Signal` |
 | `GET /api/method` | `Method`: принципы, по каждому сигналу формула, причины, действие, ограничения и источник, число ситуаций по статусам; `quality` — содержимое `survey/quality.json` (в папке `SURVEY_DIR`) или `null` |
 | `POST /api/ingest` | приём анкеты, см. ниже |
-| `POST /api/ingest/yandex` | вебхук Яндекс Форм, см. ниже |
+| `GET /api/hr/google-forms` | две формы и статус последней доставки по каждой роли |
+| `POST /api/hr/google-forms` | создать или продолжить публикацию двух форм. Тело `{"cohort": "Название потока"}` |
+| `POST /api/hr/google-forms/prefill` | сохранить ссылку-заготовку. Тело `{"role": "intern", "url": "https://docs.google.com/forms/..."}` |
+| `POST /api/hr/google-forms/sync` | вручную синхронизировать ответы и получить состояние подключения |
+| `POST /api/hr/google-forms/link` | выдать подписанную ссылку на первый незаполненный период. Тело `{"pair_id": "P-01", "role": "intern"}` |
 | `POST /api/sync/gsheet` | забрать новые строки из опубликованных CSV Google Таблиц (`GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`) |
 | `POST /api/import/excel` | multipart: `interns`, `mentors` (любой из двух), `replace=true\|false`; ответ — отчёт импорта. Файл до 5 МБ, лист до 5000 строк и 200 колонок. `replace=true` с файлом без единой распознанной анкеты отвечает 422 и базу не трогает |
 | `POST /api/admin/reset` | очистить базу и загрузить `data/sample` |
@@ -268,7 +273,9 @@ interface PairDetail extends PairSummary {
 
 Личная ссылка: `token = base64url(HMAC-SHA256(секрет, "{role}:{person_id}"))[:16]`, ссылка `/form?t={role}.{person_id}.{token}`. Секрет из `FORM_SECRET`, иначе случайный ключ в `backend/var/form_secret` (создаётся при первом запуске, права 600, в логи не пишется). Сменили секрет, старые ссылки перестают работать. `token` в `GET /api/people` нужен только HR. На туннеле `:8081` nginx добавляет к этому запросу `X-Public-Form: 1`, и бэкенд отдаёт `token: null`: по открытой форме чужую личную ссылку не собрать.
 
-Вебхук Яндекс Форм `POST /api/ingest/yandex` принимает плоский JSON: `role`, `person_id`, `month` и ответы, где ключ — `id` вопроса или его текст. Значения могут быть строками. В Яндекс Формах в разделе «Интеграции» настраивается HTTP POST на `<адрес>/api/ingest/yandex` с телом-шаблоном из переменных ответов. Пример тела лежит в `docs/integrations.md`.
+Для маршрутов `/api/hr/google-forms` используйте `Authorization: Bearer <GOOGLE_FORMS_HR_KEY>`.
+
+Ответы Google Forms API привязываются по коду приглашения к роли, паре и первому незаполненному месяцу. Уникальность входящего события определяется парой formId и responseId. После анализа сервер публикует событие в `/api/events`.
 
 События `GET /api/events` (SSE), каждые 15 секунд комментарий `: ping`:
 - `event: response`, `data: {pair_id, role, person_id, month, source, new_signal_keys}` (ключи ситуаций, как в `new_signals`)
@@ -279,7 +286,7 @@ interface PairDetail extends PairSummary {
 
 - Бэкенд `:8000`, фронт в разработке `:5173` с прокси `/api` на бэкенд.
 - Docker: `web` на `:8080` (nginx отдаёт сборку фронта и проксирует `/api` в `api:8000`, включая SSE без буферизации), `api` внутри сети.
-- `make dev`, `make test`, `make data`, `make reset`, `make up`, `make tunnel` (cloudflared на `:8081`, чтобы форму можно было открыть с телефона). На `:8081` nginx отдаёт только `/form`, `/assets/`, `GET /api/survey`, `GET /api/people` и `POST /api/ingest`, дашборд и `/api/admin/*` через туннель не видны.
+- `make dev`, `make test`, `make data`, `make reset`, `make up`, `make tunnel` (cloudflared на `:8081`). На `:8081` Nginx пропускает только маршруты демоформы. Дашборд и административные маршруты доступны через основной порт.
 
 Переменные окружения (`.env.example`): `DB_PATH`, `SURVEY_DIR`, `SAMPLE_DIR`, `LLM_PROVIDER` (`rules`|`openai`), `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `GSHEET_CSV_URL_INTERN`, `GSHEET_CSV_URL_MENTOR`, `GSHEET_POLL_SECONDS` (0 — не опрашивать), `FORM_SECRET` (подпись личных ссылок на анкету).
 

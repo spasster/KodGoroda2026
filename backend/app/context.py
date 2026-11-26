@@ -5,6 +5,7 @@ import threading
 from dataclasses import dataclass
 
 from . import db
+from .adapters.google_api import GoogleFormsAPI
 from .analyzer import TextAnalyzer, build_analyzer, with_text_check
 from .config import Settings
 from .events import EventBus
@@ -45,6 +46,9 @@ class Context:
         self.form_secret = load_secret(settings.form_secret, settings.db_path.parent)
         # Запись и пересчёт «до и после» под одним замком, чтобы new_signals не путались.
         self.write_lock = threading.RLock()
+        self.google_forms_api = GoogleFormsAPI(settings)
+        self.google_forms_lock = threading.Lock()
+        self.google_sync_lock = threading.Lock()
 
     @property
     def survey(self) -> Survey:

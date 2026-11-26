@@ -18,7 +18,7 @@ from typing import Any
 
 from .survey import ROLES, Survey, normalize_header
 
-META_FIELDS = ("submitted_at", "intern_id", "mentor_id", "month")
+META_FIELDS = ("submitted_at", "intern_id", "mentor_id", "month", "department")
 LONG_FIELDS = ("question", "answer")  # длинный формат: колонки с текстом вопроса и ответом
 DEFAULT_MAP = {"month": "month"}  # заголовок, который подставляют сами преобразования
 MSK = timezone(timedelta(hours=3))  # выгрузки Tabs и Google Форм пишут московское время без зоны
@@ -54,6 +54,7 @@ class Record:
     month: int | None
     submitted_at: str | None
     answers: dict[str, tuple[float | None, str | None]]
+    department: str | None = None
 
 
 @dataclass
@@ -476,7 +477,7 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict,
     report.columns = [{"header": m.header, "field": m.field, "by": m.by} for m in matches]
     fields = {m.field: m.index for m in matches if m.field}
     questions = {q.id: q for q in survey.questions(role)}
-    report.missing_questions = [qid for qid in questions if qid not in fields]
+    report.missing_questions = [q.id for q in survey.questions(role, include_legacy=False) if q.id not in fields]
 
     person_field = f"{role}_id"
     if person_field not in fields:
@@ -534,7 +535,7 @@ def parse_table(table: Table, role: str, survey: Survey, import_map: dict,
             row=offset, role=role, person_id=person,
             intern_id=person if role == "intern" else parse_id(cell(row, "intern_id")),
             mentor_id=person if role == "mentor" else parse_id(cell(row, "mentor_id")),
-            month=month, submitted_at=iso(dt), answers=answers,
+            month=month, submitted_at=iso(dt), answers=answers, department=parse_text(cell(row, "department")),
         ))
         keys.append(key)
 

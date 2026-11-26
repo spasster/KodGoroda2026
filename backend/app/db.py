@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS responses (
     source       TEXT NOT NULL,
     submitted_at TEXT,
     created_at   TEXT NOT NULL,
+    department   TEXT,
     UNIQUE (pair_id, role, month)
 );
 CREATE TABLE IF NOT EXISTS answers (
@@ -50,6 +51,36 @@ CREATE TABLE IF NOT EXISTS text_cache (
     result_json TEXT NOT NULL,
     PRIMARY KEY (text_hash, analyzer)
 );
+CREATE TABLE IF NOT EXISTS google_forms (
+    role TEXT PRIMARY KEY CHECK (role IN ('intern', 'mentor')),
+    cohort TEXT NOT NULL,
+    document_title TEXT NOT NULL,
+    form_id TEXT UNIQUE,
+    template TEXT NOT NULL,
+    responder_url TEXT,
+    entry_param TEXT,
+    cursor TEXT,
+    synced_at TEXT,
+    sync_error TEXT
+);
+CREATE TABLE IF NOT EXISTS google_form_invites (
+    code_hash TEXT PRIMARY KEY,
+    form_id TEXT NOT NULL REFERENCES google_forms(form_id),
+    pair_id TEXT NOT NULL REFERENCES pairs(pair_id) ON DELETE CASCADE,
+    person_id TEXT NOT NULL,
+    month INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS google_form_deliveries (
+    form_id TEXT NOT NULL REFERENCES google_forms(form_id),
+    external_id TEXT NOT NULL,
+    response_id INTEGER,
+    pair_id TEXT,
+    month INTEGER,
+    received_at TEXT NOT NULL,
+    analyzed_at TEXT,
+    rejection TEXT,
+    PRIMARY KEY (form_id, external_id)
+);
 """
 
 
@@ -74,9 +105,12 @@ def init_schema(path: Path) -> None:
     with connect(path) as conn:
         conn.execute("PRAGMA journal_mode = WAL")
         conn.executescript(SCHEMA)
+        conn.execute("BEGIN IMMEDIATE")
         # База с прошлой версии: отметка теперь помнит месяц.
         if "month" not in {r["name"] for r in conn.execute("PRAGMA table_info(reviews)")}:
             conn.execute("ALTER TABLE reviews ADD COLUMN month INTEGER")
+        if "department" not in {row["name"] for row in conn.execute("PRAGMA table_info(responses)")}:
+            conn.execute("ALTER TABLE responses ADD COLUMN department TEXT")
 
 
 def clear(conn: sqlite3.Connection) -> None:
@@ -133,6 +167,7 @@ def upsert_response(
     source: str,
     submitted_at: str | None,
     answers: dict[str, tuple[float | None, str | None]],
+    department: str | None = None,
     skip_unchanged: bool = False,
 ) -> tuple[int, bool, bool]:
     """Сохраняет анкету, прежняя за тот же месяц заменяется.
@@ -141,18 +176,20 @@ def upsert_response(
     теми же ответами и временем заполнения не перезаписывается.
     """
     old = conn.execute(
-        "SELECT id, submitted_at FROM responses WHERE pair_id = ? AND role = ? AND month = ?",
+        "SELECT id, submitted_at, department FROM responses WHERE pair_id = ? AND role = ? AND month = ?",
         (pair_id, role, month),
     ).fetchone()
     if old is not None:
-        if skip_unchanged and old["submitted_at"] == submitted_at and get_response_answers(conn, old["id"]) == answers:
+        department = department or old["department"]
+        if (skip_unchanged and old["submitted_at"] == submitted_at and old["department"] == department
+                and get_response_answers(conn, old["id"]) == answers):
             return old["id"], False, False
         conn.execute("DELETE FROM answers WHERE response_id = ?", (old["id"],))
         conn.execute("DELETE FROM responses WHERE id = ?", (old["id"],))
     cur = conn.execute(
-        "INSERT INTO responses (pair_id, role, person_id, month, source, submitted_at, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (pair_id, role, person_id, month, source, submitted_at, now_iso()),
+        "INSERT INTO responses (pair_id, role, person_id, month, source, submitted_at, created_at, department)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (pair_id, role, person_id, month, source, submitted_at, now_iso(), department),
     )
     response_id = int(cur.lastrowid)
     conn.executemany(

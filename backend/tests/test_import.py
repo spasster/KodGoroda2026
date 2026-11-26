@@ -122,8 +122,8 @@ def test_repo_import_map_matches_repo_survey():
     survey = json.loads((REPO_SURVEY / "survey.json").read_text(encoding="utf-8"))
     imap = json.loads((REPO_SURVEY / "import_map.json").read_text(encoding="utf-8"))
     for role, section in survey["roles"].items():
-        ids = {q["id"] for q in section["questions"]}
-        allowed = ids | {"submitted_at", "intern_id", "mentor_id", "month"}
+        ids = {q["id"] for q in section["questions"] + section.get("legacy_questions", [])}
+        allowed = ids | {"submitted_at", "intern_id", "mentor_id", "month", "department"}
         targets = {v for k, v in imap.get(role, {}).items() if not k.startswith("_") and v}
         assert targets <= allowed, f"{role}: в import_map есть поля, которых нет в анкете: {targets - allowed}"
     signals = json.loads((REPO_SURVEY / "signals.json").read_text(encoding="utf-8"))

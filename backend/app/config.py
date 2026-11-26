@@ -43,6 +43,12 @@ class Settings:
     gsheet_poll_seconds: int
     # Подпись личных ссылок на анкету. Пусто: ключ создаётся в папке с базой.
     form_secret: str = ""
+    google_forms_client_id: str = ""
+    google_forms_client_secret: str = ""
+    google_forms_refresh_token: str = ""
+    google_forms_hr_key: str = ""
+    google_forms_link_secret: str = ""
+    google_forms_poll_seconds: int = 15
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -59,4 +65,10 @@ class Settings:
             gsheet_csv_url_mentor=os.environ.get("GSHEET_CSV_URL_MENTOR") or "",
             gsheet_poll_seconds=int(os.environ.get("GSHEET_POLL_SECONDS") or 0),
             form_secret=(os.environ.get("FORM_SECRET") or "").strip(),
+            google_forms_client_id=os.environ.get("GOOGLE_FORMS_CLIENT_ID", "").strip(),
+            google_forms_client_secret=os.environ.get("GOOGLE_FORMS_CLIENT_SECRET", "").strip(),
+            google_forms_refresh_token=os.environ.get("GOOGLE_FORMS_REFRESH_TOKEN", "").strip(),
+            google_forms_hr_key=os.environ.get("GOOGLE_FORMS_HR_KEY", "").strip(),
+            google_forms_link_secret=os.environ.get("GOOGLE_FORMS_LINK_SECRET", "").strip(),
+            google_forms_poll_seconds=int(os.environ.get("GOOGLE_FORMS_POLL_SECONDS") or 15),
         )

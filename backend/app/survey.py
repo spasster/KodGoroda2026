@@ -6,13 +6,19 @@ signals.json, обновил страницу, увидел новые сигн�
 
 import json
 import re
-from dataclasses import dataclass
+from collections.abc import Iterable
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 ROLES = ("intern", "mentor")
 # Ответ на «Что за этим стоит?» к оценочному вопросу лежит под ключом «{вопрос}__why».
 FOLLOWUP_SUFFIX = "__why"
+
+
+def next_unanswered_month(months: int, answered: Iterable[int]) -> int | None:
+    filled = set(answered)
+    return next((month for month in range(1, months + 1) if month not in filled), None)
 
 
 def normalize_header(value: Any) -> str:
@@ -27,6 +33,7 @@ class Question:
     type: str
     text: str
     label: str = ""  # короткое название показателя, «Комфортность нагрузки»
+    score_labels: dict[str, str] = field(default_factory=dict)  # расшифровка шкалы из структуры анкеты
 
     @property
     def name(self) -> str:
@@ -47,14 +54,19 @@ class Survey:
         self.first_month: int | None = int(m[1]) * 12 + int(m[2]) - 1 if m else None
         self.roles: dict[str, dict] = raw.get("roles") or {}
         self.paired: list[dict] = raw.get("paired_questions") or []
+        self.technical_fields: dict[str, str] = raw.get("technical_fields") or {}
 
     @property
     def scale_range(self) -> float:
         return self.scale_max - self.scale_min
 
-    def questions(self, role: str) -> list[Question]:
-        items = (self.roles.get(role) or {}).get("questions") or []
-        return [Question(q["id"], q.get("type", "scale"), q.get("text", ""), q.get("label", "")) for q in items]
+    def questions(self, role: str, *, include_legacy: bool = True) -> list[Question]:
+        definition = self.roles.get(role) or {}
+        items = definition.get("questions") or []
+        if include_legacy:
+            items = items + (definition.get("legacy_questions") or [])
+        return [Question(q["id"], q.get("type", "scale"), q.get("text", ""), q.get("label", ""), q.get("score_labels") or {})
+                for q in items]
 
     def scale_ids(self, role: str) -> list[str]:
         return [q.id for q in self.questions(role) if q.type == "scale"]

@@ -150,6 +150,7 @@ def validate(survey: Survey, payload: Any) -> dict:
         "intern_id": parse_id(payload.get("intern_id")), "mentor_id": parse_id(payload.get("mentor_id")),
         "token": str(payload["token"]) if payload.get("token") is not None else None,
         "submitted_at": submitted_iso or db.now_iso(),
+        "department": parse_text(payload.get("department")),
     }
 
 
@@ -165,6 +166,7 @@ def ingest_one(ctx: Context, payload: Any) -> IngestResult:
             response_id, replaced, _ = db.upsert_response(
                 conn, pair_id=pair_id, role=data["role"], person_id=data["person_id"], month=data["month"],
                 source=data["source"], submitted_at=data["submitted_at"], answers=data["answers"],
+                department=data["department"],
             )
         new_signals = fresh(before, ctx.snapshot().signals)
     ctx.bus.publish("response", {
@@ -195,6 +197,7 @@ def store_records(conn: sqlite3.Connection, survey: Survey, records: list[Record
         _, replaced, was_changed = db.upsert_response(
             conn, pair_id=pair_id, role=rec.role, person_id=rec.person_id, month=rec.month, source=source,
             submitted_at=rec.submitted_at, answers=rec.answers, skip_unchanged=skip_unchanged,
+            department=rec.department,
         )
         if not was_changed:
             report.unchanged += 1

@@ -16,10 +16,14 @@ import type {
   Signal,
   SignalsQuery,
   Survey,
+  Role,
+  GoogleFormsStatus,
 } from './types'
 
 export const API_BASE = '/api'
 export const EVENTS_URL = `${API_BASE}/events`
+export const HR_KEY_STORAGE = 'google-forms-hr-key'
+const GOOGLE_FORMS_PATH = '/hr/google-forms'
 
 // Ошибка с текстом для человека: detail от бэкенда или наш, если бэкенд не ответил.
 export class ApiError extends Error {
@@ -74,6 +78,15 @@ function postJson<T>(path: string, data?: unknown): Promise<T> {
   })
 }
 
+function hrRequest<T>(path: string, key: string, data?: unknown): Promise<T> {
+  return request<T>(path, {
+    method: data === undefined ? 'GET' : 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: data === undefined ? undefined : JSON.stringify(data),
+    cache: 'no-store',
+  })
+}
+
 export const api = {
   health: () => request<Health>('/health'),
   survey: () => request<Survey>('/survey'),
@@ -98,7 +111,13 @@ export const api = {
   method: () => request<Method>('/method'),
 
   ingest: (payload: IngestRequest) => postJson<IngestResult>('/ingest', payload),
-  ingestYandex: (payload: Record<string, unknown>) => postJson<IngestResult>('/ingest/yandex', payload),
+  googleForms: (key: string) => hrRequest<GoogleFormsStatus>(GOOGLE_FORMS_PATH, key),
+  createGoogleForms: (key: string, cohort: string) => hrRequest<GoogleFormsStatus>(GOOGLE_FORMS_PATH, key, { cohort }),
+  setupGooglePrefill: (key: string, role: Role, url: string) =>
+    hrRequest<GoogleFormsStatus>(GOOGLE_FORMS_PATH + '/prefill', key, { role, url }),
+  syncGoogleForms: (key: string) => hrRequest<GoogleFormsStatus>(GOOGLE_FORMS_PATH + '/sync', key, {}),
+  googleFormLink: (key: string, pair_id: string, role: Role) =>
+    hrRequest<{ url: string; month: number }>(GOOGLE_FORMS_PATH + '/link', key, { pair_id, role }),
   syncGsheet: () => postJson<ImportReport>('/sync/gsheet'),
 
   importExcel: (files: { interns?: File; mentors?: File; replace?: boolean }) => {

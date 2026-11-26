@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Overview, Role } from '../../api/types'
 import { formLink } from '../../lib/formLink'
 import { ROLE_LABEL, personName, plural } from '../../lib/format'
+import { api, HR_KEY_STORAGE } from '../../api/client'
 import { dueMonths } from '../../lib/rules'
 import s from './Collect.module.css'
 
@@ -16,8 +17,8 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
   const answered = (month: number) => overview.pairs.some((p) => p.cells.some((c) => c.month === month && (!c.missing.intern || !c.missing.mentor)))
   const current = months.find((m) => !answered(m)) ?? fallback
   const rows = [
-    ...overview.pairs.map((p) => ({ role: 'intern' as Role, id: p.intern_id, name: personName(p.intern_name, p.intern_id), cells: p.cells, due: dueMonths(p) })),
-    ...overview.pairs.map((p) => ({ role: 'mentor' as Role, id: p.mentor_id, name: personName(p.mentor_name, p.mentor_id), cells: p.cells, due: dueMonths(p) })),
+    ...overview.pairs.map((p) => ({ role: 'intern' as Role, pairId: p.pair_id, id: p.intern_id, name: personName(p.intern_name, p.intern_id), cells: p.cells, due: dueMonths(p) })),
+    ...overview.pairs.map((p) => ({ role: 'mentor' as Role, pairId: p.pair_id, id: p.mentor_id, name: personName(p.mentor_name, p.mentor_id), cells: p.cells, due: dueMonths(p) })),
   ]
   const has = (role: Role, cells: Overview['pairs'][number]['cells'], m: number) => {
     const c = cells.find((x) => x.month === m)
@@ -79,7 +80,7 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
                   </td>
                 ))}
                 <td className={s.act}>
-                  {((current != null && !filled(current)) || months.some((m) => m <= r.due && !filled(m))) && <CopyLink role={r.role} id={r.id} name={r.name} />}
+                  {((current != null && !filled(current)) || months.some((m) => m <= r.due && !filled(m))) && <CopyLink role={r.role} id={r.id} pairId={r.pairId} name={r.name} />}
                 </td>
               </tr>
             )
@@ -91,12 +92,22 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
   )
 }
 
-function CopyLink({ role, id, name }: { role: Role; id: string; name: string }) {
+function CopyLink({ role, id, pairId, name }: { role: Role; id: string; pairId: string; name: string }) {
   const [done, setDone] = useState(false)
   const timer = useRef<number>(undefined)
   useEffect(() => () => window.clearTimeout(timer.current), [])
-  const url = formLink(role, id)
   const copy = async () => {
+    // HR открыл раздел «Опросы» с ключом: выдаём личную ссылку на Google Форму с кодом приглашения.
+    // Ключа нет или Google не настроен: ссылка на нашу форму.
+    let url = formLink(role, id)
+    const key = sessionStorage.getItem(HR_KEY_STORAGE)
+    if (key) {
+      try {
+        url = (await api.googleFormLink(key, pairId, role)).url
+      } catch {
+        // остаёмся на ссылке нашей формы
+      }
+    }
     try {
       await navigator.clipboard.writeText(url)
       setDone(true)

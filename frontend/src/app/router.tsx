@@ -7,6 +7,7 @@ import { FormQrPage } from '../pages/Form/Qr'
 import { MethodPage } from '../pages/Method'
 import { OverviewPage } from '../pages/Overview'
 import { PairPage } from '../pages/Pair'
+import { PollsPage } from '../pages/Polls'
 import { SignalsPage } from '../pages/Signals'
 import { LiveProvider } from '../live/LiveProvider'
 import { AppShell } from './AppShell'
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       { path: 'signals', element: <SignalsPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'method', element: <MethodPage /> },
+      { path: 'polls', element: <PollsPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },

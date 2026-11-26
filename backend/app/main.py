@@ -12,13 +12,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import db
 from .adapters.gsheet import poll_forever
+from .adapters.google_forms import poll_google_forms
 from .analyzer import TextAnalyzer
 from .config import Settings
 from .context import Context
 from .events import install_shutdown_hook
 from .importer import ImportFileError
 from .ingest import IngestError, load_sample
-from .routes import dashboard, events, extra, intake, meta
+from .routes import dashboard, events, extra, google_forms, intake, meta
 
 log = logging.getLogger("app")
 
@@ -78,6 +79,8 @@ def create_app(settings: Settings | None = None, analyzer: TextAnalyzer | None =
         install_shutdown_hook(ctx.bus)
         await asyncio.to_thread(startup, ctx)
         tasks = []
+        if ctx.google_forms_api.configured and settings.google_forms_link_secret and settings.google_forms_poll_seconds > 0:
+            tasks.append(asyncio.create_task(poll_google_forms(ctx)))
         has_urls = settings.gsheet_csv_url_intern or settings.gsheet_csv_url_mentor
         if settings.gsheet_poll_seconds > 0 and has_urls:
             tasks.append(asyncio.create_task(poll_forever(ctx, settings.gsheet_poll_seconds)))
@@ -94,7 +97,7 @@ def create_app(settings: Settings | None = None, analyzer: TextAnalyzer | None =
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    for module in (meta, dashboard, extra, intake, events):
+    for module in (meta, dashboard, extra, intake, events, google_forms):
         app.include_router(module.router, prefix="/api")
 
     @app.exception_handler(RequestValidationError)

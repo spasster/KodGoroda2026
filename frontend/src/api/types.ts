@@ -61,8 +61,9 @@ export type SeriesPoint = PairDetail['series'][number]
 export interface Health { ok: boolean; pairs: number; responses: number; analyzer: string }
 
 // GET /api/survey: содержимое survey/survey.json.
-// label — короткое название показателя из структуры анкеты МГТС («Понятность задач»), text — формулировка вопроса.
-export interface Question { id: string; type: 'scale' | 'text' | 'choice'; text: string; label?: string; options?: string[] }
+// label — короткое название показателя из структуры анкеты МГТС («Понятность задач»), text — формулировка вопроса,
+// score_labels — расшифровка шкалы из ТЗ.
+export interface Question { id: string; type: 'scale' | 'text' | 'choice'; text: string; label?: string; options?: string[]; score_labels?: Record<string, string> }
 export interface SurveyRole { title: string; person_label: string; questions: Question[] }
 // Пороги из survey/signals.json, которые нужны фронту. Бэкенд отдаёт их целиком.
 export interface Thresholds {
@@ -75,6 +76,7 @@ export interface Survey {
   months: number
   scale: { min: number; max: number; min_label: string; max_label: string }
   roles: Record<Role, SurveyRole>
+  technical_fields?: { department?: string; month?: string }
   paired_questions: { intern: string; mentor: string; label: string }[]
   thresholds: Thresholds
 }
@@ -100,11 +102,33 @@ export interface IngestRequest {
   source?: string
   intern_id?: string
   mentor_id?: string
+  department?: string
   submitted_at?: string
   // Подпись личной ссылки (people[].token). Нет токена: открытая форма.
   token?: string
 }
 export interface IngestResult { response_id: number; pair_id: string; replaced: boolean; new_signals: Signal[] }
+
+export interface GoogleForm {
+  role: Role
+  title: string
+  cohort: string
+  form_id: string | null
+  published: boolean
+  ready: boolean
+  edit_url: string | null
+  synced_at: string | null
+  sync_error: string | null
+  last_delivery: {
+    external_id: string
+    pair_id: string | null
+    month: number | null
+    received_at: string
+    analyzed_at: string | null
+    rejection: string | null
+  } | null
+}
+export interface GoogleFormsStatus { forms: GoogleForm[]; prefill_sample: string }
 
 // Отчёт импорта: POST /api/import/excel, /api/sync/gsheet, /api/admin/reset.
 export interface ImportFileReport {
