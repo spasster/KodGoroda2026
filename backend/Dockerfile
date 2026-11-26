@@ -5,6 +5,11 @@
 # Без тома /sample бэкенд стартует с пустой базой.
 FROM python:3.13-slim
 
+# Обновления безопасности Debian, которые ещё не попали в базовый образ.
+# pip в готовом образе не нужен: зависимости ставит uv, а вместе с pip приезжают его встроенные библиотеки с уязвимостями.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/* \
+    && pip uninstall -y pip
+
 COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /bin/uv
 
 ENV UV_COMPILE_BYTECODE=1 \
