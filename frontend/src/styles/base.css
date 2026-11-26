@@ -105,8 +105,8 @@ mark {
 .overline {
   display: block;
   color: var(--text-3);
-  font-family: var(--font-wide);
-  font-size: 11px;
+  font-family: var(--font-compact);
+  font-size: var(--type-caption-size);
   font-weight: var(--fw-medium);
   line-height: 1.2;
   letter-spacing: .12em;
@@ -121,7 +121,10 @@ mark {
   --fs-l: 23px;
   --fs-xl: 28px;
   --fs-page: 34px;
-  --risk-wash: #FBC3AE;
-  --watch-wash: #FBDF96;
-  --text-2: #4A535C;
+}
+/* Насыщеннее заливки и темнее вторичный текст только в светлой теме: в тёмной система уже даёт свои. */
+:root[data-projector]:not(.dark) {
+  --risk-wash: color-mix(in srgb, var(--color-accent-negative) 36%, var(--color-background-primary));
+  --watch-wash: color-mix(in srgb, var(--color-accent-warning) 50%, var(--color-background-primary));
+  --text-2: color-mix(in srgb, var(--color-text-secondary) 60%, var(--color-text-primary));
 }

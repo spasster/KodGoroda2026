@@ -26,6 +26,8 @@ export interface Signal {
 export interface Cell {
   month: number; intern_index: number | null; mentor_index: number | null; gap: number | null
   status: PairStatus; signal_keys: string[]; missing: { intern: boolean; mentor: boolean }
+  /** Средняя стажёра или наставника за месяц ниже порога baseline.index_below: одно из оснований цвета клетки. */
+  low_index?: boolean
 }
 export interface PairSummary {
   pair_id: string; intern_id: string; mentor_id: string; intern_name?: string | null; mentor_name?: string | null
@@ -59,7 +61,8 @@ export type SeriesPoint = PairDetail['series'][number]
 export interface Health { ok: boolean; pairs: number; responses: number; analyzer: string }
 
 // GET /api/survey: содержимое survey/survey.json.
-export interface Question { id: string; type: 'scale' | 'text' | 'choice'; text: string; options?: string[] }
+// label — короткое название показателя из структуры анкеты МГТС («Понятность задач»), text — формулировка вопроса.
+export interface Question { id: string; type: 'scale' | 'text' | 'choice'; text: string; label?: string; options?: string[] }
 export interface SurveyRole { title: string; person_label: string; questions: Question[] }
 // Пороги из survey/signals.json, которые нужны фронту. Бэкенд отдаёт их целиком.
 export interface Thresholds {
@@ -133,11 +136,19 @@ export interface Analytics {
     pair_id: string; intern_id: string; intern_name: string | null; first_signal_month: number; risk_month: number | null
     baseline_month: number | null; lead_months: number | null
   }[]
-  effect: { pairs_with_signals: number; earlier: number; same_or_later: number; invisible: number; avg_lead: number | null; baseline_score: number }
+  effect: {
+    pairs_with_signals: number; earlier: number; same_or_later: number; invisible: number; avg_lead: number | null; baseline_score: number
+    /** Средняя ниже порога в том же месяце, что и сигнал, и раньше него. */
+    same_month?: number; later?: number
+    /** Готовый вывод по данным: что средняя оценка не показывает. */
+    conclusion?: string
+  }
 }
 
 export interface Brief {
   summary: string
+  /** Что делать дальше: 1–3 строки, для выправившейся пары — действия на закрепление. */
+  next_steps?: string[]
   questions: { to: Role; text: string }[]
   notes: { id: number; text: string; at: string }[]
 }

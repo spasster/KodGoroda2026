@@ -18,7 +18,7 @@
 }
 .blockTitle {
   display: flex; align-items: center; gap: 10px; margin-bottom: var(--s-4);
-  font-family: var(--font-wide); font-size: var(--fs-l);
+  font-family: var(--font); font-size: var(--fs-l); font-weight: var(--fw-bold);
 }
 .count {
   display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 8px;
@@ -26,6 +26,19 @@
   font-family: var(--font); font-size: var(--fs-xs); font-weight: var(--fw-medium);
 }
 .none { color: var(--text-2); }
+
+/* Сводка над страницей: обычный абзац, тон только у пилюли статуса. */
+.lead { display: flex; flex-direction: column; gap: 10px; }
+.leadTitle { font-family: var(--font); font-size: var(--fs-l); font-weight: var(--fw-bold); }
+.leadText { font-size: var(--fs-m); line-height: var(--lh-body); }
+.leadTodo { font-size: var(--fs-s); line-height: var(--lh-body); }
+.leadTodo ul { margin-top: 4px; padding-left: 18px; }
+
+.subTitle {
+  margin: var(--s-4) 0 var(--s-3); color: var(--text-2);
+  font-family: var(--font); font-size: var(--fs-s); font-weight: var(--fw-medium);
+}
+.blockTitle + .subTitle { margin-top: 0; }
 
 /* ---------- Поводы ---------- */
 .topics { display: flex; flex-direction: column; gap: var(--s-4); list-style: none; }
@@ -35,6 +48,17 @@
 }
 .topic[data-sev='high'] { border-left-color: var(--risk); }
 .topic[data-sev='medium'] { border-left-color: var(--watch); }
+/* Прошлая ситуация: полоса нейтральная, цвет только у текущих. */
+.topic[data-past] { border-left-color: var(--line-strong); }
+.recovered { margin-top: 4px; color: var(--text-2); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+.basis { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.noteList { display: flex; flex-direction: column; gap: 8px; padding-left: 18px; font-size: var(--fs-s); line-height: var(--lh-snug); }
+.noteList li::marker { color: var(--text-3); }
+.noteQuote {
+  padding: 0; border: 0; background: none; color: var(--text-1); text-align: left;
+  font-family: var(--font-text); font-size: inherit;
+}
+.noteQuote:hover { color: var(--brand-text); text-decoration: underline; }
 .topics li + li .topic { margin-top: var(--s-2); }
 .topicTitle { font-size: var(--fs-m); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
 .when { color: var(--text-2); font-weight: var(--fw-regular); }
@@ -45,12 +69,7 @@
 .quote figcaption { margin-top: 6px; color: var(--text-2); font-size: var(--fs-xs); }
 .origin {
   margin-bottom: 6px; color: var(--text-2);
-  font-family: var(--font-wide); font-size: 10px; font-weight: var(--fw-medium); letter-spacing: .1em; text-transform: uppercase;
-}
-.originAi { color: var(--text-1); }
-.originAi::before {
-  content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; vertical-align: 1px;
-  border-radius: 50%; background: var(--hero-glow); box-shadow: 0 0 6px var(--hero-glow);
+  font-family: var(--font); font-size: var(--fs-xs); font-weight: var(--fw-medium);
 }
 .toComment {
   display: inline-flex; align-items: center; gap: 3px; padding: 0; border: 0; background: none;

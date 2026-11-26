@@ -1,18 +1,18 @@
-// Таблица «стажёр × месяц»: две оценки в клетке, главное по паре, сколько ситуаций разобрано.
-// Строки сгруппированы по статусу, вся строка ведёт на карточку стажёра.
+// Светофор «стажёр × месяц» на первом экране: две оценки в клетке (стажёр сверху,
+// наставник снизу), заливка по статусу месяца, главное по паре. Строки по порядку ID,
+// вся строка ведёт на карточку стажёра.
 
 import clsx from 'clsx'
-import { Fragment, type MouseEvent } from 'react'
+import type { MouseEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import type { Cell, PairStatus } from '../../api/types'
 import { Dot } from '../../app/status'
-import { EMPTY, PAIR_STATUS_LABEL, formatNumber, personName } from '../../lib/format'
+import { StatusPill } from '../../ds/components/data-display/StatusPill'
+import { PAIR_STATUS_LABEL, formatNumber, monthsPhrase, personName } from '../../lib/format'
 import { situationMonths } from '../../lib/rules'
 import type { Story } from './model'
 import s from './Overview.module.css'
-
-const STATUSES: PairStatus[] = ['risk', 'watch', 'ok']
 
 interface Props {
   stories: Story[]
@@ -22,9 +22,25 @@ interface Props {
 }
 
 export function OverviewTable({ stories, months, freshCells }: Props) {
-  const cols = months.length + 3
+  const rows = [...stories].sort((a, b) => (a.pair.pair_id < b.pair.pair_id ? -1 : 1))
+  const showDone = rows.some((st) => st.active > 0)
   return (
-    <>
+    <section className={s.block} aria-labelledby="program-months">
+      <div className={s.head}>
+        <h2 id="program-months" className={s.title}>
+          Программа по месяцам
+        </h2>
+        <div className={s.legend}>
+          <StatusPill tone="positive">положительная оценка</StatusPill>
+          <StatusPill tone="warning">зона внимания</StatusPill>
+          <StatusPill tone="negative">критичный сигнал</StatusPill>
+          <span className={s.legendPair}>
+            <b>4,5</b> стажёр
+            <br />
+            <span>4,0</span> наставник
+          </span>
+        </div>
+      </div>
       <div className={s.card}>
         <div className={s.scroll}>
           <table className={s.table}>
@@ -35,54 +51,43 @@ export function OverviewTable({ stories, months, freshCells }: Props) {
                 </th>
                 {months.map((m) => (
                   <th key={m} scope="col" className={s.thMonth}>
-                    {m}
+                    {m}-й мес.
                   </th>
                 ))}
                 <th scope="col" className={s.thMain}>
                   Главное
                 </th>
-                <th scope="col" className={s.thDone}>
-                  Разобрано
-                </th>
+                {showDone && (
+                  <th scope="col" className={s.thDone}>
+                    Разобрано
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
-              {STATUSES.map((status) => {
-                const list = stories.filter((st) => st.status === status)
-                if (list.length === 0) return null
-                return (
-                  <Fragment key={status}>
-                    <tr className={s.group}>
-                      <td colSpan={cols}>
-                        <span className={s.groupLabel}>
-                          {PAIR_STATUS_LABEL[status]} · {list.length}
-                        </span>
-                      </td>
-                    </tr>
-                    {list.map((st) => (
-                      <Row key={st.pair.pair_id} story={st} months={months} freshCells={freshCells} />
-                    ))}
-                  </Fragment>
-                )
-              })}
+              {rows.map((st) => (
+                <Row key={st.pair.pair_id} story={st} months={months} freshCells={freshCells} showDone={showDone} />
+              ))}
             </tbody>
           </table>
         </div>
       </div>
-      <p className={s.legend}>
-        <span>
-          <i className={s.keyIntern} aria-hidden="true" /> стажёр
-        </span>
-        <span>
-          <i className={s.keyMentor} aria-hidden="true" /> наставник
-        </span>
-      </p>
-    </>
+    </section>
   )
 }
 
-function Row({ story, months, freshCells }: { story: Story; months: number[]; freshCells: ReadonlySet<string> }) {
-  const { pair, status, main, active, reviewed } = story
+function Row({
+  story,
+  months,
+  freshCells,
+  showDone,
+}: {
+  story: Story
+  months: number[]
+  freshCells: ReadonlySet<string>
+  showDone: boolean
+}) {
+  const { pair, status, main, past, active, reviewed } = story
   const navigate = useNavigate()
   const to = `/pairs/${pair.pair_id}`
   const fresh = months.some((m) => freshCells.has(`${pair.pair_id}:${m}`))
@@ -101,10 +106,11 @@ function Row({ story, months, freshCells }: { story: Story; months: number[]; fr
             {fresh && <span className={s.newTag}>новая анкета</span>}
           </span>
           <span className={s.mentor}>наставник {personName(pair.mentor_name, pair.mentor_id)}</span>
+          <span className="sr-only">. Сейчас: {PAIR_STATUS_LABEL[status]}</span>
         </Link>
       </th>
       {months.map((m) => (
-        <MonthCell key={m} cell={pair.cells.find((c) => c.month === m)} fresh={freshCells.has(`${pair.pair_id}:${m}`)} />
+        <MonthCell key={m} cell={pair.cells.find((c) => c.month === m)} month={m} fresh={freshCells.has(`${pair.pair_id}:${m}`)} />
       ))}
       <td className={s.main}>
         {main ? (
@@ -115,23 +121,44 @@ function Row({ story, months, freshCells }: { story: Story; months: number[]; fr
               {active > 1 && ` · ещё ${active - 1}`}
             </span>
           </>
+        ) : past ? (
+          <>
+            <span className={s.mainTitle}>{past.title}</span>
+            <span className={s.mainSub}>{monthsPhrase(past.months)} · выправилось</span>
+          </>
         ) : (
-          <span className={s.mainTitle}>Всё ровно</span>
+          <span className={s.mainTitle}>Сигналов не было</span>
         )}
       </td>
-      <td className={s.done}>{active > 0 ? `${reviewed} из ${active}` : ''}</td>
+      {showDone && <td className={s.done}>{active > 0 ? `${reviewed} из ${active}` : ''}</td>}
     </tr>
   )
 }
 
-function MonthCell({ cell, fresh }: { cell: Cell | undefined; fresh: boolean }) {
-  if (!cell) return <td className={s.monthTd}><div className={s.cellEmpty} /></td>
-  const title = `Стажёр ${formatNumber(cell.intern_index)}, наставник ${formatNumber(cell.mentor_index)}`
+const CELL_CLASS: Record<PairStatus, string | undefined> = { ok: s.ok, watch: s.watch, risk: s.risk }
+
+function MonthCell({ cell, month, fresh }: { cell: Cell | undefined; month: number; fresh: boolean }) {
+  const none = !cell || (cell.missing.intern && cell.missing.mentor)
+  if (!cell || none) {
+    return (
+      <td className={clsx(s.monthTd, s.none, fresh && s.fresh)} title={`${month}-й месяц: анкет нет`}>
+        <div className={s.cellEmpty}>нет анкет</div>
+      </td>
+    )
+  }
+  const intern = cell.missing.intern ? 'не ответил' : formatNumber(cell.intern_index)
+  const mentor = cell.missing.mentor ? 'не ответил' : formatNumber(cell.mentor_index)
+  const label = `${month}-й месяц, ${PAIR_STATUS_LABEL[cell.status].toLowerCase()}. Стажёр ${intern}, наставник ${mentor}`
   return (
-    <td className={clsx(s.monthTd, cell.status === 'risk' && s.risk, cell.status === 'watch' && s.watch, fresh && s.fresh)} title={title}>
+    <td className={clsx(s.monthTd, CELL_CLASS[cell.status], fresh && s.fresh)} title={label}>
       <div className={s.cell}>
-        <span className={clsx(s.vIntern, cell.missing.intern && s.vNone)}>{cell.missing.intern ? EMPTY : formatNumber(cell.intern_index)}</span>
-        <span className={clsx(s.vMentor, cell.missing.mentor && s.vNone)}>{cell.missing.mentor ? EMPTY : formatNumber(cell.mentor_index)}</span>
+        <span className="sr-only">{label}</span>
+        <span aria-hidden="true" className={clsx(s.vIntern, cell.missing.intern && s.vNone)}>
+          {cell.missing.intern ? 'нет' : intern}
+        </span>
+        <span aria-hidden="true" className={clsx(s.vMentor, cell.missing.mentor && s.vNone)}>
+          {cell.missing.mentor ? 'нет' : mentor}
+        </span>
       </div>
     </td>
   )

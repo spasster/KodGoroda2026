@@ -16,13 +16,15 @@ export function Effect({ analytics: a }: { analytics: Analytics }) {
   const surveys = a.pairs * 2
   const saved = ((MANUAL_MIN - TOOL_MIN) * surveys) / 60
   const stats: { value: string; label: string }[] = []
-  if (e.avg_lead != null) {
+  // Раньше средней не пришёл ни один сигнал: крупные числа ничего не говорят, оставляем список по стажёрам.
+  const none = e.pairs_with_signals > 0 && e.earlier === 0
+  if (!none && e.avg_lead != null) {
     stats.push({ value: `на ${formatNumber(e.avg_lead)} мес.`, label: `раньше, чем средняя оценка упадёт ниже ${baseline}: так в среднем приходит сигнал` })
   }
-  if (e.pairs_with_signals > 0) {
+  if (!none && e.pairs_with_signals > 0) {
     stats.push({ value: `${e.earlier} из ${e.pairs_with_signals}`, label: `${plural(e.pairs_with_signals, ['стажёр', 'стажёра', 'стажёров'])}: сигнал пришёл раньше средней оценки` })
   }
-  if (e.invisible > 0) {
+  if (!none && e.invisible > 0) {
     stats.push({ value: String(e.invisible), label: `${plural(e.invisible, ['стажёр', 'стажёра', 'стажёров'])}: по средней оценке проблему не видно совсем` })
   }
 
@@ -30,9 +32,10 @@ export function Effect({ analytics: a }: { analytics: Analytics }) {
     <section className={s.hero} aria-labelledby="effect-title">
       <span className={s.overline}>Эффект</span>
       <h2 id="effect-title" className={s.title}>
-        Сигнал приходит раньше средней оценки
+        {none ? 'Что средняя оценка не показывает' : 'Сигнал приходит раньше средней оценки'}
       </h2>
-      {stats.length > 0 ? (
+      {e.conclusion && <p className={s.conclusion}>{e.conclusion}</p>}
+      {none ? null : stats.length > 0 ? (
         <dl className={s.stats}>
           {stats.map((st) => (
             <div key={st.value} className={s.stat}>

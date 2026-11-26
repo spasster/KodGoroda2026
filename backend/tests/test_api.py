@@ -15,7 +15,7 @@ from .conftest import INTERN_HEADERS, MENTOR_HEADERS, answers, write_xlsx
 SIGNAL = {"key", "type", "pair_id", "role", "month", "months", "since_month", "severity", "title", "explanation", "action",
           "values", "quotes", "active", "review", "outcome", "text_check"}
 QUOTE = {"role", "month", "question_id", "text", "start", "end"}
-CELL = {"month", "intern_index", "mentor_index", "gap", "status", "signal_keys", "missing"}
+CELL = {"month", "intern_index", "mentor_index", "gap", "status", "signal_keys", "missing", "low_index"}
 PAIR_SUMMARY = {"pair_id", "intern_id", "mentor_id", "status", "last_month", "intern_index_last", "mentor_index_last",
                 "trend", "open_signals", "cells", "intern_name", "mentor_name"}
 OVERVIEW = {"updated_at", "months", "scale", "totals", "pairs", "recent"}

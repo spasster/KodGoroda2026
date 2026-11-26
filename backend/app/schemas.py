@@ -86,6 +86,7 @@ class Cell(BaseModel):
     status: PairStatus
     signal_keys: list[str]
     missing: Missing
+    low_index: bool = False  # средняя стажёра или наставника ниже baseline.index_below
 
 
 class PairSummary(BaseModel):

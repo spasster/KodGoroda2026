@@ -1,7 +1,6 @@
-// «Разговоры»: первый экран HR. Работа HR раз в месяц: понять, с кем говорить,
-// о чём, и потом записать итог. Сверху графитовая лента с итогом месяца и
-// эффектом, ниже карточки «Пора поговорить», строки «Присмотреться» и короткое
-// «Всё ровно». Таблица «стажёр × месяц» живёт на экране «Программа».
+// «Разговоры»: первый экран HR. Сверху графитовая лента: что сейчас и что было
+// за программу. Под ней светофор «стажёр × месяц» словами ТЗ, ниже карточки
+// «Критичный сигнал», строки «Зона внимания» и короткое «Положительная оценка».
 
 import clsx from 'clsx'
 import { ArrowRight, QrCode } from 'lucide-react'
@@ -18,7 +17,8 @@ import { useLive } from '../../live/useLive'
 import { explanationLine } from '../Pair/model'
 import { EmptyOverview } from './EmptyOverview'
 import { addFresh, freshKey, pruneFresh, useFreshEntries, type FreshEntry } from './fresh'
-import { responsesIn, sortStories, storyOf, type Story } from './model'
+import { historyOf, responsesIn, sortStories, storyOf, type History, type Story } from './model'
+import { OverviewTable } from './OverviewTable'
 import { StoryChart } from './StoryChart'
 import s from './Talks.module.css'
 
@@ -59,6 +59,17 @@ export function OverviewPage() {
   }, [o, overview.dataUpdatedAt, last, isFreshResponse])
 
   const freshPairs = useMemo(() => new Set(fresh.map((e) => e.key.split(':')[0])), [fresh])
+  // Ключ fresh: pair:role:month, таблице нужен pair:month.
+  const freshCells = useMemo(
+    () =>
+      new Set(
+        fresh.map((e) => {
+          const [p, , m] = e.key.split(':')
+          return `${p}:${m}`
+        }),
+      ),
+    [fresh],
+  )
   const stories = useMemo(
     () => sortStories((o?.pairs ?? []).map((p) => storyOf(p, signals.data ?? []))),
     [o, signals.data],
@@ -86,12 +97,15 @@ export function OverviewPage() {
   const risk = stories.filter((st) => st.status === 'risk')
   const watch = stories.filter((st) => st.status === 'watch')
   const ok = stories.filter((st) => st.status === 'ok')
+  const history = historyOf(o.pairs, dataEnd)
 
   return (
     <>
       <Hero
         total={total}
         risk={risk.length}
+        watch={watch.length}
+        history={history}
         month={month}
         calendar={calendar}
         got={got}
@@ -102,12 +116,14 @@ export function OverviewPage() {
       <div className="wrap">
         {overview.isError && <LoadError query={overview} className={s.error} />}
 
+        <OverviewTable stories={stories} months={months.slice(0, Math.max(dataEnd, 1))} freshCells={freshCells} />
+
         {risk.length > 0 && (
           <section className={s.section} aria-labelledby="talks-risk">
             <div className={s.sectionHead}>
               <h2 id="talks-risk" className={s.sectionTitle}>
                 <Dot status="risk" />
-                Пора поговорить
+                Критичный сигнал: пора поговорить
               </h2>
               <p className={s.legend} aria-hidden="true">
                 <span><i className={s.keyIntern} /> стажёр</span>
@@ -126,7 +142,7 @@ export function OverviewPage() {
           <section className={s.section} aria-labelledby="talks-watch">
             <h2 id="talks-watch" className={s.sectionTitle}>
               <Dot status="watch" />
-              Присмотреться
+              Зона внимания
             </h2>
             <ul className={s.rows}>
               {watch.map((st) => (
@@ -136,11 +152,12 @@ export function OverviewPage() {
           </section>
         )}
 
-        {ok.length > 0 && (
+        {/* Когда все в порядке, список повторяет таблицу выше: показываем его только рядом с другими секциями. */}
+        {ok.length > 0 && risk.length + watch.length > 0 && (
           <section className={s.section} aria-labelledby="talks-ok">
             <h2 id="talks-ok" className={s.sectionTitle}>
               <Dot status="ok" />
-              Всё ровно
+              Положительная оценка
             </h2>
             <p className={s.okLine}>
               {ok.map((st, i) => (
@@ -170,6 +187,8 @@ export function OverviewPage() {
 interface HeroProps {
   total: number
   risk: number
+  watch: number
+  history: History
   month: number
   calendar: string | null
   got: number
@@ -178,11 +197,20 @@ interface HeroProps {
   analytics: Analytics | undefined
 }
 
-function Hero({ total, risk, month, calendar, got, expected, collecting, analytics }: HeroProps) {
+function Hero({ total, risk, watch, history, month, calendar, got, expected, collecting, analytics }: HeroProps) {
+  const ofTotal = `из ${total} ${total === 1 ? 'стажёра' : 'стажёров'}`
   const title =
-    risk === 0
-      ? 'Все стажёры в порядке'
-      : `${risk} из ${total} ${total === 1 ? 'стажёра' : 'стажёров'} ${risk === 1 ? 'ждёт' : 'ждут'} разговора`
+    risk > 0
+      ? `${risk} ${ofTotal} ${risk === 1 ? 'ждёт' : 'ждут'} разговора`
+      : watch > 0
+        ? `${watch} ${ofTotal} в зоне внимания`
+        : `Сейчас все ${total} ${plural(total, ['стажёр', 'стажёра', 'стажёров'])} в порядке`
+  // Факт по истории из клеток: даже если сейчас всё ровно, видно, у кого было плохо.
+  const past = [
+    history.riskEver > 0 ? `критичный месяц был у ${history.riskEver} из ${total}` : null,
+    history.watchOnly > 0 ? `зона внимания у ${history.watchOnly} из ${total}` : null,
+  ].filter(Boolean)
+  const historyLine = past.length ? `За программу ${past.join(', ')}` : null
   const over = [calendar, month > 0 ? `${month}-й месяц` : null].filter(Boolean).join(' · ')
 
   // Средняя по программе: то, на что HR смотрит без дашборда. Берём последний
@@ -202,6 +230,7 @@ function Hero({ total, risk, month, calendar, got, expected, collecting, analyti
           <h1 id="talks-title" className={s.heroTitle}>
             {title}
           </h1>
+          {historyLine && <p className={s.heroHistory}>{historyLine}</p>}
           <p className={s.heroCollect}>
             {collecting ? (
               <>
@@ -232,13 +261,32 @@ function Hero({ total, risk, month, calendar, got, expected, collecting, analyti
               <dd className={s.kpiValue}>{formatNumber(avg)}</dd>
             </div>
           )}
-          <div className={s.kpi}>
-            <dt className={s.kpiLabel}>{risk === 1 ? 'стажёр ждёт' : 'стажёров ждут'} разговора по сигналам</dt>
-            <dd className={s.kpiValue}>
-              {risk}
-              <span className={s.kpiOf}> из {total}</span>
-            </dd>
-          </div>
+          {risk > 0 ? (
+            <div className={s.kpi}>
+              <dt className={s.kpiLabel}>{risk === 1 ? 'стажёр ждёт' : 'стажёров ждут'} разговора по сигналам</dt>
+              <dd className={s.kpiValue}>
+                {risk}
+                <span className={s.kpiOf}> из {total}</span>
+              </dd>
+            </div>
+          ) : (
+            <div className={s.kpi}>
+              <dt className={s.kpiLabel}>{history.riskEver === 1 ? 'проходил' : 'проходили'} критичный месяц за программу</dt>
+              <dd className={s.kpiValue}>
+                {history.riskEver}
+                <span className={s.kpiOf}> из {total}</span>
+              </dd>
+            </div>
+          )}
+          {history.expected > 0 && (
+            <div className={s.kpi}>
+              <dt className={s.kpiLabel}>анкет собрано</dt>
+              <dd className={s.kpiValue}>
+                {history.collected}
+                <span className={s.kpiOf}> из {history.expected}</span>
+              </dd>
+            </div>
+          )}
           {effect && effect.avg_lead != null && effect.earlier > 0 && (
             <div className={s.kpi}>
               <dt className={s.kpiLabel}>
@@ -259,7 +307,7 @@ function Hero({ total, risk, month, calendar, got, expected, collecting, analyti
   )
 }
 
-// Светящаяся синяя линия по низу ленты, как трасса на studchamp.mgts.ru.
+// Синяя линия по низу ленты, как трасса на studchamp.mgts.ru, без свечения.
 function Trace() {
   return (
     <svg className={s.trace} viewBox="0 0 1000 24" preserveAspectRatio="none" aria-hidden="true">

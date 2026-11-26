@@ -15,11 +15,16 @@ export interface QuestionRow {
   values: (number | null)[]
   /** Есть хотя бы у одной строки: появляется колонка «Изменение». */
   delta?: number | null
+  /** Своя заливка строки вместо общей, например у строки «Разница». */
+  tone?: (value: number | null) => Tone
+  /** Показывать знак: «+1», «−2». */
+  signed?: boolean
 }
 
 interface Props {
   months: number[]
-  groups: { role: Role; rows: QuestionRow[] }[]
+  /** title вместо «Отвечает …», если строки группы не про одну роль. */
+  groups: { role: Role; title?: string; rows: QuestionRow[] }[]
   tone: (value: number | null) => Tone
   compact?: boolean
 }
@@ -38,11 +43,11 @@ export function QuestionTable({ months, groups, tone, compact }: Props) {
             {withDelta && <th>Изменение</th>}
           </tr>
         </thead>
-        {groups.map(({ role, rows }) => (
-          <tbody key={role}>
+        {groups.map(({ role, title, rows }) => (
+          <tbody key={title ?? role}>
             <tr>
               <th colSpan={months.length + 1 + Number(withDelta)} className={s.role}>
-                Отвечает {ROLE_LABEL[role]}
+                {title ?? `Отвечает ${ROLE_LABEL[role]}`}
               </th>
             </tr>
             {rows.map((q) => (
@@ -51,8 +56,8 @@ export function QuestionTable({ months, groups, tone, compact }: Props) {
                 {months.map((m, i) => {
                   const v = q.values[i] ?? null
                   return (
-                    <td key={m} className={s[tone(v)]}>
-                      <span className={s.cell}>{v == null ? '—' : formatNumber(v)}</span>
+                    <td key={m} className={s[(q.tone ?? tone)(v)]}>
+                      <span className={s.cell}>{v == null ? '—' : `${q.signed && v > 0 ? '+' : ''}${formatNumber(v)}`}</span>
                     </td>
                   )
                 })}

@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest'
 
-import type { CommentItem, Overview, Signal } from '../../api/types'
-import { doneSignals, explanationLine, marksWorthShowing, neighbours, openSignals, pairOrder, signalQuote } from './model'
+import type { Cell, CommentItem, Overview, Signal } from '../../api/types'
+import {
+  doneSignals,
+  explanationLine,
+  marksWorthShowing,
+  monthsLabel,
+  neighbours,
+  openSignals,
+  pairOrder,
+  pastSignals,
+  recovery,
+  scoreTone,
+  signalQuote,
+  signalSources,
+} from './model'
 
 function sig(over: Partial<Signal> & Pick<Signal, 'type' | 'month'>): Signal {
   return {
@@ -90,5 +103,44 @@ describe('signalQuote', () => {
 
   it('не подсвечивает, если фрагмент и есть вся цитата', () => {
     expect(marksWorthShowing('Опять сорвал срок.', [{ start: 0, end: 17 }])).toEqual([])
+  })
+})
+
+describe('история ситуаций', () => {
+  const cell = (month: number, intern: number, status: Cell['status']): Cell => ({
+    month, intern_index: intern, mentor_index: intern, gap: 0, status, signal_keys: [], missing: { intern: false, mentor: false },
+  })
+  const cells = [cell(2, 3.1, 'watch'), cell(3, 2.7, 'risk'), cell(4, 4.0, 'ok'), cell(5, 4.1, 'watch')]
+
+  it('прошлая ситуация выправилась к первому месяцу ok с ростом индекса', () => {
+    const s = sig({ type: 'low_question', month: 3, months: [2, 3], since_month: 2, active: false })
+    expect(recovery(s, cells)).toEqual({ month: 4, from: 2.7, to: 4.0 })
+    expect(monthsLabel(s)).toBe('месяцы 2–3')
+    expect(monthsLabel(sig({ type: 'decline', month: 3 }))).toBe('3-й месяц')
+  })
+
+  it('нет месяца ok после ситуации: исход не пишем', () => {
+    expect(recovery(sig({ type: 'decline', month: 4 }), cells)).toBeNull()
+  })
+
+  it('в истории только неактивные medium и high, от поздних к ранним', () => {
+    const list = [
+      sig({ type: 'decline', month: 2, active: false }),
+      sig({ type: 'low_question', month: 3, active: false }),
+      sig({ type: 'text_vs_score', month: 5, active: false, severity: 'low' }),
+      sig({ type: 'gap_intern_low', month: 6 }),
+    ]
+    expect(pastSignals(list).map((s) => s.month)).toEqual([3, 2])
+  })
+
+  it('источник вывода: формула, разбор текста или оба', () => {
+    expect(signalSources(sig({ type: 'decline', month: 3 }))).toEqual(['Формула по оценкам'])
+    expect(signalSources(sig({ type: 'text_vs_score', month: 3 }))).toEqual(['ИИ: разбор комментария'])
+    const q = { role: 'intern' as const, month: 3, question_id: 'x', text: 't', start: 0, end: 1 }
+    expect(signalSources(sig({ type: 'decline', month: 3, quotes: [q] }))).toEqual(['Формула по оценкам', 'ИИ: разбор комментария'])
+  })
+
+  it('заливка клетки: 1–2 критично, 3 внимание, 4–5 без заливки', () => {
+    expect([1, 2, 3, 4, 5, null].map(scoreTone)).toEqual(['low', 'low', 'mid', 'fine', 'fine', 'none'])
   })
 })

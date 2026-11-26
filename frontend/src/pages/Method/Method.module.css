@@ -2,7 +2,7 @@
 .stack { display: flex; flex-direction: column; gap: var(--s-4); }
 .error { margin-top: 24px; }
 .card { padding: var(--s-5) var(--s-6); border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); min-width: 0; }
-.h2 { margin-bottom: var(--s-3); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+.h2 { margin-bottom: var(--s-3); font-family: var(--font-compact); font-size: var(--type-h3-size); font-weight: var(--fw-bold); line-height: var(--type-h3-lh); }
 .h3 { margin: var(--s-3) 0 var(--s-1); font-size: var(--fs-s); font-weight: var(--fw-bold); }
 .text, .list, .principles { font-size: var(--fs-m); line-height: var(--lh-body); }
 .list, .principles { display: flex; flex-direction: column; gap: var(--s-2); padding-left: 1.4em; }

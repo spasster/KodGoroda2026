@@ -12,11 +12,16 @@ DEFAULTS = {
     "active_months": 2,
     "decline": {"two_month_drop": 0.12, "single_drop": 0.25},
     "gap": {"min_gap": 0.25, "high_gap": 0.4},
-    "text_vs_score": {"min_index": 0.65, "max_sentiment": -0.2},
+    # confirm: важность от второй стороны. Только один текст — low (заметка), обе стороны в том же месяце — medium.
+    "text_vs_score": {"min_index": 0.65, "max_sentiment": -0.2, "confirm": False},
     "low_question": {"max_score": 0.25},
     "silence": {"length_drop": 0.6, "min_prev_length": 40},
     "baseline": {"index_below": 0.625},
     "quote_min_length": 12,
+    # Как сигналы красят клетку месяца и пару. Все False — старое поведение.
+    # notes_neutral: low не красит. low_index: средняя ниже baseline.index_below — ещё одно подтверждение medium.
+    # one_text_finding: text_vs_score стажёра и наставника в одном месяце считаются одной находкой.
+    "status": {"notes_neutral": False, "low_index": False, "one_text_finding": False},
 }
 TRIGGER_TOPICS = ("mentor", "tasks_shortage", "overload")  # в порядке важности для заголовка
 SEVERITY_RANK = {"high": 0, "medium": 1, "low": 2}
@@ -182,7 +187,7 @@ class _Builder:
         if best is None:
             return ""
         q = self.ds.survey.question(role, best[1])
-        return f" Сильнее всего упала оценка по вопросу «{q.text if q else best[1]}»: {score_str(best[2])} → {score_str(best[3])}."
+        return f" Сильнее всего упала оценка по вопросу «{q.name if q else best[1]}»: {score_str(best[2])} → {score_str(best[3])}."
 
     # Типы сигналов.
 
@@ -280,7 +285,7 @@ class _Builder:
                 score = resp.scores.get(qid)
                 if score is not None and (score - lo) / self.range <= max_score + EPS:
                     q = self.ds.survey.question(role, qid)
-                    low.append((q.text if q else qid, score))
+                    low.append((q.name if q else qid, score))
             if not low:
                 continue
             high = len(low) >= 2 or any(score <= lo for _, score in low)
@@ -294,19 +299,26 @@ class _Builder:
             self.out.append(Monthly("low_question", pair_id, role, m, "high" if high else "medium",
                                     title, explanation, action, values=values))
 
-    def text_vs_score(self, pair_id: str, role: str, month: int) -> None:
+    def text_trigger(self, pair_id: str, role: str, month: int) -> list[str] | None:
+        """Темы, если у роли в этом месяце хорошие оценки и комментарий о проблеме; иначе None."""
         th = self.th["text_vs_score"]
-        idx = self.ds.index(pair_id, role, month)
-        n = self.ds.norm(idx)
+        n = self.ds.norm(self.ds.index(pair_id, role, month))
         if n is None or n < th["min_index"] - EPS:
-            return
+            return None
         items = self.insights.get((pair_id, role, month), [])
         labels = {c.label for it in items for c in it.insight.concerns}
-        has_quotes = bool(labels)
         topics = [t for t in TRIGGER_TOPICS if t in labels]
         negative = any(it.insight.sentiment <= th["max_sentiment"] + EPS and it.insight.concerns for it in items)
-        if not has_quotes or not (topics or negative):
+        if not labels or not (topics or negative):
+            return None
+        return topics
+
+    def text_vs_score(self, pair_id: str, role: str, month: int) -> None:
+        th = self.th["text_vs_score"]
+        topics = self.text_trigger(pair_id, role, month)
+        if topics is None:
             return
+        idx = self.ds.index(pair_id, role, month)
         quotes = self.quotes(pair_id, role, month, tuple(topics))
         main = topics[0] if topics else None
         if role == "mentor" and main == "mentor":
@@ -337,8 +349,23 @@ class _Builder:
                 "tasks_shortage": "Попросить наставника спланировать задачи стажёра на следующий месяц.",
                 "overload": "Обсудить с наставником, как снизить нагрузку стажёра.",
             }.get(main, "Спросить наставника, что стоит за этим комментарием. По оценкам проблемы не видно.")
+        severity = "high" if main == "mentor" else "medium"
+        if th["confirm"]:
+            # Анкета прямо спрашивает о сложностях, трудность есть почти в каждом комментарии.
+            # Поэтому один текст — заметка, а сигнал — когда о проблеме пишут обе стороны.
+            if self.text_trigger(pair_id, OTHER[role], month) is not None:
+                severity = "medium"
+                title = {
+                    "mentor": "Стажёр и наставник оба пишут, что им трудно работать вместе",
+                    "tasks_shortage": "Стажёр и наставник оба пишут, что задач не хватает",
+                    "overload": "Стажёр и наставник оба пишут о перегрузке",
+                }.get(main, "Стажёр и наставник оба пишут о проблеме")
+                explanation += f" {WHO[OTHER[role]]['Nom']} в том же месяце тоже пишет о проблеме."
+            else:
+                severity = "low"
+                explanation += f" {WHO[OTHER[role]]['Nom']} об этом не пишет, поэтому пока это заметка."
         self.out.append(Monthly(
-            "text_vs_score", pair_id, role, month, "high" if main == "mentor" else "medium",
+            "text_vs_score", pair_id, role, month, severity,
             title, explanation, action, values=[self.value(pair_id, role, month)], quotes=quotes,
         ))
 
@@ -543,16 +570,29 @@ def sort_signals(signals: list[Signal]) -> list[Signal]:
     return sorted(signals, key=lambda s: (SEVERITY_RANK[s.severity], -s.month, s.pair_id, TYPE_RANK[s.type], s.role))
 
 
-def cell_status_of(signals: list) -> str:
-    """Статус клетки месяца по месячным сигналам: risk: high или два и больше; watch: один; иначе ok."""
-    if any(s.severity == "high" for s in signals) or len(signals) >= 2:
+def cell_status_of(signals: list, low_index: bool = False, rules: dict | None = None) -> str:
+    """Статус клетки месяца по месячным сигналам: risk: high или два и больше; watch: один; иначе ok.
+    rules — раздел status из порогов: заметки не считаются, низкая средняя — ещё одно подтверждение."""
+    rules = rules or DEFAULTS["status"]
+    if rules.get("notes_neutral"):
+        signals = [s for s in signals if s.severity != "low"]
+    if rules.get("one_text_finding"):
+        findings = len({(s.type, "both" if s.type == "text_vs_score" else s.role) for s in signals})
+    else:
+        findings = len(signals)
+    if rules.get("low_index") and low_index:
+        findings += 1
+    if any(s.severity == "high" for s in signals) or findings >= 2:
         return "risk"
-    return "watch" if signals else "ok"
+    return "watch" if findings else "ok"
 
 
-def status_of(situations: list[Signal]) -> str:
+def status_of(situations: list, rules: dict | None = None) -> str:
     """Статус пары по активным ситуациям. risk: high, который держится два месяца и больше,
-    или две ситуации с важностью medium и выше; watch: любая активная; иначе ok."""
+    или две ситуации с важностью medium и выше; watch: любая активная; иначе ok.
+    С rules.notes_neutral ситуации low (заметки) статус не меняют."""
+    if (rules or {}).get("notes_neutral"):
+        situations = [s for s in situations if s.severity != "low"]
     if (any(s.severity == "high" and s.month > s.since_month for s in situations)
             or sum(s.severity != "low" for s in situations) >= 2):
         return "risk"

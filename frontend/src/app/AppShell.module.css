@@ -10,12 +10,12 @@
 .mark { display: block; width: 40px; height: 40px; }
 .name {
   padding-left: 14px; border-left: 1px solid var(--line);
-  font-family: var(--font-wide); font-size: var(--fs-m); font-weight: var(--fw-bold); line-height: 32px;
+  font-family: var(--font-compact); font-size: var(--type-h4-size); font-weight: var(--fw-bold); line-height: 32px;
 }
 
 .nav { display: flex; align-self: stretch; gap: 8px; min-width: 0; }
 .nav a > span {
-  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-xl);
   background: var(--risk-wash); color: var(--text-1); font-size: var(--fs-xs); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums;
 }
 .nav a {
@@ -98,24 +98,27 @@
 }
 .toast {
   pointer-events: auto; padding: 18px 20px 18px 24px; border: 1px solid var(--line); border-left: 4px solid var(--text-3);
-  border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-high);
+  border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-middle);
 }
 .toast[data-status="risk"] { border-left-color: var(--risk); }
 .toast[data-status="watch"] { border-left-color: var(--watch); }
 .toast[data-status="ok"] { border-left-color: var(--ok); }
 .toastHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.toastTitle { font-family: var(--font-wide); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: var(--lh-snug); }
+/* H4 системы: Compact 500 17/24. */
+.toastTitle { font-family: var(--font-compact); font-size: var(--type-h4-size); font-weight: var(--type-h4-weight); line-height: var(--type-h4-lh); }
 .toastWho { margin-top: 2px; color: var(--text-1); font-size: var(--fs-m); }
 .change { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 8px; }
 .arrow { color: var(--text-2); }
+/* Ссылка «Открыть» в размерах Button системы: secondary, size s (36px, отступ 16, шрифт 14). */
 .toastBtn {
-  display: inline-flex; flex: none; align-items: center; justify-content: center;
-  height: 40px; padding: 0 18px;
-  border: 1px solid var(--line-strong); border-radius: var(--r-m); background: transparent; color: var(--text-1);
-  font-weight: var(--fw-medium); text-decoration: none; white-space: nowrap;
-  transition: background var(--dur-1) linear;
+  display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 8px;
+  height: var(--control-s); padding: 0 16px;
+  border: 1px solid var(--color-brand); border-radius: var(--radius-m); background: transparent; color: var(--color-text-brand);
+  font-family: var(--font-compact); font-size: var(--type-body-sm-size); font-weight: var(--fw-medium); line-height: 1;
+  text-decoration: none; white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-standard);
 }
-.toastBtn:hover { background: var(--hover); }
+.toastBtn:hover, .toastBtn:active { background: var(--color-brand-subtle); }
 
 /* ---------- Содержимое: страницы сами оборачивают себя в .wrap ---------- */
 .main { padding-bottom: var(--s-8); }

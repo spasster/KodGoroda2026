@@ -26,6 +26,7 @@
   line-height: 1.12;
   letter-spacing: -0.01em;
 }
+.heroHistory { margin-top: 12px; color: var(--hero-text); font-size: var(--fs-m); line-height: var(--lh-snug); }
 .heroCollect { margin-top: 12px; color: var(--hero-text-2); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
 .heroCollect a { color: var(--hero-text); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--hero-text) 40%, transparent); }
 .heroQr {
@@ -50,7 +51,6 @@
 .trace { position: absolute; left: 0; right: 0; bottom: -2px; width: 100%; height: 24px; overflow: visible; pointer-events: none; }
 .traceLine {
   fill: none; stroke: var(--hero-glow); stroke-width: 2;
-  filter: drop-shadow(0 0 6px var(--hero-glow));
   stroke-dasharray: 1; stroke-dashoffset: 1;
   animation: draw 900ms var(--ease-io) 150ms forwards;
 }
@@ -66,7 +66,7 @@
 .keyMentor { border-top: 2.5px solid var(--series-mentor); }
 .sectionTitle {
   display: flex; align-items: center; gap: 10px; margin-bottom: var(--s-4);
-  font-family: var(--font-wide); font-size: var(--fs-l);
+  font-family: var(--font); font-size: var(--fs-l);
 }
 
 /* ---------- Карточки «Пора поговорить» ---------- */
@@ -90,7 +90,7 @@
 }
 .cardLink:focus-visible { outline-offset: 2px; }
 .cardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.cardName { font-family: var(--font-wide); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: 1.2; }
+.cardName { font-family: var(--font); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: 1.2; }
 .cardMentor { margin-top: 4px; color: var(--text-2); font-size: var(--fs-xs); }
 .reason { margin-top: 16px; font-size: var(--fs-m); font-weight: var(--fw-medium); line-height: var(--lh-snug); }
 .reasonLine { margin-top: 6px; color: var(--text-1); font-size: var(--fs-s); line-height: var(--lh-body); }
@@ -103,7 +103,7 @@
 .quoteText { display: block; font-family: var(--font-text); font-size: var(--fs-s); line-height: var(--lh-body); }
 .ai, .aiInline {
   display: inline-block; color: var(--text-2);
-  font-family: var(--font-wide); font-size: 10px; font-weight: var(--fw-medium); letter-spacing: .1em; text-transform: uppercase;
+  font-family: var(--font); font-size: 10px; font-weight: var(--fw-medium); letter-spacing: .1em; text-transform: uppercase;
 }
 .ai { margin-bottom: 4px; }
 .aiInline { margin-left: 10px; }

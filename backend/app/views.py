@@ -48,16 +48,21 @@ def pair_summary(snap: Snapshot, pair_id: str) -> PairSummary:
     pair = ds.pairs[pair_id]
     signals = snap.pair_signals(pair_id)
     by_key = {s.key: s for s in signals}
+    below = snap.th["baseline"]["index_below"]
     cells = []
     for m in ds.months:
         month_signals = [s for s in snap.monthly if s.pair_id == pair_id and s.month == m]
         counted = [s for s in month_signals if not _dismissed(by_key[s.situation_key], m)]
+        # Средняя стажёра или наставника ниже порога «как HR смотрит сейчас»: фронт объясняет этим цвет.
+        low_index = any((n := ds.norm_index(pair_id, role, m)) is not None and n < below - 1e-9
+                        for role in ("intern", "mentor"))
         cells.append(Cell(
             month=m,
             intern_index=r1(ds.index(pair_id, "intern", m)),
             mentor_index=r1(ds.index(pair_id, "mentor", m)),
             gap=ds.shown_gap(pair_id, m),
-            status=cell_status_of(counted),
+            status=cell_status_of(counted, low_index, snap.th["status"]),
+            low_index=low_index,
             signal_keys=list(dict.fromkeys(s.situation_key for s in month_signals)),
             missing=Missing(intern=ds.response(pair_id, "intern", m) is None,
                             mentor=ds.response(pair_id, "mentor", m) is None),
@@ -66,7 +71,7 @@ def pair_summary(snap: Snapshot, pair_id: str) -> PairSummary:
     return PairSummary(
         pair_id=pair_id, intern_id=pair.intern_id, mentor_id=pair.mentor_id,
         intern_name=snap.names.get(pair.intern_id), mentor_name=snap.names.get(pair.mentor_id),
-        status=status_of(active), last_month=ds.pair_last_month(pair_id),
+        status=status_of(active, snap.th["status"]), last_month=ds.pair_last_month(pair_id),
         intern_index_last=r1(_last_value(snap, pair_id, "intern")),
         mentor_index_last=r1(_last_value(snap, pair_id, "mentor")),
         trend=_trend(snap, pair_id),

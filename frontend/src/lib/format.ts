@@ -95,9 +95,9 @@ export const SEVERITY_LABEL: Record<Severity, string> = {
 
 // Статус пары и клетки месяца.
 export const PAIR_STATUS_LABEL: Record<PairStatus, string> = {
-  risk: 'Пора поговорить',
-  watch: 'Присмотреться',
-  ok: 'Всё ровно',
+  risk: 'Критичный сигнал',
+  watch: 'Зона внимания',
+  ok: 'Положительная оценка',
 }
 
 /** Имя человека из справочника survey/people.json; если имени нет, показываем ID. */

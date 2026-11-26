@@ -1,11 +1,11 @@
-// Программа: эффект, таблица «стажёр × месяц», общая динамика, вопросы по месяцам, темы комментариев, сбор анкет.
+// Программа: эффект, таблица «стажёр × месяц», статус прохождения опросов, общая динамика, темы комментариев, вопросы по месяцам.
 
 import clsx from 'clsx'
 import { useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { useAnalytics, useOverview, usePeople, useSignals, useSurvey } from '../../api/queries'
-import type { Analytics, Role } from '../../api/types'
+import type { Analytics, Role, Survey } from '../../api/types'
 import { LoadError, Loading, PageHeader, QuestionTable, Skeleton, type Tone } from '../../components'
 import { formatNumber, plural } from '../../lib/format'
 import { collectMonth } from '../../lib/rules'
@@ -91,6 +91,13 @@ export function AnalyticsPage() {
           )}
         </section>
 
+        {/* Требование ТЗ: статус прохождения опросов, сразу под общей картиной. */}
+        <section className={clsx(s.card, s.full)} id="collect">
+          <span className="overline">Анкеты</span>
+          <h2 className={s.title}>Статус прохождения опросов</h2>
+          <Collect overview={o} months={months} fallback={collect} />
+        </section>
+
         <section className={clsx(s.card, s.wide)}>
           <span className="overline">Динамика</span>
           <h2 className={s.title}>Средняя оценка по месяцам</h2>
@@ -115,15 +122,10 @@ export function AnalyticsPage() {
           <span className="overline">Опросник</span>
           <h2 className={s.title}>Вопросы по месяцам</h2>
           <div className={s.scrollX}>
-            <Heat analytics={a} />
+            <Heat analytics={a} survey={survey.data} />
           </div>
         </section>
 
-        <section className={clsx(s.card, s.full)} id="collect">
-          <span className="overline">Анкеты</span>
-          <h2 className={s.title}>Сбор анкет</h2>
-          <Collect overview={o} months={months} fallback={collect} />
-        </section>
       </div>
     </>
   )
@@ -160,12 +162,14 @@ function Topics({ topics }: { topics: Analytics['topics'] }) {
 }
 
 // Средняя оценка по всем парам, просевшие клетки залиты.
-function Heat({ analytics: a }: { analytics: Analytics }) {
+// Подпись строки: короткий показатель из анкеты (label), без него формулировка вопроса.
+function Heat({ analytics: a, survey }: { analytics: Analytics; survey: Survey | undefined }) {
+  const label = (role: Role, id: string, text: string) => survey?.roles[role]?.questions.find((q) => q.id === id)?.label?.trim() || text
   const tone = (v: number | null): Tone => (v == null ? 'none' : v < 3.5 ? 'low' : v < 4.2 ? 'mid' : 'fine')
   const roles: Role[] = ['intern', 'mentor']
   const groups = roles.map((role) => ({
     role,
-    rows: a.questions.filter((q) => q.role === role).map((q) => ({ id: q.question_id, text: q.text, values: q.values, delta: q.delta })),
+    rows: a.questions.filter((q) => q.role === role).map((q) => ({ id: q.question_id, text: label(role, q.question_id, q.text), values: q.values, delta: q.delta })),
   }))
   return <QuestionTable months={a.months} groups={groups} tone={tone} />
 }

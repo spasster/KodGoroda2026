@@ -3,6 +3,9 @@
 .error { margin-top: 24px; }
 
 /* ---------- Таблица ---------- */
+.block { margin-bottom: var(--s-6); }
+.head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-4); }
+.title { font-family: var(--font); font-size: var(--fs-l); font-weight: var(--fw-bold); }
 .card { margin-top: var(--s-2); border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); overflow: hidden; }
 .scroll { overflow-x: auto; }
 .table { width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
@@ -11,7 +14,7 @@
   height: 36px; padding: 0 var(--s-2); border-bottom: 1px solid var(--line);
   color: var(--text-2); font-size: var(--fs-xs); font-weight: var(--fw-regular); text-align: left; white-space: nowrap;
 }
-.thWho { position: sticky; left: 0; z-index: 2; width: 260px; padding-left: var(--s-4) !important; background: var(--surface); }
+.thWho { position: sticky; left: 0; z-index: 2; width: 330px; padding-left: var(--s-4) !important; background: var(--surface); }
 .thMonth { width: 76px; text-align: center !important; font-variant-numeric: tabular-nums; }
 .thMain { padding-left: var(--s-4) !important; }
 .thDone { width: 96px; }
@@ -48,12 +51,14 @@
   height: 52px; font-variant-numeric: tabular-nums; line-height: 1.2;
 }
 .table tbody td.monthTd { padding: 0; border-left: 1px solid var(--line); transition: background-color var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out); }
-.table tbody td.risk { background: var(--risk-wash); }
-.table tbody td.watch { background: var(--watch-wash); }
-.vIntern, .vMentor { font-size: var(--fs-s); font-weight: var(--fw-medium); }
-.vIntern { color: var(--series-intern); }
-.vMentor { color: var(--series-mentor); }
-.vNone { color: var(--text-3); font-weight: var(--fw-regular); }
+.table tbody td.ok { background: var(--ok-wash); color: var(--ok-text); }
+.table tbody td.watch { background: var(--watch-wash); color: var(--watch-text); }
+.table tbody td.risk { background: var(--risk-wash); color: var(--risk-text); }
+.table tbody td.none { background: var(--empty-wash); color: var(--text-3); }
+.cellEmpty { font-size: var(--fs-xs); }
+.vIntern { font-size: var(--fs-s); font-weight: var(--fw-bold); }
+.vMentor { font-size: var(--fs-xs); font-weight: var(--fw-regular); }
+.vNone { font-weight: var(--fw-regular); opacity: .7; }
 .table tbody td.fresh { box-shadow: inset 0 0 0 2px var(--brand); }
 
 /* Главное. */
@@ -62,12 +67,10 @@
 .mainSub { display: block; margin-top: 2px; color: var(--text-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
 .done { color: var(--text-2); font-size: var(--fs-s); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* Легенда под таблицей. */
-.legend { display: flex; justify-content: flex-end; gap: var(--s-5); margin-top: var(--s-3); padding: 0 var(--s-4); color: var(--text-2); font-size: var(--fs-xs); }
-.legend span { display: inline-flex; align-items: center; gap: 6px; }
-.keyIntern, .keyMentor { width: 8px; height: 8px; border-radius: 50%; }
-.keyIntern { background: var(--series-intern); }
-.keyMentor { background: var(--series-mentor); }
+/* Легенда над таблицей: светофор словами ТЗ и что значат два числа в клетке. */
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); color: var(--text-2); font-size: var(--fs-xs); }
+.legendPair { margin-left: var(--s-2); line-height: 1.25; font-variant-numeric: tabular-nums; }
+.legendPair b { color: var(--text-1); font-weight: var(--fw-bold); }
 
 /* ---------- Пустая база и загрузка ---------- */
 .empty { padding-top: 48px; }

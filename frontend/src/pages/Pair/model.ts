@@ -106,7 +106,7 @@ export function questionGroups(survey: Survey, series: PairDetail['series'], mon
       .filter((q) => q.type === 'scale')
       .map<QuestionRow>((q) => ({
         id: q.id,
-        text: q.text,
+        text: q.label ?? q.text,
         values: months.map((m) => series.find((x) => x.month === m)?.[role][q.id] ?? null),
       })),
   }))
@@ -115,4 +115,87 @@ export function questionGroups(survey: Survey, series: PairDetail['series'], mon
 // Клетка с низкой оценкой: не выше max_score от размаха шкалы, как у сигнала «низкая оценка по вопросу».
 export function lowTone(scale: { min: number; max: number }, maxScore: number): (value: number | null) => Tone {
   return (v) => (v == null ? 'none' : (v - scale.min) / (scale.max - scale.min) <= maxScore ? 'low' : 'fine')
+}
+
+// Заливка клетки по оценке одной пары: 1–2 критично, 3 зона внимания, 4–5 без заливки.
+export function scoreTone(value: number | null): Tone {
+  if (value == null) return 'none'
+  if (value < 2.5) return 'low'
+  if (value < 3.5) return 'mid'
+  return 'fine'
+}
+
+// Парные вопросы анкеты: стажёр и наставник про одно и то же, рядом по месяцам и разница.
+// Разница залита по порогам сигнала расхождения (доля размаха шкалы).
+export function pairedGroups(survey: Survey, series: PairDetail['series'], months: readonly number[]) {
+  const range = survey.scale.max - survey.scale.min
+  const { min_gap, high_gap } = survey.thresholds.gap
+  const at = (role: Role, id: string) => months.map((m) => series.find((x) => x.month === m)?.[role][id] ?? null)
+  return survey.paired_questions.map((pq) => {
+    const intern = at('intern', pq.intern)
+    const mentor = at('mentor', pq.mentor)
+    const diff = months.map((_, i) => {
+      const a = intern[i]
+      const b = mentor[i]
+      return a == null || b == null ? null : a - b
+    })
+    const gapTone = (v: number | null): Tone => {
+      if (v == null) return 'none'
+      const d = Math.abs(v) / range
+      return d >= high_gap ? 'low' : d >= min_gap ? 'mid' : 'fine'
+    }
+    const rows: QuestionRow[] = [
+      { id: `${pq.label}:intern`, text: 'Стажёр', values: intern },
+      { id: `${pq.label}:mentor`, text: 'Наставник', values: mentor },
+      { id: `${pq.label}:gap`, text: 'Разница', values: diff, tone: gapTone, signed: true },
+    ]
+    return { role: 'intern' as Role, title: pq.label, rows }
+  })
+}
+
+// Ситуации, которые уже не активны: важность medium и high, от поздних к ранним.
+export function pastSignals(signals: readonly Signal[]): Signal[] {
+  return signals
+    .filter((s) => !s.active && s.severity !== 'low')
+    .sort((a, b) => b.month - a.month || compareSignals(a, b))
+}
+
+// Заметки из комментариев: ситуации важности low, от поздних к ранним.
+export function noteSignals(signals: readonly Signal[]): Signal[] {
+  return signals.filter((s) => s.severity === 'low').sort((a, b) => b.month - a.month || compareSignals(a, b))
+}
+
+// Месяцы ситуации словами: «3-й месяц» или «месяцы 2–3».
+export function monthsLabel(signal: Signal): string {
+  const from = Math.min(signal.since_month, ...signal.months)
+  const to = Math.max(signal.month, ...signal.months)
+  return from === to ? `${to}-й месяц` : `месяцы ${from}–${to}`
+}
+
+// Чем кончилась прошлая ситуация: первый месяц после неё со статусом ok, в котором
+// индекс роли выше, чем в последнем месяце ситуации. Нет такого месяца: null.
+export function recovery(signal: Signal, cells: readonly Cell[]): { month: number; from: number; to: number } | null {
+  const key = signal.role === 'mentor' ? 'mentor_index' : 'intern_index'
+  const last = cells.find((c) => c.month === signal.month)?.[key]
+  if (last == null) return null
+  const ok = [...cells].sort((a, b) => a.month - b.month).find((c) => c.month > signal.month && c.status === 'ok')
+  const now = ok?.[key]
+  if (!ok || now == null || now <= last) return null
+  return { month: ok.month, from: last, to: now }
+}
+
+// Откуда вывод: формула по оценкам и/или разбор комментария моделью.
+export function signalSources(signal: Signal): string[] {
+  const out: string[] = []
+  if (signal.type !== 'text_vs_score') out.push('Формула по оценкам')
+  if (signal.type === 'text_vs_score' || signal.quotes.length > 0) out.push('ИИ: разбор комментария')
+  return out
+}
+
+// Цифры, на которых стоит вывод: «стажёр, месяц 3: 2,7».
+export function valueTags(signal: Signal): string[] {
+  return signal.values
+    .filter((v) => v.value != null)
+    .sort((a, b) => a.role.localeCompare(b.role) || a.month - b.month)
+    .map((v) => `${v.role === 'intern' ? 'стажёр' : 'наставник'}, месяц ${v.month}: ${formatNumber(v.value)}`)
 }

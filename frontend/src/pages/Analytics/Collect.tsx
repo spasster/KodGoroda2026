@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import type { Overview, Role } from '../../api/types'
 import { formLink } from '../../lib/formLink'
-import { ROLE_LABEL, personName } from '../../lib/format'
+import { ROLE_LABEL, personName, plural } from '../../lib/format'
 import s from './Collect.module.css'
 
 export function Collect({ overview, months, fallback }: { overview: Overview | undefined; months: number[]; fallback: number | null }) {
@@ -18,7 +18,28 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
     ...overview.pairs.map((p) => ({ role: 'intern' as Role, id: p.intern_id, name: personName(p.intern_name, p.intern_id), cells: p.cells })),
     ...overview.pairs.map((p) => ({ role: 'mentor' as Role, id: p.mentor_id, name: personName(p.mentor_name, p.mentor_id), cells: p.cells })),
   ]
+  const has = (role: Role, cells: Overview['pairs'][number]['cells'], m: number) => {
+    const c = cells.find((x) => x.month === m)
+    return !!c && !c.missing[role]
+  }
+  // Итог за месяцы программы: каждая сторона пары заполняет одну анкету в месяц.
+  const got = (role: Role) => rows.filter((r) => r.role === role).reduce((n, r) => n + months.filter((m) => has(role, r.cells, m)).length, 0)
+  const need = overview.pairs.length * months.length
+  const interns = got('intern')
+  const mentors = got('mentor')
   return (
+    <>
+      <p className={s.total}>
+        Собрано {interns + mentors} из {need * 2} {plural(need * 2, ['анкеты', 'анкет', 'анкет'])}: стажёры {interns} из {need}, наставники {mentors} из {need}
+      </p>
+      <p className={s.legend}>
+        <span>
+          <Check className={s.yes} aria-hidden="true" size={16} strokeWidth={2.2} /> анкета есть
+        </span>
+        <span>
+          <span className={s.no}>нет</span> нет анкеты
+        </span>
+      </p>
     <div className={s.scroll}>
       <table className={s.matrix}>
         <thead>
@@ -38,27 +59,31 @@ export function Collect({ overview, months, fallback }: { overview: Overview | u
         </thead>
         <tbody>
           {rows.map((r) => {
-            const has = (m: number) => {
-              const c = r.cells.find((x) => x.month === m)
-              return !!c && !c.missing[r.role]
-            }
+            const filled = (m: number) => has(r.role, r.cells, m)
             return (
               <tr key={`${r.role}-${r.id}`}>
                 <th scope="row" className={s.who}>
                   {r.name} <span className={s.role}>{ROLE_LABEL[r.role]}</span>
                 </th>
                 {months.map((m) => (
-                  <td key={m} className={clsx(s.month, m === current && s.current)}>
-                    <i className={has(m) ? s.full : s.ring} role="img" aria-label={has(m) ? 'заполнил' : 'не заполнил'} />
+                  <td key={m} className={clsx(s.month, m === current && s.current, !filled(m) && s.missing)}>
+                    {filled(m) ? (
+                      <Check className={s.yes} role="img" aria-label="анкета есть" size={16} strokeWidth={2.2} />
+                    ) : (
+                      <span className={s.no} title="Нет анкеты" aria-label="нет анкеты">
+                        нет
+                      </span>
+                    )}
                   </td>
                 ))}
-                <td className={s.act}>{current != null && !has(current) && <CopyLink role={r.role} id={r.id} name={r.name} />}</td>
+                <td className={s.act}>{current != null && !filled(current) && <CopyLink role={r.role} id={r.id} name={r.name} />}</td>
               </tr>
             )
           })}
         </tbody>
       </table>
     </div>
+    </>
   )
 }
 

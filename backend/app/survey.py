@@ -26,6 +26,12 @@ class Question:
     id: str
     type: str
     text: str
+    label: str = ""  # короткое название показателя, «Комфортность нагрузки»
+
+    @property
+    def name(self) -> str:
+        """Для заголовков сигналов: короткое название, если есть, иначе формулировка."""
+        return self.label or self.text
 
 
 class Survey:
@@ -48,7 +54,7 @@ class Survey:
 
     def questions(self, role: str) -> list[Question]:
         items = (self.roles.get(role) or {}).get("questions") or []
-        return [Question(q["id"], q.get("type", "scale"), q.get("text", "")) for q in items]
+        return [Question(q["id"], q.get("type", "scale"), q.get("text", ""), q.get("label", "")) for q in items]
 
     def scale_ids(self, role: str) -> list[str]:
         return [q.id for q in self.questions(role) if q.type == "scale"]

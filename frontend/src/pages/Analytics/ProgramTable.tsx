@@ -67,6 +67,16 @@ export function ProgramTable({ stories, months, collect, scale, baseline }: Prop
           <p className={s.caption}>Так HR видит программу без дашборда: средняя оценка каждой анкеты за месяц, в клетке меньшая из двух. Порог {formatNumber(baseline)} выбрали мы</p>
         ) : (
           <p className={s.caption}>
+            {/* Светофор клетки словами ТЗ. */}
+            <span>
+              <i className={clsx(s.swatch, s.risk)} aria-hidden="true" /> критичный сигнал
+            </span>
+            <span>
+              <i className={clsx(s.swatch, s.watch)} aria-hidden="true" /> зона внимания
+            </span>
+            <span>
+              <i className={clsx(s.swatch, s.ok)} aria-hidden="true" /> положительная оценка
+            </span>
             <span>
               <i className={s.keyIntern} aria-hidden="true" /> стажёр
             </span>
@@ -181,8 +191,16 @@ function Row({ story, months, collect, scale, baseline, mode }: RowProps) {
 }
 
 function MainSignal({ story }: { story: Story }) {
-  const { main, active } = story
-  if (!main) return <span className={s.mainTitle}>Всё ровно</span>
+  const { main, active, past } = story
+  if (!main && past) {
+    return (
+      <>
+        <span className={s.mainTitle}>{past.title}</span>
+        <span className={s.mainSub}>{situationMonths(past)} · выправилось</span>
+      </>
+    )
+  }
+  if (!main) return <span className={s.mainTitle}>Сигналов не было</span>
   return (
     <>
       <span className={s.mainTitle}>{main.title}</span>
@@ -241,7 +259,7 @@ function MonthCell({ cell, collecting, scale, baseline, mode }: { cell: Cell | u
 
   return (
     <td
-      className={clsx(s.monthTd, cell.status === 'risk' && s.risk, cell.status === 'watch' && s.watch, collecting && s.collect)}
+      className={clsx(s.monthTd, cell.status === 'risk' && s.risk, cell.status === 'watch' && s.watch, cell.status === 'ok' && s.ok, collecting && s.collect)}
       title={`Стажёр ${formatNumber(iv)}, наставник ${formatNumber(mv)}`}
     >
       <div className={s.cell}>
@@ -277,7 +295,7 @@ export function Dumbbell({ intern, mentor, scale }: { intern: number | null; men
 
 // Список вместо таблицы на узком экране.
 function PairCard({ story, months, baseline, mode }: { story: Story; months: number[]; baseline: number; mode: Mode }) {
-  const { pair, status, main } = story
+  const { pair, status, main, past } = story
   const cell = lastCell(story, months)
   const avg = monthAverage(cell)
   const summary =
@@ -297,7 +315,7 @@ function PairCard({ story, months, baseline, mode }: { story: Story; months: num
         </span>
         <span className={s.mentor}>наставник {personName(pair.mentor_name, pair.mentor_id)}</span>
         {summary && <span className={s.cardSum}>{summary}</span>}
-        {mode === 'signals' && <span className={s.mainTitle}>{main ? main.title : 'Всё ровно'}</span>}
+        {mode === 'signals' && <span className={s.mainTitle}>{main ? main.title : past ? `${past.title} · выправилось` : 'Сигналов не было'}</span>}
       </Link>
     </li>
   )

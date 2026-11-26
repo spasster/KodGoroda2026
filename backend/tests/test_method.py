@@ -19,7 +19,10 @@ def test_method_texts_on_default_scale(client):
     m = method(client)
     assert set(m) == {"principles", "signals", "baseline", "quality"}
     assert m["principles"][0] == "Оценки считают формулы. ИИ читает только комментарии."
-    assert len(m["principles"]) == 4
+    # 4 общих правила, светофор и статус стажёра. Правила заметок в тестовых порогах выключены.
+    assert len(m["principles"]) == 6
+    assert any("«зона внимания»" in p and "«критичный сигнал»" in p for p in m["principles"])
+    assert not any("Заметка" in p for p in m["principles"])
     assert [s["type"] for s in m["signals"]] == ["decline", "gap_intern_low", "gap_mentor_low", "low_question",
                                                  "text_vs_score", "silence"]
     s = by_type(m)
@@ -30,11 +33,13 @@ def test_method_texts_on_default_scale(client):
                                           "Важность высокая от 1,6 балла или если разрыв растёт второй месяц.")
     assert s["gap_mentor_low"]["how"] == ("Средняя оценка стажёра выше средней оценки наставника на 1,0 балла и больше. "
                                           "Важность высокая от 1,6 балла.")
-    assert s["low_question"]["how"] == "По любому вопросу анкеты поставлено 2 или ниже."
+    assert s["low_question"]["how"].startswith("По любому вопросу анкеты поставлено 2 или ниже. Важность высокая")
     assert s["text_vs_score"]["how"].startswith("Средняя оценка анкеты 3,6 и выше, а в комментарии той же анкеты жалоба")
     assert "стал короче прошлых на 60% и больше" in s["silence"]["how"]
     assert m["baseline"] == ("Сравниваем с тем, как это видно без дашборда: HR смотрит среднюю оценку за один месяц "
-                             "и реагирует, когда она ниже 3,5. Порог выбрали мы сами, его нужно уточнить у HR.")
+                             "и реагирует, когда она ниже 3,5. Порог выбрали мы сами, его нужно уточнить у HR. "
+                             "Пороги сигналов подобраны на пяти парах МГТС за шесть месяцев, на большой программе "
+                             "их нужно проверить заново.")
     for item in m["signals"]:
         assert len(item["why"]) == 3 and item["action"] and item["limit"]
     assert s["low_question"]["source"] is None and s["text_vs_score"]["source"].startswith("Aralikatte")
@@ -56,7 +61,7 @@ def test_method_thresholds_follow_signals_json_and_scale(client, survey_dir):
     # Размах 9: 0,25 · 9 = 2,25 → 2,3; 0,12 · 9 = 1,08 → 1,1; 0,4 · 9 = 3,6; шкала начинается с 1.
     assert "упала на 2,3 балла" in s["decline"]["how"] and "потеряла за них 1,1 балла" in s["decline"]["how"]
     assert "от 3,6 балла" in s["gap_intern_low"]["how"]
-    assert s["low_question"]["how"] == "По любому вопросу анкеты поставлено 3 или ниже."  # 1 + 0,3 · 9 = 3,7, оценки целые
+    assert s["low_question"]["how"].startswith("По любому вопросу анкеты поставлено 3 или ниже.")  # 1 + 0,3 · 9 = 3,7, оценки целые
     assert "оценка анкеты 6,9 и выше" in s["text_vs_score"]["how"]  # 1 + 0,65 · 9 = 6,85
     assert "ниже 6,6." in method(client)["baseline"]  # 1 + 0,625 · 9 = 6,625
 
@@ -82,3 +87,25 @@ def test_method_quality_is_file_as_is(client, survey_dir):
                "errors": ["«…» — модель не увидела иронию"]}
     (survey_dir / "quality.json").write_text(json.dumps(quality, ensure_ascii=False), encoding="utf-8")
     assert method(client)["quality"] == quality
+
+
+def test_method_notes_rules_and_quality_limit(client, survey_dir):
+    th = json.loads((survey_dir / "signals.json").read_text(encoding="utf-8"))
+    th["text_vs_score"]["confirm"] = True
+    th["status"] = {"notes_neutral": True, "low_index": True, "one_text_finding": True}
+    (survey_dir / "signals.json").write_text(json.dumps(th), encoding="utf-8")
+    quality = {"updated": "2026-11-25", "model": "m", "seconds_per_comment": 1.0, "errors": [],
+               "sets": [{"id": "holdout", "name": "Настоящие", "comments": 56, "problems": 31,
+                         "model": {"found": 26, "missed": 5, "false_alarms": 0},
+                         "rules": {"found": 7, "missed": 24, "false_alarms": 0}}]}
+    (survey_dir / "quality.json").write_text(json.dumps(quality, ensure_ascii=False), encoding="utf-8")
+    later = time.time() + 5
+    for name in ("signals.json", "quality.json"):
+        os.utime(survey_dir / name, (later, later))
+    m = method(client)
+    joined = " ".join(m["principles"])
+    assert "Заметка (низкая важность) светофор не красит" in joined
+    assert "одной находкой" in joined and "ниже 3,5 считается ещё одной находкой" in joined
+    text = by_type(m)["text_vs_score"]
+    assert "Пишет одна сторона: это заметка" in text["how"]
+    assert "ИИ нашёл 26 из 31 проблемы в публичных отзывах" in text["limit"] and "МГТС" in text["limit"]

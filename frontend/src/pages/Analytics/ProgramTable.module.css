@@ -55,6 +55,12 @@
 .cell { display: flex; align-items: center; justify-content: center; gap: 8px; height: 56px; font-variant-numeric: tabular-nums; }
 .table tbody td.risk { background: var(--risk-wash); }
 .table tbody td.watch { background: var(--watch-wash); }
+.table tbody td.ok { background: var(--ok-wash); }
+/* Образцы заливки в легенде. */
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: var(--radius-s); box-shadow: inset 0 0 0 1px var(--line); }
+.swatch.risk { background: var(--risk-wash); }
+.swatch.watch { background: var(--watch-wash); }
+.swatch.ok { background: var(--ok-wash); }
 .table tbody td.collect { background: var(--brand-wash); }
 .num { color: var(--text-1); font-size: var(--fs-s); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
 .none { color: var(--text-3); font-weight: var(--fw-regular); }

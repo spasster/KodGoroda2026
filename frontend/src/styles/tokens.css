@@ -54,20 +54,20 @@
   /* Графики: стажёр графит, наставник серый. Синий только у того, на что нажимают. */
   --series-intern: var(--color-text-primary);
   --series-mentor: var(--color-text-tertiary);
-  --series-gap: rgb(249 87 33 / .12);
+  --series-gap: color-mix(in srgb, var(--color-accent-negative) 12%, transparent);
   --chart-grid: var(--color-line);
-  --risk-gap: rgb(249 87 33 / .16);
-  --watch-gap: rgb(250 192 49 / .22);
+  --risk-gap: color-mix(in srgb, var(--color-accent-negative) 16%, transparent);
+  --watch-gap: color-mix(in srgb, var(--color-accent-warning) 22%, transparent);
 
-  /* Графитовая лента наверху страницы */
-  --hero-bg: #1D2023;
-  --hero-text: #FAFAFA;
-  --hero-text-2: #BBC1C9;
-  --hero-line: #2C3135;
-  --hero-glow: #008AE0;
+  /* Графитовая лента наверху страницы: инвертированная поверхность системы, без свечения */
+  --hero-bg: var(--color-background-inverted);
+  --hero-text: var(--color-text-inverted);
+  --hero-text-2: var(--color-control-disabled);
+  --hero-line: color-mix(in srgb, var(--hero-text) 12%, var(--hero-bg));
+  --hero-glow: var(--color-brand);
 
   /* Подсветка цитаты */
-  --mark-bg: rgb(250 192 49 / .28);
+  --mark-bg: color-mix(in srgb, var(--color-accent-warning) 28%, transparent);
 
   /* Тени: --shadow-low / middle / high приходят из системы */
   --shadow-pop: var(--shadow-high);
@@ -126,10 +126,13 @@
   --line-strong: var(--color-control-stroke-hover);
   --brand-text: var(--color-text-brand);
   --focus: var(--color-text-brand);
-  --series-gap: rgb(249 87 33 / .16);
-  --hero-bg: #0E1012;
-  --hero-line: #26292D;
-  --mark-bg: rgb(250 192 49 / .30);
+  --series-gap: color-mix(in srgb, var(--color-accent-negative) 16%, transparent);
+  /* В тёмной теме инвертированная поверхность светлая, поэтому лента берёт самый тёмный фон системы. */
+  --hero-bg: var(--color-background-lower);
+  --hero-text: var(--color-text-primary);
+  --hero-text-2: var(--color-text-secondary);
+  --hero-line: var(--color-line);
+  --mark-bg: color-mix(in srgb, var(--color-accent-warning) 30%, transparent);
   --shadow-low: 0 2px 8px rgb(0 0 0 / .4);
   --shadow-middle: 0 4px 16px rgb(0 0 0 / .45);
   --shadow-high: 0 12px 40px rgb(0 0 0 / .55);

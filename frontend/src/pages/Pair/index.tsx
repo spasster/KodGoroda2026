@@ -9,16 +9,17 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { api, ApiError } from '../../api/client'
-import { queryKeys, useOverview, usePair, usePeople, useSurvey } from '../../api/queries'
+import { queryKeys, useBrief, useOverview, usePair, usePeople, useSurvey } from '../../api/queries'
 import type { Overview, PairDetail, PairStatus } from '../../api/types'
-import { PAIR_STATUS_LABEL, personName } from '../../lib/format'
+import { StatusText } from '../../app/status'
+import { personName } from '../../lib/format'
 import { PageHeader, QuestionTable } from '../../components'
 import { useReduced, variants } from '../../lib/motion'
 import { collectMonth } from '../../lib/rules'
 import { Chart } from './Chart'
 import { Comments } from './Comments'
 import { clearFreshMarks } from './freshMarks'
-import { hasData, lowTone, neighbours, openSignals, pairOrder, questionGroups } from './model'
+import { hasData, neighbours, openSignals, pairedGroups, pairOrder, questionGroups, scoreTone } from './model'
 import { Outcome } from './Outcome'
 import s from './Pair.module.css'
 import { Questions, Topics } from './Talk'
@@ -101,8 +102,12 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
   }
 
   const groups = survey.data ? questionGroups(survey.data, p.series, monthList) : []
-  const tone = survey.data ? lowTone(scale, survey.data.thresholds.low_question.max_score) : null
-  const lowGroups = tone ? groups.map((g) => ({ ...g, rows: g.rows.filter((r) => r.values.some((v) => tone(v) === 'low')) })).filter((g) => g.rows.length) : []
+  const paired = survey.data ? pairedGroups(survey.data, p.series, monthList) : []
+  // Подписи вопросов анкеты для комментариев: короткое название показателя, нет его — формулировка.
+  const labels: Record<string, string> = {}
+  for (const role of ['intern', 'mentor'] as const) {
+    for (const q of survey.data?.roles[role].questions ?? []) labels[`${role}:${q.id}`] = q.label ?? q.text
+  }
 
   return (
     <>
@@ -115,6 +120,7 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
       <div className="wrap">
         <div className={t.layout}>
           <div className={t.talk}>
+            <Lead pair={p} />
             <Topics pair={p} onQuote={toComment} />
             <Questions pairId={p.pair_id} />
           </div>
@@ -127,26 +133,57 @@ function PairView({ pair: p, overview }: { pair: PairDetail; overview: Overview 
                 Оценки по месяцам
               </h2>
               <Chart cells={p.cells} months={dataEnd} scale={scale} marks={marks} />
-              {tone && lowGroups.length > 0 && (
+              {groups.length > 0 && (
                 <div className={t.lowRows}>
-                  <p className="overline">Низкие оценки по вопросам</p>
-                  <QuestionTable compact months={monthList} groups={lowGroups} tone={tone} />
+                  <h3 className={t.subTitle}>Оценки по вопросам</h3>
+                  <QuestionTable compact months={monthList} groups={groups} tone={scoreTone} />
                 </div>
               )}
-              {tone && (
-                <details className={t.allQuestions}>
-                  <summary>Все вопросы</summary>
-                  <div>
-                    <QuestionTable compact months={monthList} groups={groups} tone={tone} />
-                  </div>
-                </details>
+              {paired.length > 0 && (
+                <div className={t.lowRows}>
+                  <h3 className={t.subTitle}>Стажёр и наставник об одном и том же</h3>
+                  <QuestionTable compact months={monthList} groups={paired} tone={scoreTone} />
+                </div>
               )}
             </section>
-            <Comments pair={p} collect={collect} flash={flash} className={t.block} />
+            <Comments pair={p} collect={collect} flash={flash} labels={labels} className={t.block} />
           </div>
         </div>
       </div>
     </>
+  )
+}
+
+// «Коротко»: резюме ситуации от бэкенда и что сделать по активным ситуациям.
+function Lead({ pair }: { pair: PairDetail }) {
+  const brief = useBrief(pair.pair_id)
+  // Действия считает бэкенд: для активных поводов — что сделать, для выправившейся пары — как закрепить.
+  // Старый бэкенд поля не отдаёт: тогда берём действия активных поводов, без заметок.
+  const todo = brief.data?.next_steps ?? [
+    ...new Set(pair.signals.filter((sig) => sig.active && sig.severity !== 'low' && sig.action).map((sig) => sig.action)),
+  ]
+  if (!brief.data?.summary && todo.length === 0) return null
+  return (
+    <section className={t.lead} aria-labelledby="pair-lead">
+      <h2 id="pair-lead" className={t.leadTitle}>
+        Коротко
+      </h2>
+      {brief.data?.summary && <p className={t.leadText}>{brief.data.summary}</p>}
+      {todo.length > 0 && (
+        <div className={t.leadTodo}>
+          <span className={t.actionLabel}>Что делать дальше</span>
+          {todo.length === 1 ? (
+            <p>{todo[0]}</p>
+          ) : (
+            <ul>
+              {todo.map((a) => (
+                <li key={a}>{a}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -159,16 +196,14 @@ function Status({ status }: { status: PairStatus }) {
   }, [])
   return (
     <div className={s.statusBox} aria-live="polite">
-      <motion.p
+      <motion.div
         key={status}
-        className={s.status}
         variants={variants.swap}
         initial={first.current || reduce ? false : 'hidden'}
         animate="shown"
       >
-        <span className={s.statusDot} data-status={status} aria-hidden="true" />
-        {PAIR_STATUS_LABEL[status]}
-      </motion.p>
+        <StatusText status={status} />
+      </motion.div>
     </div>
   )
 }

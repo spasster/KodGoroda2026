@@ -11,6 +11,6 @@
 .btn:hover { background: var(--color-brand-subtle); }
 .btn svg { width: 18px; height: 18px; }
 
-.brand { border-color: transparent; background: var(--color-brand); color: #fff; }
+.brand { border-color: transparent; background: var(--color-brand); color: var(--brand-fg); }
 .brand:hover { background: var(--color-brand-hover); }
 .brand:active { background: var(--color-brand-active); }

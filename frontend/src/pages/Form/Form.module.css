@@ -3,14 +3,8 @@
 .page { min-height: 100dvh; background: var(--bg); }
 .wrap { max-width: 592px; margin: 0 auto; padding: 0 16px; }
 
-/* ---------- Знак сверху ---------- */
+/* ---------- Знак сверху: Logo системы ---------- */
 .top { display: flex; align-items: center; gap: 12px; height: 72px; }
-.mark {
-  display: flex; align-items: flex-end;
-  width: 40px; height: 40px; padding: 0 0 6px 5px;
-  border-radius: var(--r-s); background: var(--mgts-blue); color: #FFFFFF;
-  font-family: var(--font-wide); font-size: 9px; font-weight: var(--fw-bold); line-height: 1; letter-spacing: .02em;
-}
 .product { font-size: var(--fs-m); font-weight: var(--fw-medium); }
 
 /* ---------- Карточки ---------- */
@@ -29,7 +23,8 @@
 /* Пропущенный вопрос после «Отправить». */
 .miss { box-shadow: 0 0 0 2px var(--risk), var(--shadow-low); }
 
-.title { font-family: var(--font-wide); font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh-tight); }
+/* H1 анкеты: на телефоне по размеру H2 системы (Wide 24/28), с 768px H1 (Wide 32/36). */
+.title { font-family: var(--font-wide); font-size: var(--type-h2-size); font-weight: var(--fw-bold); line-height: var(--type-h2-lh); }
 .title:focus-visible, .name:focus-visible { outline: none; }
 
 /* ---------- Кнопки выбора: роль, человек ---------- */
@@ -57,7 +52,8 @@
 
 /* ---------- Шаг 2: кто заполняет ---------- */
 .head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-.name { font-family: var(--font-wide); font-size: var(--fs-l); font-weight: var(--fw-bold); line-height: var(--lh-tight); }
+/* Кто заполняет: H3 системы, Compact 700 20/24. */
+.name { font-family: var(--font-compact); font-size: var(--type-h3-size); font-weight: var(--fw-bold); line-height: var(--type-h3-lh); }
 .sub { color: var(--text-2); font-size: var(--fs-s); font-weight: var(--fw-regular); }
 .head + .sub { margin-top: 6px; }
 
@@ -75,27 +71,29 @@
 .select svg { position: absolute; top: 50%; right: 16px; width: 20px; height: 20px; translate: 0 -50%; color: var(--text-2); pointer-events: none; }
 
 /* ---------- Вопросы ---------- */
-.qt { display: block; font-size: var(--fs-m); font-weight: var(--fw-medium); line-height: var(--lh-snug); text-wrap: pretty; }
+/* Вопрос: H4 системы, Compact 500 17/24. */
+.qt { display: block; font-family: var(--font-compact); font-size: var(--type-h4-size); font-weight: var(--fw-medium); line-height: var(--type-h4-lh); text-wrap: pretty; }
 
 .scale { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 8px; margin-top: 16px; }
 .opt { position: relative; }
 .opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+/* Вид как у ChoiceChip системы: высота --control-l под палец, радиус --radius-m, Compact 17. */
 .opt span {
-  display: flex; align-items: center; justify-content: center; height: 52px;
-  border-radius: var(--r-m); background: var(--sunken);
-  font-family: var(--font-wide); font-size: var(--fs-l); font-weight: var(--fw-medium);
+  display: flex; align-items: center; justify-content: center; height: var(--control-l);
+  border-radius: var(--radius-m); background: var(--color-background-secondary); color: var(--color-text-primary);
+  font-family: var(--font-compact); font-size: var(--type-body-lg-size); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums;
   pointer-events: none;
   transition: background var(--dur-1) linear, color var(--dur-1) linear;
 }
-.opt input:checked + span { background: var(--brand); color: var(--brand-fg); }
+.opt input:checked + span { background: var(--color-brand); color: var(--brand-fg); }
 .opt input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-.edges { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; color: var(--text-2); font-size: var(--fs-xs); }
+.edges { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; color: var(--text-2); font-size: var(--type-caption-size); line-height: var(--type-caption-lh); }
 
 .text {
   display: block; width: 100%; min-height: 120px; margin-top: 16px; padding: 14px 16px;
   border: 0; border-radius: var(--r-m); background: var(--sunken); color: var(--text-1);
-  font-family: var(--font-text); font-size: var(--fs-m); line-height: var(--lh-body);
+  font-family: var(--font-compact); font-size: var(--fs-m); line-height: var(--lh-body);
   resize: none; field-sizing: content;
 }
 .text:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; border-radius: var(--r-m); }
@@ -117,20 +115,15 @@
 }
 .bar { display: flex; align-items: center; gap: 16px; }
 .count { flex: none; color: var(--text-2); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
-.submit {
-  display: block; flex: 1; min-width: 0; height: 52px;
-  border: 0; border-radius: var(--r-m);
-  background: var(--brand); color: var(--brand-fg);
-  font-size: var(--fs-m); font-weight: var(--fw-medium);
-  transition: background var(--dur-1) linear;
-}
-.submit[aria-busy="true"] { cursor: progress; }
+/* Обёртка кнопки системы (Button primary l fullWidth): занимает остаток строки рядом со счётчиком. */
+.submit { flex: 1; min-width: 0; }
+.submit [aria-busy="true"] { cursor: progress; }
 .error { margin-bottom: 12px; padding: 12px 16px; border-radius: var(--r-m); background: var(--risk-wash); font-size: var(--fs-s); }
 
 /* Наведение только там, где есть мышь: на телефоне оно залипает после касания. */
 @media (hover: hover) {
   .choice:hover, .select select:hover, .opt:hover span, .secondary:hover { background: var(--line); }
-  .choice[aria-pressed="true"]:hover, .opt:hover input:checked + span, .submit:hover { background: var(--brand-hover); }
+  .choice[aria-pressed="true"]:hover, .opt:hover input:checked + span { background: var(--brand-hover); }
   .link:hover { color: var(--brand-hover); }
 }
 
@@ -148,7 +141,7 @@
 .check { width: 64px; height: 64px; }
 .check circle { fill: var(--ok); transform-box: fill-box; transform-origin: center; animation: pop var(--dur-3) var(--ease-out) both; }
 .check path {
-  fill: none; stroke: #FFFFFF; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+  fill: none; stroke: var(--brand-fg); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
   stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw var(--dur-3) var(--ease-out) 200ms forwards;
 }
 @keyframes pop { from { transform: scale(.6); opacity: 0; } }
@@ -163,6 +156,5 @@
   .stack { gap: 16px; }
   .card { padding: 32px; }
   .center { padding: 48px 32px; }
-  .title { font-size: 28px; }
-  .name { font-size: var(--fs-xl); }
+  .title { font-size: var(--type-h1-size); line-height: var(--type-h1-lh); }
 }

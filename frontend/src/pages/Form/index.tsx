@@ -11,6 +11,8 @@ import { useSearchParams } from 'react-router-dom'
 
 import { useIngest, usePeople, useSurvey } from '../../api/queries'
 import type { People, Role, Survey } from '../../api/types'
+import { Button } from '../../ds/components/core/Button'
+import { Logo } from '../../ds/components/brand/Logo'
 import { formatCount, personName, ROLE_LABEL, ROLE_TITLE } from '../../lib/format'
 import { parseFormToken, type FormToken } from '../../lib/formLink'
 import { useDocumentTitle } from './title'
@@ -157,9 +159,7 @@ function Shell({ children }: { children: ReactNode }) {
     <div className={s.page}>
       <div className={s.wrap}>
         <header className={s.top}>
-          <span className={s.mark} aria-hidden="true">
-            МГТС
-          </span>
+          <Logo variant="mark" size={40} />
           <span className={s.product}>Анкета стажировки</span>
         </header>
         <main>{children}</main>
@@ -354,7 +354,7 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
   const def = survey.roles[role]
   // Как в счётчике «Отвечено N из M»: оценки обязательны, комментарий отдельно.
   const questionCount = def.questions.filter((q) => q.type === 'scale').length
-  const hasText = def.questions.some((q) => q.type === 'text')
+  const textCount = def.questions.filter((q) => q.type === 'text').length
   const scaleQs = def.questions.filter((q) => q.type === 'scale')
   const missing = scaleQs.filter((q) => typeof draft.answers[q.id] !== 'number')
   const scale = range(survey.scale.min, survey.scale.max)
@@ -422,7 +422,8 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
           </p>
           {lock ? (
             <p className={s.sub}>
-              {formatCount(questionCount, ['оценка', 'оценки', 'оценок'])}{hasText ? ' и комментарий' : ''}, {ASK_MINUTES}
+              {formatCount(questionCount, ['оценка', 'оценки', 'оценок'])}
+              {textCount ? ` и ${formatCount(textCount, ['вопрос', 'вопроса', 'вопросов'])} словами` : ''}, {ASK_MINUTES}
             </p>
           ) : (
             <div className={s.select}>
@@ -549,9 +550,11 @@ function FormFlow({ survey, people }: { survey: Survey; people: People }) {
             <span className={s.count} aria-live="polite">
               Отвечено {scaleQs.length - missing.length} из {scaleQs.length}
             </span>
-            <button type="submit" className={s.submit} aria-busy={ingest.isPending || undefined}>
-              {ingest.isPending ? 'Отправляем…' : 'Отправить'}
-            </button>
+            <div className={s.submit}>
+              <Button variant="primary" size="l" fullWidth type="submit" aria-busy={ingest.isPending || undefined}>
+                {ingest.isPending ? 'Отправляем…' : 'Отправить'}
+              </Button>
+            </div>
           </div>
         </div>
       </form>

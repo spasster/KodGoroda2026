@@ -3,7 +3,8 @@
 // из data/sample/truth.json → demo.order. Shift+D открывает панель со всеми
 // демо-анкетами. Уведомление и обновление данных приходят обычным путём, через
 // /api/events. Клавиши не срабатывают в полях ввода и с Ctrl, Cmd, Alt.
-// Файлы *.json здесь копия data/sample/demo/.
+// Файлы *.json здесь копия data/sample/demo/. Пульт работает только с анкетами людей, которые есть
+// в /api/people: на данных МГТС (СТ-001, Н-001) старых S-01 и M-01 нет, и тогда n и Shift+D ничего не делают.
 
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
@@ -96,12 +97,16 @@ export function DemoPanel() {
     }
   }
 
-  // Следующая анкета: первая из ORDER, которой ещё нет в базе. Все есть: S-01 заново.
-  const next = DEMO.find((d) => !isSent(d, people.data)) ?? DEMO[0]
+  // Только анкеты людей из базы: анкета на чужой ID вернёт ошибку.
+  const live = DEMO.filter((d) => person(d, people.data) != null)
+  // Следующая анкета: первая из ORDER, которой ещё нет в базе. Все есть: первая заново.
+  const next = live.find((d) => !isSent(d, people.data)) ?? live[0]
+  const enabled = live.length > 0
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return
+      if (!enabled) return
       // e.code, а не e.key: в русской раскладке n печатает «т».
       if (e.code === 'KeyN' && !e.shiftKey && next) {
         e.preventDefault()
@@ -115,20 +120,20 @@ export function DemoPanel() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [next, send])
+  }, [next, send, enabled])
 
-  if (!open) return null
+  if (!open || !enabled) return null
 
   return (
     <section className={s.panel} aria-label="Демо-пульт" aria-busy={busy || undefined}>
       <div className={s.head}>
-        <b>Демо, {DEMO[0]?.month}-й месяц</b>
+        <b>Демо, {live[0]?.month}-й месяц</b>
         <button type="button" className={s.close} aria-label="Скрыть демо-пульт" onClick={() => setOpen(false)}>
           <X aria-hidden="true" strokeWidth={1.8} />
         </button>
       </div>
       <ul className={s.list}>
-        {DEMO.map((d) => {
+        {live.map((d) => {
           const sent = isSent(d, people.data)
           return (
             <li key={`${d.role}:${d.person_id}:${d.month}`}>

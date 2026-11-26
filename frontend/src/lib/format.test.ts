@@ -80,7 +80,7 @@ describe('время', () => {
 
 describe('подписи v2', () => {
   it('статусы пары', () => {
-    expect(PAIR_STATUS_LABEL).toEqual({ risk: 'Пора поговорить', watch: 'Присмотреться', ok: 'Всё ровно' })
+    expect(PAIR_STATUS_LABEL).toEqual({ risk: 'Критичный сигнал', watch: 'Зона внимания', ok: 'Положительная оценка' })
   })
 
   it('имя или ID', () => {

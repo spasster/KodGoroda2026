@@ -127,6 +127,12 @@ def analyze(text: str, role: str, question_id: str) -> TextInsight
 - `title`, `action`, `values` берутся от последнего месячного сигнала. `explanation` тоже, а если серия длиннее одного месяца, в конец добавляется «Повторяется с 3-го месяца, 2 мес. подряд.» Число считается по месяцам срабатывания внутри серии
 - `quotes` собираются из месячных сигналов: свежие месяцы первыми, без повторов, не больше 3.
 - Статус пары по активным ситуациям: `risk`, если есть ситуация с `high`, которая держится два месяца и больше (`month > since_month`), или ситуаций с важностью `medium` и выше две и больше; `watch`, если есть хотя бы одна активная; иначе `ok`. Статус клетки месяца считается по месячным сигналам по другому правилу: `risk`, если есть `high` или сигналов два и больше; `watch`, если один; иначе `ok`. Клетка считает месячные сигналы этого месяца без учёта `active_months`; месячные сигналы отклонённой ситуации в клетке не считаются.
+- Новые правила светофора (`survey/signals.json`, по умолчанию выключены, для данных МГТС включены):
+  - `text_vs_score.confirm`: анкета прямо спрашивает о сложностях, поэтому текст одной стороны — заметка `low`. Если в том же месяце `text_vs_score` есть и у второй роли, обе получают `medium` и заголовок «Стажёр и наставник оба пишут о …». `high` от текста не ставится.
+  - `status.notes_neutral`: сигналы `low` не красят ни клетку, ни пару, но остаются в списке ситуаций.
+  - `status.low_index`: средняя стажёра или наставника за месяц ниже `baseline.index_below` (на шкале 1–5 это 3,5) считается в клетке ещё одним подтверждением: одна — `watch`, вместе с другим сигналом — `risk`. Поле `Cell.low_index` отдаётся всегда.
+  - `status.one_text_finding`: подтверждённые `text_vs_score` стажёра и наставника в одном месяце считаются в клетке одной находкой.
+  - Заголовки `low_question` и `decline` берут короткое название показателя `label` из `survey.json`, если оно есть.
 - `Cell.signal_keys` — ключи ситуаций, которые сработали в этом месяце. `highlights[].signal_key` — ключ ситуации.
 - `open_signals`, `totals.open_signals`, `totals.confirmed`, `totals.rejected` считаются по ситуациям.
 
@@ -192,6 +198,7 @@ interface Signal {
 interface Cell {
   month: number; intern_index: number | null; mentor_index: number | null; gap: number | null
   status: PairStatus; signal_keys: string[]; missing: { intern: boolean; mentor: boolean }
+  low_index: boolean  // средняя стажёра или наставника ниже baseline.index_below
 }
 interface PairSummary {
   pair_id: string; intern_id: string; mentor_id: string; status: PairStatus; last_month: number
@@ -293,7 +300,7 @@ interface PairDetail extends PairSummary {
 | Метод и путь | Что делает |
 |---|---|
 | `GET /api/analytics` | общая аналитика программы: средние по месяцам, вопросы по месяцам, темы комментариев, раннее предупреждение по парам (`early`), сравнение с базовым способом (`effect`) |
-| `GET /api/pairs/{pair_id}/brief` | сводка по паре, вопросы для разговора (`to`: кому задавать), заметки HR. Собирается правилами из ситуаций и тем |
+| `GET /api/pairs/{pair_id}/brief` | `{summary, next_steps, questions, notes}`: резюме 1–4 предложения (сейчас, прошлые ситуации medium и high с месяцами и показателями, чем кончилось, одна заметка low), `next_steps: string[]` из 1–3 строк (action активных поводов; после выправившейся ситуации — что закрепить; без истории — «Действий не требуется»), вопросы для разговора (`to`: кому задавать), заметки HR. Собирается правилами из сигналов и тем |
 | `POST /api/pairs/{pair_id}/notes` | тело `{text}`: добавить заметку HR, ответ как у `brief` |
 
 Имена людей берутся из `survey/people.json` (ID → имя). Нет записи — интерфейс показывает ID.
@@ -304,13 +311,13 @@ interface PairDetail extends PairSummary {
 
 Базовый способ: HR смотрит среднюю оценку за один месяц и реагирует, когда она ниже `baseline.index_below` (по умолчанию 0,625, на шкале 1–5 это 3,5). Порог в нормированном индексе, сравнение строгое.
 
-`early[]` — пары, у которых есть хотя бы одно срабатывание, не снятое отметкой «Проблемы нет» (месяцы до отметки у повторившейся ситуации тоже не считаются):
+`early[]` — пары, у которых хотя бы одна клетка обзора не «положительная оценка» (клетки считаются как в обзоре: снятые отметкой «Проблемы нет» месяцы и заметки по правилам `status` не красят, низкая средняя красит при `status.low_index`):
 
 ```ts
 interface Early {
   pair_id: string; intern_id: string; intern_name: string | null
-  first_signal_month: number       // первый месяц срабатывания
-  risk_month: number | null        // первый месяц, когда статус пары на конец месяца был risk (те же правила, что у статуса пары, по срабатываниям до этого месяца)
+  first_signal_month: number       // первый месяц, когда клетка обзора watch или risk
+  risk_month: number | null        // первый месяц, когда статус пары на конец месяца был risk (те же правила, что у статуса пары, по срабатываниям до этого месяца; при status.one_text_finding тексты обеих сторон одна ситуация)
   baseline_month: number | null    // первый месяц, когда индекс стажёра или наставника ниже порога
   lead_months: number | null       // baseline_month - first_signal_month; null, если базовый способ не сработал
 }
@@ -319,8 +326,8 @@ interface Early {
 Блок `effect` в ответе аналитики:
 
 ```ts
-effect: { pairs_with_signals: number; earlier: number; same_or_later: number; invisible: number
-          avg_lead: number | null; baseline_score: number }
+effect: { pairs_with_signals: number; earlier: number; same_or_later: number; same_month: number; later: number
+          invisible: number; avg_lead: number | null; baseline_score: number; conclusion: string }
 ```
 
-`earlier` — пар с `lead_months > 0`; `same_or_later` — с `lead_months <= 0`; `invisible` — пар, где базовый способ не сработал совсем; `avg_lead` — среднее `lead_months` по парам, где он не `null`, один знак; `baseline_score` — порог в баллах шкалы.
+`earlier` — пар с `lead_months > 0`; `same_or_later` — с `lead_months <= 0`; `same_month` — с `lead_months == 0`; `later` — с `lead_months < 0`; `invisible` — пар, где базовый способ не сработал совсем; `conclusion` — вывод на русском, собран из этих чисел и строк `early` (с примером, где средняя прячет низкую оценку по вопросу); `avg_lead` — среднее `lead_months` по парам, где он не `null`, один знак; `baseline_score` — порог в баллах шкалы.
