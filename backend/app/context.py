@@ -4,7 +4,7 @@ import logging
 import threading
 from dataclasses import dataclass
 
-from . import db
+from . import db, tuning
 from .adapters.google_api import GoogleFormsAPI
 from .analyzer import TextAnalyzer, build_analyzer, with_text_check
 from .config import Settings
@@ -56,7 +56,10 @@ class Context:
 
     @property
     def thresholds(self) -> dict:
-        return thresholds(self.files.thresholds)
+        # Правки HR из раздела настроек лежат в базе и идут поверх survey/signals.json.
+        with self.connect() as conn:
+            saved = tuning.load(conn)
+        return tuning.apply(thresholds(self.files.thresholds), saved)
 
     def connect(self):
         return db.connect(self.settings.db_path)

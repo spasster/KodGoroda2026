@@ -63,3 +63,25 @@
 
 /* Сравнение сигналов со средней оценкой: обычный абзац. */
 .compare { max-width: 90ch; margin-top: var(--s-2); line-height: var(--lh-body); }
+
+/* Пороги сигналов */
+.tuneLead { margin-bottom: var(--s-4); color: var(--text-2); font-size: var(--fs-s); line-height: var(--lh-body); }
+.tune { display: flex; flex-direction: column; }
+.tuneRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); align-items: center; gap: var(--s-2) var(--s-5); padding: var(--s-3) 0; border-top: 1px solid var(--line); }
+.tuneLabel { display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-m); font-weight: var(--fw-medium); }
+.tuneHint { color: var(--text-2); font-size: var(--fs-s); font-weight: var(--fw-regular); line-height: var(--lh-body); }
+.tuneValue { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
+.tuneInput { width: 88px; padding: 8px 10px; color: var(--text-1); background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-s); font-variant-numeric: tabular-nums; text-align: right; }
+.tuneInput:disabled { color: var(--text-2); }
+.tuneUnit { font-size: var(--fs-s); }
+.tuneDefault { color: var(--text-2); font-size: var(--fs-xs); }
+.tuneFoot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); }
+.tuneKey { display: flex; flex-direction: column; gap: 6px; color: var(--text-2); font-size: var(--fs-s); }
+.tuneKeyInput { width: min(100%, 260px); padding: 8px 10px; color: var(--text-1); background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r-s); }
+.tuneActions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.tuneOk, .tuneError { margin-top: var(--s-3); font-size: var(--fs-s); }
+.tuneOk { color: var(--ok-text); }
+.tuneError { color: var(--risk-text); }
+@media (max-width: 720px) {
+  .tuneRow { grid-template-columns: minmax(0, 1fr); }
+}

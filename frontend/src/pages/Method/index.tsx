@@ -3,11 +3,14 @@
 
 import clsx from 'clsx'
 import { ChevronRight } from 'lucide-react'
-import { Fragment, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Fragment, useEffect, useState, type FormEvent } from 'react'
 
-import { useAnalytics, useMethod } from '../../api/queries'
-import type { Quality, QualitySet } from '../../api/types'
+import { api, HR_KEY_STORAGE } from '../../api/client'
+import { queryKeys, useAnalytics, useMethod, useThresholdSettings } from '../../api/queries'
+import type { Quality, QualitySet, ThresholdSettings } from '../../api/types'
 import { LoadError, Loading, PageHeader, Skeleton } from '../../components'
+import { Button } from '../../components/Button'
 import { formatNumber, plural } from '../../lib/format'
 import s from './Method.module.css'
 
@@ -120,6 +123,8 @@ export function MethodPage() {
               </div>
             </section>
 
+            <ThresholdsCard />
+
             {compare && (
               <section className={s.card} aria-labelledby="method-compare">
                 <h2 id="method-compare" className={s.h2}>
@@ -133,6 +138,109 @@ export function MethodPage() {
         )}
       </div>
     </>
+  )
+}
+
+// Порог как есть, с запятой: 0,48 нельзя округлять до 0,5, иначе форма сохранит другое значение.
+const plainNumber = (value: number) => String(value).replace('.', ',')
+
+// Пороги сигналов: HR меняет их здесь, файл survey/signals.json остаётся исходным значением.
+function ThresholdsCard() {
+  const qc = useQueryClient()
+  const settings = useThresholdSettings().data
+  const [draft, setDraft] = useState<Record<string, string>>({})
+  const [key, setKey] = useState(() => sessionStorage.getItem(HR_KEY_STORAGE) ?? '')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  // Сервер прислал новые значения (сохранили здесь или в другой вкладке): форма показывает их.
+  useEffect(() => {
+    if (settings) setDraft(Object.fromEntries(settings.fields.map((f) => [f.id, plainNumber(f.value)])))
+  }, [settings])
+
+  if (!settings) return null
+  const parsed = Object.fromEntries(settings.fields.map((f) => [f.id, Number((draft[f.id] ?? '').replace(',', '.'))]))
+  const invalid = settings.fields.some((f) => (draft[f.id] ?? '').trim() === '' || Number.isNaN(parsed[f.id]))
+  const dirty = settings.fields.some((f) => parsed[f.id] !== f.value)
+
+  async function run(request: () => Promise<ThresholdSettings>, success: string) {
+    setBusy(true)
+    setMessage('')
+    setError('')
+    try {
+      const result = await request()
+      sessionStorage.setItem(HR_KEY_STORAGE, key.trim())
+      qc.setQueryData(queryKeys.thresholdSettings, result)
+      // Сигналы, светофор и формулировки выше зависят от порогов: перечитываем всё.
+      void qc.invalidateQueries()
+      setMessage(success)
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Запрос не выполнен.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function save(e: FormEvent) {
+    e.preventDefault()
+    void run(() => api.saveThresholds(key.trim(), parsed), 'Пороги сохранены, сигналы пересчитаны.')
+  }
+
+  return (
+    <section className={s.card} aria-labelledby="method-thresholds">
+      <h2 id="method-thresholds" className={s.h2}>
+        Пороги сигналов
+      </h2>
+      <p className={s.tuneLead}>
+        {settings.can_edit
+          ? 'Меняются здесь, без правки кода. После сохранения сигналы и светофор пересчитываются по всей истории.'
+          : 'Чтобы менять пороги, администратор должен настроить ключ HR. Сейчас действуют значения из файла настроек.'}
+      </p>
+      <form className={s.tune} onSubmit={save}>
+        {settings.fields.map((f) => (
+          <div key={f.id} className={s.tuneRow}>
+            <label htmlFor={`th-${f.id}`} className={s.tuneLabel}>
+              {f.label}
+              <span className={s.tuneHint}>{f.hint}</span>
+            </label>
+            <div className={s.tuneValue}>
+              <input
+                id={`th-${f.id}`}
+                className={s.tuneInput}
+                inputMode="decimal"
+                autoComplete="off"
+                disabled={!settings.can_edit || busy}
+                value={draft[f.id] ?? ''}
+                onChange={(e) => setDraft({ ...draft, [f.id]: e.target.value })}
+              />
+              {f.unit && !Number.isNaN(parsed[f.id]) && <span className={s.tuneUnit}>{plural(parsed[f.id], ['балл', 'балла', 'баллов'])}</span>}
+              {parsed[f.id] !== f.default && <span className={s.tuneDefault}>исходно {plainNumber(f.default)}</span>}
+            </div>
+          </div>
+        ))}
+        {settings.can_edit && (
+          <div className={s.tuneFoot}>
+            <label htmlFor="th-key" className={s.tuneKey}>
+              Ключ доступа HR
+              <input id="th-key" className={s.tuneKeyInput} type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} />
+            </label>
+            <div className={s.tuneActions}>
+              <Button variant="brand" type="submit" busy={busy} disabled={!dirty || invalid || !key.trim()}>
+                Сохранить пороги
+              </Button>
+              {settings.changed && (
+                <Button busy={busy} disabled={!key.trim()} onClick={() => void run(() => api.resetThresholds(key.trim()), 'Вернули исходные пороги.')}>
+                  Вернуть исходные
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+        {message && <p role="status" className={s.tuneOk}>{message}</p>}
+        {error && <p role="alert" className={s.tuneError}>{error}</p>}
+      </form>
+    </section>
   )
 }
 

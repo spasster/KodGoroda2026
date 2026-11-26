@@ -67,6 +67,7 @@ docker-compose.yml, Makefile, .env.example
 - `answers(response_id, question_id, score, text)`.
 - `reviews(signal_key, status, note, updated_at, month)`. Ключ — ситуация. `month` — последний месяц самой ситуации (`signal.month`) на момент отметки. В старой базе колонку добавляет `ALTER TABLE` при запуске.
 - `text_cache(text_hash, analyzer, result_json)`.
+- `settings(key, value_json, updated_at)`. Ключ `thresholds`: правки порогов из интерфейса, `{"группа.ключ": доля шкалы}`. Накладываются поверх `survey/signals.json`, сброс базы их не стирает.
 
 Сигналы и ситуации не хранятся: данных мало, они пересчитываются при каждом запросе. Кэшируется только разбор текста.
 
@@ -239,6 +240,9 @@ interface PairDetail extends PairSummary {
 |---|---|
 | `GET /api/health` | `{ok, pairs, responses, analyzer}` |
 | `GET /api/survey` | содержимое `survey.json` и `thresholds`: пороги из `signals.json` вместе со значениями по умолчанию. Фронт берёт из них окно активных сигналов и порог высокой важности разрыва |
+| `GET /api/settings/thresholds` | пороги для формы на `/method`: `{fields: [{id, label, hint, unit, value, default, min, max, step}], changed, updated_at, can_edit}`. `id` — `группа.ключ` из `signals.json`. Значения в баллах (`decline.*`, `gap.min_gap`) и в оценках шкалы (`low_question.max_score`, `baseline.index_below`). `unit` — «балл» для разницы и пустая строка для оценки. `can_edit` — задан ли ключ HR |
+| `PUT /api/settings/thresholds` | тело `{values: {id: число}}`, заголовок `Authorization: Bearer <ключ HR>` (тот же `GOOGLE_FORMS_HR_KEY`). Значение, равное исходному, правкой не считается. Ответ как у GET. Открытым дашбордам уходит событие `reset`. Ошибки: 401 неверный ключ, 503 ключ не настроен, 422 значение вне границ |
+| `POST /api/settings/thresholds/reset` | с тем же заголовком: убрать правки, вернуть значения из `signals.json` |
 | `GET /api/people` | `{interns: [{id, name, mentor_id, pair_id, next_month, token}], mentors: [...]}` для выбора в форме и «Сбора анкет» у HR; `next_month` — первый месяц без анкеты; `token` — подпись личной ссылки, см. «Личная ссылка» |
 | `GET /api/overview` | `Overview` |
 | `GET /api/pairs/{pair_id}` | `PairDetail`, 404 если нет |
@@ -297,7 +301,7 @@ interface PairDetail extends PairSummary {
 - `/` Обзор: итоги, таблица «пара × месяц», активные сигналы, последние поступления.
 - `/pairs/:id` Карточка пары: две линии индексов, ответы по вопросам, комментарии с подсвеченными цитатами, сигналы с действием и отметкой.
 - `/signals` Сигналы: очередь «с кем поговорить», фильтры по статусу и важности, отметка «Проблема подтвердилась» или «Проблемы нет».
-- `/method` Как считаем: принципы, по каждому сигналу формула, причины и ограничения, результаты проверки модели (`GET /api/method`).
+- `/method` Как считаем: принципы, по каждому сигналу формула, причины и ограничения, результаты проверки модели (`GET /api/method`). Блок «Пороги сигналов»: пять порогов в баллах и оценках, сохранение по ключу HR, после сохранения сигналы пересчитываются по всей истории.
 - `/form` Форма для стажёра и наставника: собирается из `/api/survey`, удобна с телефона, без навигации дашборда.
 
 Новый ответ, пришедший через SSE, виден без перезагрузки: обновляются данные и показывается уведомление.

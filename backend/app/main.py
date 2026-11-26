@@ -19,7 +19,7 @@ from .context import Context
 from .events import install_shutdown_hook
 from .importer import ImportFileError
 from .ingest import IngestError, load_sample
-from .routes import dashboard, events, extra, google_forms, intake, meta
+from .routes import dashboard, events, extra, google_forms, intake, meta, tuning
 
 log = logging.getLogger("app")
 
@@ -97,7 +97,7 @@ def create_app(settings: Settings | None = None, analyzer: TextAnalyzer | None =
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    for module in (meta, dashboard, extra, intake, events, google_forms):
+    for module in (meta, dashboard, extra, intake, events, google_forms, tuning):
         app.include_router(module.router, prefix="/api")
 
     @app.exception_handler(RequestValidationError)

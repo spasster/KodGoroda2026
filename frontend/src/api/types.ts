@@ -186,3 +186,10 @@ export interface MethodSignal {
   open: number; confirmed: number; rejected: number
 }
 export interface Method { principles: string[]; signals: MethodSignal[]; baseline: string; quality: Quality | null }
+
+// Пороги сигналов для раздела настроек: значения в баллах и оценках, как их видит HR.
+export interface ThresholdField {
+  id: string; label: string; hint: string; unit: string
+  value: number; default: number; min: number; max: number; step: number
+}
+export interface ThresholdSettings { fields: ThresholdField[]; changed: boolean; updated_at: string | null; can_edit: boolean }

@@ -51,6 +51,11 @@ CREATE TABLE IF NOT EXISTS text_cache (
     result_json TEXT NOT NULL,
     PRIMARY KEY (text_hash, analyzer)
 );
+CREATE TABLE IF NOT EXISTS settings (
+    key        TEXT PRIMARY KEY,
+    value_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS google_forms (
     role TEXT PRIMARY KEY CHECK (role IN ('intern', 'mentor')),
     cohort TEXT NOT NULL,
@@ -215,6 +220,25 @@ def set_review(conn: sqlite3.Connection, key: str, status: str, note: str | None
         " updated_at = excluded.updated_at, month = excluded.month",
         (key, status, note, now_iso(), month),
     )
+
+
+def setting_get(conn: sqlite3.Connection, key: str) -> str | None:
+    row = conn.execute("SELECT value_json FROM settings WHERE key = ?", (key,)).fetchone()
+    return row["value_json"] if row else None
+
+
+def setting_updated(conn: sqlite3.Connection, key: str) -> str | None:
+    row = conn.execute("SELECT updated_at FROM settings WHERE key = ?", (key,)).fetchone()
+    return row["updated_at"] if row else None
+
+
+def setting_put(conn: sqlite3.Connection, key: str, value_json: str) -> None:
+    conn.execute("INSERT OR REPLACE INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)",
+                 (key, value_json, now_iso()))
+
+
+def setting_delete(conn: sqlite3.Connection, key: str) -> None:
+    conn.execute("DELETE FROM settings WHERE key = ?", (key,))
 
 
 def cache_get(conn: sqlite3.Connection, text_hash: str, analyzer: str) -> str | None:

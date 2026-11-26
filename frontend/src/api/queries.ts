@@ -29,6 +29,7 @@ export const queryKeys = {
   analytics: ['analytics'] as const,
   brief: (pairId: string) => ['pair', pairId, 'brief'] as const,
   method: ['method'] as const,
+  thresholdSettings: ['threshold-settings'] as const,
 }
 
 // Ключ ситуации по контракту: {type}:{pair_id}:{role}.
@@ -169,4 +170,9 @@ export function useAddNote(pairId: string) {
 
 export function useMethod() {
   return useQuery({ queryKey: queryKeys.method, queryFn: api.method })
+}
+
+// Пороги для формы настроек на экране «Как считаем».
+export function useThresholdSettings() {
+  return useQuery({ queryKey: queryKeys.thresholdSettings, queryFn: api.thresholdSettings })
 }

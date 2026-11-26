@@ -18,12 +18,14 @@ import type {
   Survey,
   Role,
   GoogleFormsStatus,
+  ThresholdSettings,
 } from './types'
 
 export const API_BASE = '/api'
 export const EVENTS_URL = `${API_BASE}/events`
 export const HR_KEY_STORAGE = 'google-forms-hr-key'
 const GOOGLE_FORMS_PATH = '/hr/google-forms'
+const THRESHOLDS_PATH = '/settings/thresholds'
 
 // Ошибка с текстом для человека: detail от бэкенда или наш, если бэкенд не ответил.
 export class ApiError extends Error {
@@ -111,6 +113,14 @@ export const api = {
   method: () => request<Method>('/method'),
 
   ingest: (payload: IngestRequest) => postJson<IngestResult>('/ingest', payload),
+  thresholdSettings: () => request<ThresholdSettings>(THRESHOLDS_PATH),
+  saveThresholds: (key: string, values: Record<string, number>) =>
+    request<ThresholdSettings>(THRESHOLDS_PATH, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values }),
+    }),
+  resetThresholds: (key: string) => hrRequest<ThresholdSettings>(THRESHOLDS_PATH + '/reset', key, {}),
   googleForms: (key: string) => hrRequest<GoogleFormsStatus>(GOOGLE_FORMS_PATH, key),
   createGoogleForms: (key: string, cohort: string) => hrRequest<GoogleFormsStatus>(GOOGLE_FORMS_PATH, key, { cohort }),
   setupGooglePrefill: (key: string, role: Role, url: string) =>
